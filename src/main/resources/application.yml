@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+
+  aop:
+    auto: true #开启切面编程
+
+  main:
+    allow-bean-definition-overriding: true
+
+  redis:  #redis配置
+    host: 129.204.74.133
+    port: 6379
+    jedis:
+      pool:
+        max-idle: 15
+        min-idle: 10
+        max-active: 20
+
+  datasource:
+    username: root
+    password: Mail123456
+    url: jdbc:mysql://129.204.74.133:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+#mybatis配置
+mybatis-plus:
+  mapper-locations:
+    - classpath:/mapper/*.xml
+  type-aliases-package: com.caidao.entity
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+#swagger2 配置
+swagger2:
+  base-package: com.caidao.controller
+  name: jinpeng
+  url: https://www.baidu.com
+  email: 245311344@qq.com
+  title: mail-shop的数据接口
+  destription: 数据认证
+  term-of-service-url: www.yanli.ltd
+  license: Apache 2.0
