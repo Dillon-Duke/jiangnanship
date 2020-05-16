@@ -39,7 +39,7 @@ public class SysRole implements Serializable {
     private String roleName;
 
     @ApiModelProperty(value = "角色描述")
-    private String remake;
+    private String remark;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:SS")
     @ApiModelProperty(value = "创建时间")
