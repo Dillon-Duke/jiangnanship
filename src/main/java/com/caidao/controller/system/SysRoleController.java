@@ -88,6 +88,8 @@ public class SysRoleController {
 	 */
 	@PutMapping
 	public ResponseEntity<Void> updateRoleByRoleId(@RequestBody SysRole sysRole){
+		SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
+		sysRole.setUpdateId(principal.getUserId());
 		sysRoleService.updateById(sysRole);
 		return ResponseEntity.ok().build();
 	}

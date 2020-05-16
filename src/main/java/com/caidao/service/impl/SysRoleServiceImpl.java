@@ -61,6 +61,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 			throw new RuntimeException("新增角色参数错误");
 		}
 		sysRole.setCreateDate(LocalDateTime.now());
+		sysRole.setState(1);
 		boolean save = super.save(sysRole);
 		
 		List<Integer> menuIdLists = sysRole.getMenuIdList();
@@ -83,6 +84,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	public boolean updateById(SysRole sysRole) {
 		Assert.notNull(sysRole, "sysRole must not be null");
 		log.info("修改角色{}",sysRole);
+
+		sysRole.setUpdateDate(LocalDateTime.now());
 		if (sysRole.getRoleId() == null || sysRole.getRoleName() == null ) {
 			throw new RuntimeException("修改角色参数错误");
 		}
