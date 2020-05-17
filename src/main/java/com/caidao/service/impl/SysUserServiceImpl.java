@@ -135,17 +135,19 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	public void deleteByIds(List<Integer> ids) {
 
-		//批量更新 设置状态为0
-		List<SysUser> sysUsers = new ArrayList<>();
-		for (Integer id : ids) {
-			SysUser user = new SysUser();
-			user.setUserId(id);
-			user.setState(0);
-			sysUsers.add(user);
-		}
+//		//批量更新 设置状态为0
+//		List<SysUser> sysUsers = new ArrayList<>();
+//		for (Integer id : ids) {
+//			SysUser user = new SysUser();
+//			user.setUserId(id);
+//			user.setState(0);
+//			sysUsers.add(user);
+//		}
+//
+//		//将主键传到mapper sql批量删除
+//		this.updateBatchById(sysUsers,100);
 
-		//将主键传到mapper sql批量删除
-		this.updateBatchById(sysUsers,100);
+		sysUserMapper.batchDelete(ids);
 	}
 	
 	/**

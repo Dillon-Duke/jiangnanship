@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.caidao.mapper.SysUserMapper">
+    
+    <update id="batchDelete" parameterType="java.util.List">
+        update sys_user
+        SET state =
+        <foreach collection="list" item="item" index="index"
+                 separator=" " open="case user_id" close="end">
+            when #{item.user_id} then #{item.state}
+        </foreach>
+        where user_id in (
+        <foreach collection="list" item="item" index="index"
+                 separator="," >
+            #{item.user_id}
+        </foreach>
+    </update>
 
 </mapper>
