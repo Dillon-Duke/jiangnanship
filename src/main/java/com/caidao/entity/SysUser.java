@@ -100,4 +100,5 @@ public class SysUser implements Serializable {
     @TableField(exist = false)
     private List<Integer> roleIdList = new ArrayList<Integer>(0);
 
+
 }

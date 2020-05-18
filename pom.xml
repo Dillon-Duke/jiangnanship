@@ -128,7 +128,7 @@
             <artifactId>activiti-spring</artifactId>
             <version>6.0.0</version>
         </dependency>
-         activiti 模型依赖
+        <!-- activiti 模型依赖 -->
         <dependency>
             <groupId>org.activiti</groupId>
             <artifactId>activiti-bpmn-model</artifactId>
@@ -169,6 +169,17 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            //控制版本更新时
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <outputFileName>测试</outputFileName>
+                </configuration>
+            </plugin>    
         </plugins>
     </build>
 

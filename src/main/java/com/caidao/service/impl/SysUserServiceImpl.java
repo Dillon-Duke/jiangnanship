@@ -135,7 +135,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	public void deleteByIds(List<Integer> ids) {
 
-//		//批量更新 设置状态为0
+		//批量更新 设置状态为0
 //		List<SysUser> sysUsers = new ArrayList<>();
 //		for (Integer id : ids) {
 //			SysUser user = new SysUser();

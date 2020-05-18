@@ -4,16 +4,13 @@
     
     <update id="batchDelete" parameterType="java.util.List">
         update sys_user
-        SET state =
-        <foreach collection="list" item="item" index="index"
-                 separator=" " open="case user_id" close="end">
-            when #{item.user_id} then #{item.state}
-        </foreach>
+        SET state = 0
         where user_id in (
-        <foreach collection="list" item="item" index="index"
-                 separator="," >
-            #{item.user_id}
-        </foreach>
+            <foreach collection="list" item="item" index="index"
+                     separator=",">
+                #{item}
+            </foreach>
+        )
     </update>
 
 </mapper>
