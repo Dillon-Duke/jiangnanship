@@ -44,3 +44,15 @@ swagger2:
   destription: 数据认证
   term-of-service-url: www.yanli.ltd
   license: Apache 2.0
+
+#fastdfs 配置类
+fdfs:
+  so-timeout: 6000 #超时时间
+  connect-timeout: 6000 #连接超时时间
+  thumb-image: #缩略图
+    width: 20
+    height: 20
+  tracker-list: #踪迹服务器tracker地址
+    - 129.204.74.133:22122
+
+
