@@ -18,9 +18,9 @@ public interface SysLogService extends IService<SysLog> {
 	/**
 	 * 获取页表数据 当前页 页大小
 	 * @param page
-	 * @param log
+	 * @param logs
 	 * @return
 	 */
-	IPage<SysLog> findPage(Page<SysLog> page, SysLog log);
+	IPage<SysLog> findPage(Page<SysLog> page, SysLog logs);
 
 }

@@ -79,7 +79,7 @@ public class SysMenuController {
 	 * @return
 	 */
 	@GetMapping("info/{id}")
-	public ResponseEntity<SysMenu> getOneMenu(@PathVariable("id") Long id){
+	public ResponseEntity<SysMenu> getOneMenu(@PathVariable("id") Integer id){
 		SysMenu sysMenu = sysMenuService.getById(id);
 		return ResponseEntity.ok(sysMenu);
 	}

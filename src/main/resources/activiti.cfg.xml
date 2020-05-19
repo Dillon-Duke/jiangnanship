@@ -6,8 +6,8 @@
 
 
     <!--数据源配置dbcp-->
-    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
         <property name="url" value="129.204.74.133:3306/jiangnanship" />
         <property name="username" value="root" />
         <property name="password" value="Mail123456" />
@@ -20,7 +20,7 @@
     <!--代表数据源-->
     <property name="dataSource" ref="dataSource"></property>
 
-    <property name="jdbcDriver" value="com.mysql.cj.jdbc.Driver" />
+    <property name="jdbcDriver" value="com.mysql.jdbc.Driver" />
     <property name="jdbcUrl" value="129.204.74.133:3306/jiangnanship" />
     <property name="jdbcUsername" value="root" />
     <property name="jdbcPassword" value="Mail123456" />

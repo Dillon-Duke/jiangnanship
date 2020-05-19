@@ -148,7 +148,6 @@
         </dependency>
         <!--Activiti Dependency End -->
 
-
         <!-- 单元测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -169,17 +168,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
-            //控制版本更新时
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <outputFileName>测试</outputFileName>
-                </configuration>
-            </plugin>    
         </plugins>
     </build>
 

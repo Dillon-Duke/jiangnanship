@@ -22,6 +22,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import cn.hutool.json.JSONUtil;
 
+/**
+ * @author Dillon
+ * @since 2020-05-18
+ */
 @Aspect
 @Component  //注入到spring中
 public class SysLogAspectj {
