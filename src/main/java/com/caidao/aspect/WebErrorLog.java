@@ -21,22 +21,22 @@ public class WebErrorLog {
 
     private static final Logger log = LoggerFactory.getLogger(WebErrorLog.class);
 
-	/**
-     *
-     * ResponseEntity 能改变程序内部错误码
-     * @param e 异常
-     * @return
-     */
 
-//    运行时异常
+	/**
+	 * 运行时异常
+	 */
 	@ExceptionHandler(RuntimeException.class)
 	public ResponseEntity<String> runtimeException(RuntimeException e){
 		log.error("系统内部错误",e );
 
 		return ResponseEntity.badRequest().body("系统内部错误");
 	}
-	
-	//用户权限认证 无权抛异常
+
+	/**
+	 * 用户权限认证 无权抛异常
+	 * @param authorizationException
+	 * @return
+	 */
 	@ExceptionHandler(AuthorizationException.class)
 	public ResponseEntity<String> authorizationException(AuthorizationException authorizationException){
 		log.info("该用户无此权限",authorizationException);

@@ -16,5 +16,11 @@ import com.caidao.entity.SysRole;
  */
 public interface SysCarService extends IService<SysCar> {
 
+    /**
+     * 查询车辆分页数据
+     * @param page
+     * @param sysCar
+     * @return
+     */
     IPage<SysCar> findSysCarPage(Page<SysCar> page, SysCar sysCar);
 }

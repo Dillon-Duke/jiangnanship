@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.entity.SysLog;
 import com.caidao.service.SysLogService;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,7 @@ public class SysLogController {
 	 * @return
 	 */
 	@GetMapping("/page")
+	@ApiOperation("获取当前页日志信息")
 	public ResponseEntity<IPage<SysLog>> getPage(Page<SysLog> page, SysLog logs){
 		log.info("日志获取当前页{}，页大小{}",page.getCurrent(),page.getSize());
 		IPage<SysLog> findPage = sysLogService.findPage(page,logs);

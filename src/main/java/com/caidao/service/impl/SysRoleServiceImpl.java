@@ -53,7 +53,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	 * 新增角色
 	 */
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public boolean save(SysRole sysRole) {
 		Assert.notNull(sysRole, "sysRole must not be null");
 		log.info("新增角色{}",sysRole);
@@ -78,9 +78,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	
 	/**
 	 * 修改角色
+	 * @Transactional(rollbackFor = Exception.class) 让checked例外也回滚
 	 */
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysRole sysRole) {
 		Assert.notNull(sysRole, "sysRole must not be null");
 		log.info("修改角色{}",sysRole);
@@ -130,8 +131,10 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	}
 	/**
 	 * 批量删除校验
+	 * @Transactional(noRollbackFor = RuntimeException.class)  让unchecked例外不回滚
 	 */
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 		log.info("批量删除的角色id为{}",idList);
 

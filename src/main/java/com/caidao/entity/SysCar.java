@@ -51,6 +51,9 @@ public class SysCar implements Serializable {
     @ApiModelProperty(value = "车辆图片")
     private String carPhoto;
 
+    @ApiModelProperty(value = "车辆图片资源路径")
+    private String sourcePhoto;
+
     @ApiModelProperty(value = "空车重量")
     private Double emptyWeight;
 

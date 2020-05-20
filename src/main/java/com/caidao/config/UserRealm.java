@@ -21,6 +21,10 @@ import org.springframework.context.annotation.Lazy;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
 
 @Configuration 
 @Slf4j
@@ -28,10 +32,13 @@ public class UserRealm extends AuthorizingRealm {
 	
 	@Autowired
 	private SysUserService sysUserService;
-	
+
+	/**
+	 * @Lazy //懒加载  先让springcontroller里面的类进行cglib加载，然后加载此类 jdk
+	 * //优点 生成两个代理类 不相互影响 缺点  占用内存
+	 */
 	@Autowired
-	@Lazy //懒加载  先让springcontroller里面的类进行cglib加载，然后加载此类 jdk 
-				//优点 生成两个代理类 不相互影响 缺点  占用内存
+	@Lazy
 	private SysMenuService sysMenuService;
 	
 	/**

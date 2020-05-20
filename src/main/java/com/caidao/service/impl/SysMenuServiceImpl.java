@@ -1,6 +1,5 @@
 package com.caidao.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.SysMenu;
@@ -16,12 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 /**
@@ -65,7 +63,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		//设置一级树形菜单
 		for (SysMenu sysMenu : menuList) {
 			if (sysMenu.getParentId() == 0) {
-				rootone.add(SysMenuService(sysMenu));
+				rootone.add(sysMenuService(sysMenu));
 			}
 		}
 		
@@ -73,14 +71,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		for (SysMenu sysMenu : menuList) {
 			for (Menu menu : rootone) {
 				if (menu.getMenuId().equals(sysMenu.getParentId())) {
-					menu.getList().add(SysMenuService(sysMenu));
+					menu.getList().add(sysMenuService(sysMenu));
 				}
 			}
 		}
 	return rootone;
 	}
 
-	private Menu SysMenuService(SysMenu sysMenu) {
+	private Menu sysMenuService(SysMenu sysMenu) {
 		Menu menu = new Menu();
 		menu.setMenuId(sysMenu.getMenuId());
 		menu.setName(sysMenu.getName());
@@ -88,9 +86,14 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		return menu;
 	}
 
-	@Override   //查询用户的按钮权限
-	//开启缓存，因为是shiro的查询 所以缓存放在redis里面了
-//	@Cacheable(cacheNames="com.tencent.service.impl.SysMenuServiceImpl",key="#p0")
+	/**
+	 * 查询用户的按钮权限
+	 * @param userId
+	 * @return
+	 * 开启缓存，因为是shiro的查询 所以缓存放在redis里面了
+	 *@Cacheable(cacheNames="com.tencent.service.impl.SysMenuServiceImpl",key="#p0")
+	 */
+	@Override
 	public List<String> getAuth2ByUslerId(Integer userId) {
 		//获取登录用户的菜单id
 		List<Object> menuIds = getMenuIds(userId);
@@ -109,7 +112,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		}
 		return result;
 	}
-	
+
+	/**
+	 * 通过用户ID获取菜单列表
+	 * @param userId
+	 * @return
+	 */
 	private List<SysMenu> findMenuListByUserId(Integer userId) {
 		//获取登录用户的菜单id
 		List<Object> menuIds = getMenuIds(userId);
@@ -127,13 +135,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		//查询对应的menu列表
 		 List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
 				 .in(SysMenu::getMenuId, menuIds));
-//				 .eq(SysMenu::getParentId, 0l)
-//				 .or(true)
-//				 .eq(SysMenu::getParentId, 1));
 		 return selectList;
 	}
-	
-	//通过用户id获取用户对应的菜单id
+
+	/**
+	 * 通过用户id获取用户对应的菜单id
+	 */
 	private List<Object> getMenuIds(Integer userId) {
 		
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单权限
@@ -188,6 +195,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 * 新增菜单复写判断
 	 */
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public boolean save(SysMenu sysMenu) {
 		sysMenu.setCreateDate(LocalDateTime.now());
 		sysMenu.setState(1);
@@ -202,6 +210,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 * 新增更新要求
 	 */
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysMenu sysMenu) {
 
 		sysMenu.setUpdateDate(LocalDateTime.now());
@@ -248,22 +257,25 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 */
 	private void volifyDate(SysMenu sysMenu) {
 		switch (sysMenu.getType()) {
-		case 0:  //目录条件过滤
+
+		//目录条件过滤
+		case 0:
 			Assert.state(sysMenu.getName()!=null, "目录名不能为空");
 			sysMenu.setParentId(0);
 			sysMenu.setPerms(null);
 			sysMenu.setUrl(null);
 			break;
-			
-		case 1:  //菜单条件过滤
+		//菜单条件过滤
+		case 1:
 			Assert.state(sysMenu.getName()!=null
 								&& sysMenu.getParentId()!=0
 								&& sysMenu.getUrl()!=null
 								, "菜单新增信息有误");
 			sysMenu.setPerms(null);
 			break;
-			
-		case 2: //按钮条件过滤
+
+		//按钮条件过滤
+		case 2:
 			Assert.state(sysMenu.getName()!=null
 								&& sysMenu.getUrl()==null
 								&& sysMenu.getParentId()!=0
@@ -273,6 +285,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 			sysMenu.setIcon(null);
 			break;
 
+		//抛出异常
 		default:
 				throw new RuntimeException("菜单类型不合法");
 		}

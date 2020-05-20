@@ -5,6 +5,11 @@ import lombok.Data;
 
 import java.io.File;
 
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
+
 @Data
 public class FileParam {
 

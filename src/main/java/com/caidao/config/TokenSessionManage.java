@@ -12,6 +12,11 @@ import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
+
 @Configuration
 public class TokenSessionManage extends DefaultWebSessionManager {
 

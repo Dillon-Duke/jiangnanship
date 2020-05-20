@@ -12,6 +12,7 @@ import com.caidao.service.SysConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -46,6 +47,7 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 	 * 校验新增数据参数
 	 */	
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public boolean save(SysConfig sysConfig) {
 		Assert.state(sysConfig.getParamKey() !=null
 				&& sysConfig.getParamValue() !=null

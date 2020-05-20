@@ -7,9 +7,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.caidao.anno.SysLogs;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
+import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +55,7 @@ public class SysUserController {
 	 * @return
 	 */
 	@GetMapping("/page")
+	@ApiOperation("获取分页的用户数据")
 	public ResponseEntity<IPage<SysUser>> userPage(Page<SysUser> page, SysUser sysUser){
 		IPage<SysUser> usersPage = sysUserService.getUserPage(page,sysUser);
 		return ResponseEntity.ok(usersPage);
@@ -65,6 +68,7 @@ public class SysUserController {
 	 */
 	@RequiresPermissions("sys:user:save")
 	@PostMapping
+	@ApiOperation("新增用户")
 	public ResponseEntity<SysUser> addUser(@RequestBody SysUser sysUser){
 		SysUser sysUser2 = (SysUser)SecurityUtils.getSubject().getPrincipal();
 		sysUser.setCreateId(sysUser2.getUserId());
@@ -79,6 +83,7 @@ public class SysUserController {
 	 */
 	@RequiresPermissions("sys:user:info")
 	@GetMapping("info/{id}")
+	@ApiOperation("通过id获取用户数据")
 	public ResponseEntity<SysUser> getUserById(@PathVariable("id") long id){
 		SysUser sysUser = sysUserService.getById(id);
 		return ResponseEntity.ok(sysUser);
@@ -103,8 +108,10 @@ public class SysUserController {
 	 * @param ids
 	 * @return
 	 */
+	@SysLogs("批量删除用户")
 	@RequiresPermissions("sys:user:delete")
 	@DeleteMapping
+	@ApiOperation("批量删除用户，假删除")
 	public ResponseEntity<Void> beachDel(@RequestBody List<Integer> ids){
 		sysUserService.deleteByIds(ids);
 		return ResponseEntity.ok().build();
@@ -118,6 +125,7 @@ public class SysUserController {
 	 */
 	@RequiresPermissions("sys:user:update")
 	@PutMapping
+	@ApiOperation("修改用户")
 	public ResponseEntity<SysUser> updateUser(@RequestBody SysUser sysUser,HttpServletResponse resource) throws IOException{
 		SysUser sysUser2 = (SysUser)SecurityUtils.getSubject().getPrincipal();
 

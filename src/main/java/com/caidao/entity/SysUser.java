@@ -58,8 +58,11 @@ public class SysUser implements Serializable {
     @ApiModelProperty(value = "讨论工号长度、生成规则")
     private Integer jobNum;
 
-    @ApiModelProperty(value = "个人头像")
-    private String image;
+    @ApiModelProperty(value = "个人头像文件名称")
+    private String fileImage;
+
+    @ApiModelProperty(value = "头像资源库文件名称+路径")
+    private String sourceImage;
 
     @ApiModelProperty(value = "是否禁用")
     private Integer status;

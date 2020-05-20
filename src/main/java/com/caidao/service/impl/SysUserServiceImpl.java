@@ -21,6 +21,7 @@ import java.util.*;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -114,9 +115,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	
 	/**
 	 * 批量移除用户
-	 * 假删除
+	 * 真删除
 	 */
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 		log.info("批量移除id为{}的用户",idList);
 
@@ -129,10 +131,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 	/**
 	 * 批量删除用户
-	 * 真删除
+	 * 假删除
 	 * @param ids
 	 */
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public void deleteByIds(List<Integer> ids) {
 
 		//批量更新 设置状态为0
@@ -143,7 +146,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 //			user.setState(0);
 //			sysUsers.add(user);
 //		}
-//
 //		//将主键传到mapper sql批量删除
 //		this.updateBatchById(sysUsers,100);
 
@@ -180,6 +182,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 * 更新用户
 	 */
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysUser sysUser) {
 		log.info("更新用户为{}的用户",sysUser.getUsername());
 		

@@ -60,5 +60,5 @@ public class SysRole implements Serializable {
     
     @TableField(exist = false)
     @ApiModelProperty(value = "角色对应的菜单Id")
-    private List<Integer> MenuIdList = new ArrayList<Integer>(0);
+    private List<Integer> menuIdList = new ArrayList<Integer>(0);
 }

@@ -25,9 +25,11 @@ import cn.hutool.json.JSONUtil;
 /**
  * @author Dillon
  * @since 2020-05-18
+ * @Component  注入到spring中
  */
+
 @Aspect
-@Component  //注入到spring中
+@Component
 public class SysLogAspectj {
 	
 	@Autowired

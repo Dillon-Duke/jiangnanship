@@ -1,8 +1,8 @@
-package com.caidao.wapper;
+package com.caidao.util;
 
-
-import com.github.tobato.fastdfs.domain.StorePath;
-import com.github.tobato.fastdfs.proto.storage.DownloadByteArray;
+import com.github.tobato.fastdfs.domain.fdfs.StorePath;
+import com.github.tobato.fastdfs.domain.proto.storage.DownloadByteArray;
+import com.github.tobato.fastdfs.exception.FdfsServerException;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +17,9 @@ import java.io.IOException;
  */
 
 @Component
-public class FastDfsClientWrapper {
+public class FastDfsClientUtils {
 
-    private final Logger logger = LoggerFactory.getLogger(FastDfsClientWrapper.class);
+    private final Logger logger = LoggerFactory.getLogger(FastDfsClientUtils.class);
 
     @Autowired
     private FastFileStorageClient fastFileStorageClient;
@@ -36,23 +36,39 @@ public class FastDfsClientWrapper {
     public String uploadFile(byte[] bytes, long fileSize, String extension) {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         StorePath storePath = fastFileStorageClient.uploadFile(byteArrayInputStream, fileSize, extension, null);
-        System.out.println(storePath.getGroup() + "==" + storePath.getPath() + "======" + storePath.getFullPath());
         return storePath.getFullPath();
     }
 
     /**
      * 下载文件
      *  返回文件字节流大小
-     * @param fileUrl 文件URL
+     * @param fielname 文件URL
      * @return 文件字节
      * @throws IOException
      */
-    public byte[] downloadFile(String fileUrl) throws IOException {
-        String group = fileUrl.substring(0, fileUrl.indexOf("/"));
-        String path = fileUrl.substring(fileUrl.indexOf("/") + 1);
+    public byte[] downloadFile(String fielname) {
+
+        String group = fielname.substring(0, fielname.indexOf("/"));
+        String path = fielname.substring(fielname.indexOf("/") + 1);
         DownloadByteArray downloadByteArray = new DownloadByteArray();
         byte[] bytes = fastFileStorageClient.downloadFile(group, path, downloadByteArray);
         return bytes;
+    }
 
+    /**
+     * 删除单个文件
+     * @param fielname
+     * @return
+     */
+    public String deleteFile(String fielname) {
+
+        //获得文件的总体路径并且自动分开文件组和真是路径
+        StorePath storePath = StorePath.parseFromUrl(fielname);
+        try {
+            fastFileStorageClient.deleteFile(storePath.getGroup(),storePath.getPath());
+        }catch (FdfsServerException exception){
+             return exception.getMessage();
+        }
+        return null;
     }
 }

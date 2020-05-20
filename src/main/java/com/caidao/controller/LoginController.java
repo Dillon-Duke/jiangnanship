@@ -37,6 +37,9 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author tom
+ */
 
 @RestController
 @Slf4j
@@ -111,14 +114,16 @@ public class LoginController {
 		return ResponseEntity.ok(token);
 	}
 
-	//校验验证码
-	private void checkCode(String sessionUUID, String imageCode) {
-		if (!StringUtils.hasText(imageCode) ||!StringUtils.hasText(sessionUUID) ) {
+	/**
+	 * 校验验证码
+	 */
+	private void checkCode(String sessionUuid, String imageCode) {
+		if (!StringUtils.hasText(imageCode) ||!StringUtils.hasText(sessionUuid) ) {
 			throw new AuthenticationException("验证码校验失败");
 		}
 		
 		//获取redis里面的验证码并校验
-		String redisImageCode = redis.opsForValue().get(PropertyUtils.VALCODE_PRIFAX+sessionUUID);
+		String redisImageCode = redis.opsForValue().get(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
 		if (!StringUtils.hasText(redisImageCode)) {
 			throw new AuthenticationException("验证码超时，请重新验证");
 		}
@@ -128,7 +133,7 @@ public class LoginController {
 		}
 		
 		//验证码使用之后 删除
-		redis.delete(PropertyUtils.VALCODE_PRIFAX+sessionUUID);
+		redis.delete(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
 	}
 	
 	/**
@@ -143,7 +148,7 @@ public class LoginController {
 			throw new NullPointerException("shiro无此用户");
 		}
 		log.info("{}用户登录",user.getUsername());
-		Map<String, Object> result = new HashMap<String,Object>();
+		Map<String, Object> result = new HashMap<String,Object>(2);
 		List<Menu> menuList = sysMenuService.getMenuListByUserId(user.getUserId());
 		//用户的菜单列表
 		result.put("menuList", menuList);
@@ -163,11 +168,6 @@ public class LoginController {
 		SysUser user = (SysUser)SecurityUtils.getSubject().getPrincipal();
 		log.info("登录获取{}对象",user.getUsername());
 		return ResponseEntity.ok(user);
-	}
-	
-	@PostMapping("sys/logout")
-	public ResponseEntity<Void> userLogOut(){
-		return ResponseEntity.ok().build();
 	}
 
 

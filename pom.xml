@@ -164,17 +164,10 @@
         <!--Activiti Dependency End -->
 
         <!-- fastdfs -->
-<!--        <dependency>-->
-<!--            <groupId>org.csource</groupId>-->
-<!--            <artifactId>fastdfs-client-java</artifactId>-->
-<!--            <version>1.27-SNAPSHOT</version>-->
-<!--        </dependency>-->
-
-        <!-- fastdfs -->
         <dependency>
             <groupId>com.github.tobato</groupId>
             <artifactId>fastdfs-client</artifactId>
-            <version>1.26.2</version>
+            <version>1.27.2</version>
         </dependency>
 
         <!-- 单元测试 -->

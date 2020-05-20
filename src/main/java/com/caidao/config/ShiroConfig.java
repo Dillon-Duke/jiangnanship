@@ -14,6 +14,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
 
 @Configuration
 public class ShiroConfig {
@@ -62,9 +68,15 @@ public class ShiroConfig {
 		DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition = new DefaultShiroFilterChainDefinition();
 		defaultShiroFilterChainDefinition.addPathDefinition("/captcha.jpg", "anon");
 		defaultShiroFilterChainDefinition.addPathDefinition("/login", "anon");
+		defaultShiroFilterChainDefinition.addPathDefinition("/logout", "logout");
 		defaultShiroFilterChainDefinition.addPathDefinition("/sys/menu/nav", "anon");
-//		defaultShiroFilterChainDefinition.addPathDefinition("/**", "anon");
-		defaultShiroFilterChainDefinition.addPathDefinition("/*", "authc");
+
+		//表示所有的路径不拦截 调试使用
+		defaultShiroFilterChainDefinition.addPathDefinition("/**", "anon");
+
+		//表示需要认证才可以访问
+//		defaultShiroFilterChainDefinition.addPathDefinition("/**", "authc");
+
 		return defaultShiroFilterChainDefinition;
 	}
 	

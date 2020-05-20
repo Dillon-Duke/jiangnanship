@@ -4,6 +4,7 @@ import com.caidao.anno.SysLogs;
 import com.caidao.entity.SysMenu;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysMenuService;
+import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,7 @@ public class SysMenuController {
 	 * @return
 	 */
 	@GetMapping("/table")
+	@ApiOperation("获取所有的菜单列表 包括目录 菜单 按钮")
 	public ResponseEntity<List<SysMenu>> getSysMenu(){
 		List<SysMenu> sysMenus = sysMenuService.findSysMenu();
 		return ResponseEntity.ok(sysMenus);
@@ -50,6 +52,7 @@ public class SysMenuController {
 	 * @return
 	 */
 	@GetMapping("/list")
+	@ApiOperation("查询菜单")
 	public ResponseEntity<List<SysMenu>> addSysmenu(){
 		List<SysMenu> findSysMenu = sysMenuService.getListMenu();
 		return ResponseEntity.ok(findSysMenu);
@@ -61,8 +64,8 @@ public class SysMenuController {
 	 * @param sysMenu
 	 * @return
 	 */
-	@SysLogs("新增目录或者菜单或者按钮")
 	@PostMapping
+	@ApiOperation("新增一个菜单,目录或者按钮")
 	public ResponseEntity<SysMenu> addSysMenu(@RequestBody SysMenu sysMenu){
 
 		//获取当前登录对象
@@ -79,6 +82,7 @@ public class SysMenuController {
 	 * @return
 	 */
 	@GetMapping("info/{id}")
+	@ApiOperation("修改前获取对应的需要修改的信息")
 	public ResponseEntity<SysMenu> getOneMenu(@PathVariable("id") Integer id){
 		SysMenu sysMenu = sysMenuService.getById(id);
 		return ResponseEntity.ok(sysMenu);
@@ -90,6 +94,7 @@ public class SysMenuController {
 	 * @return
 	 */
 	@PutMapping
+	@ApiOperation("更新菜单,目录或者按钮")
 	public ResponseEntity<SysMenu> updateMenu(@RequestBody SysMenu sysMenu){
 
 		//获取当前登录对象
@@ -106,7 +111,8 @@ public class SysMenuController {
 	 */
 	@SysLogs("删除菜单或者按钮或者目录")
 	@DeleteMapping("{id}")
-	public ResponseEntity<SysMenu> deleteMenu(@PathVariable("id") Long id){
+	@ApiOperation("通过id删除菜单")
+	public ResponseEntity<SysMenu> deleteMenu(@PathVariable("id") Integer id){
 		sysMenuService.removeById(id);
 		return ResponseEntity.ok().build();
 	}

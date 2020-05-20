@@ -9,6 +9,7 @@ import com.caidao.service.SysCarService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -27,11 +28,17 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, SysCar> impleme
     @Autowired
     private SysCarMapper sysCarMapper;
 
+    /**
+     * 获取车辆的当前页，页大小
+     * @param page
+     * @param sysCar
+     * @return
+     */
     @Override
     public IPage<SysCar> findSysCarPage(Page<SysCar> page, SysCar sysCar) {
-        IPage<SysCar> carIPage = sysCarMapper.selectPage(page, new LambdaQueryWrapper<SysCar>()
+        IPage<SysCar> carPage = sysCarMapper.selectPage(page, new LambdaQueryWrapper<SysCar>()
                 .eq(StringUtils.hasText(sysCar.getCarName()), SysCar::getCarName, sysCar.getCarName()));
-        return carIPage;
+        return carPage;
     }
 
     /**
@@ -40,6 +47,7 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, SysCar> impleme
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean save(SysCar sysCar) {
         sysCar.setCreateDate(LocalDateTime.now());
         sysCar.setState(1);

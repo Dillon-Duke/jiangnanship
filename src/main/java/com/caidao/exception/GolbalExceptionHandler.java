@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
+
 @ControllerAdvice
 public class GolbalExceptionHandler {
 

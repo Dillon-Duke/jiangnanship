@@ -8,8 +8,13 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
 
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
+
 @Configuration
-public class ActiitiConfig {
+public class ActivitiConfig {
 
     @Autowired
     private DataSource dataSource;

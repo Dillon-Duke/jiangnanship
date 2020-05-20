@@ -5,8 +5,10 @@ import java.util.List;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.caidao.anno.SysLogs;
 import com.caidao.entity.SysConfig;
 import com.caidao.service.SysConfigService;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,6 +43,7 @@ public class SysConfigController  {
 	 * @return
 	 */
 	@GetMapping("page")
+	@ApiOperation("获取当前页字典数据")
 	public ResponseEntity<IPage<SysConfig>> getSysConfigPage(Page<SysConfig> page, SysConfig sysConfig){
 		IPage<SysConfig> configPage = sysConfigService.findPage(page, sysConfig);
 		return ResponseEntity.ok(configPage);
@@ -52,6 +55,7 @@ public class SysConfigController  {
 	 * @return
 	 */
 	@PostMapping
+	@ApiOperation("新增字典数据")
 	public ResponseEntity<SysConfig> addSysConfig(@RequestBody SysConfig sysConfig){
 		sysConfigService.save(sysConfig);
 		return ResponseEntity.ok().build();
@@ -63,7 +67,8 @@ public class SysConfigController  {
 	 * @return
 	 */
 	@GetMapping("/info/{id}")
-	public ResponseEntity<SysConfig> beforeUpdate(@PathVariable("id") Long id){
+	@ApiOperation("通过ID查询字典数据")
+	public ResponseEntity<SysConfig> beforeUpdate(@PathVariable("id") Integer id){
 		SysConfig sysConfig = sysConfigService.getById(id);
 		return ResponseEntity.ok(sysConfig);
 	}
@@ -74,6 +79,7 @@ public class SysConfigController  {
 	 * @return
 	 */
 	@PutMapping
+	@ApiOperation("更新字典数据")
 	public ResponseEntity<SysConfig> updateSysConfig(@RequestBody SysConfig sysConfig){
 		sysConfigService.updateById(sysConfig);
 		return ResponseEntity.ok().build();
@@ -81,12 +87,14 @@ public class SysConfigController  {
 	
 	/**
 	 * 批量删除
-	 * @param ConfigId
+	 * @param configId
 	 * @return
 	 */
+	@SysLogs("批量删除字典数据")
 	@DeleteMapping
-	public ResponseEntity<List<Long>> deleteSysConfig(@RequestBody List<Long> ConfigId){
-		sysConfigService.removeByIds(ConfigId);
+	@ApiOperation("批量删除字典数据")
+	public ResponseEntity<Void> deleteSysConfig(@RequestBody List<Integer> configId){
+		sysConfigService.removeByIds(configId);
 		return ResponseEntity.ok().build();
 	}
 

@@ -8,9 +8,9 @@ import com.caidao.anno.SysLogs;
 import com.caidao.entity.SysCar;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysCarService;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +41,7 @@ public class SysCarController {
      * @return
      */
     @GetMapping("/page")
+    @ApiOperation("获取分页车辆信息")
     public ResponseEntity<IPage<SysCar>> getRoleList(Page<SysCar> page , SysCar sysCar){
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<SysCar> sysRoles = sysCarService.findSysCarPage(page,sysCar);
@@ -54,6 +55,7 @@ public class SysCarController {
     /** @RequiresPermissions("sys:car:save") */
     @SysLogs("新增车辆")
     @PostMapping
+    @ApiOperation("新增车辆信息")
     public ResponseEntity<String> addCar(@RequestBody SysCar sysCar){
         Assert.notNull(sysCar,"车辆信息不能为空");
         log.info("新增车牌号为{}的车辆",sysCar.getCarPlate());
@@ -73,6 +75,7 @@ public class SysCarController {
      * 修改前查询
      */
     @GetMapping("info/{id}")
+    @ApiOperation("通过id查询车辆信息")
     public ResponseEntity<SysCar> getCarInfoById(@PathVariable("id") Integer id){
         Assert.notNull(id,"id 不能为空");
         SysCar sysCar = sysCarService.getById(id);
@@ -84,7 +87,9 @@ public class SysCarController {
      * @param sysCar
      * @return
      */
+    @SysLogs("更新车辆信息")
     @PutMapping
+    @ApiOperation("更新车辆信息")
     public ResponseEntity<String> updateCar(@RequestBody SysCar sysCar){
         boolean updateCar = sysCarService.updateById(sysCar);
         if (updateCar){
@@ -98,7 +103,9 @@ public class SysCarController {
      * @param ids
      * @return
      */
+    @SysLogs("删除车辆信息")
     @DeleteMapping
+    @ApiOperation("删除车辆信息")
     public ResponseEntity<String> deleteByIds(@RequestBody List<Integer> ids){
         boolean removeByIds = sysCarService.removeByIds(ids);
         if (removeByIds){

@@ -7,6 +7,11 @@ import java.util.List;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+/**
+ * @author tom
+ * @since 2020-5-12
+ */
+
 @Data
 public class Menu implements Serializable {
 	

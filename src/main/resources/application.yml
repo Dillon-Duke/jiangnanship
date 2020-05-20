@@ -3,8 +3,17 @@ server:
 
 spring:
 
+  servlet:
+    multipart:
+      #设置单个文件的最大值
+      max-file-size: 50MB
+
+      #设置单次请求文件最大值
+      max-request-size: 50MB
+
   aop:
-    auto: true #开启切面编程
+    #开启切面编程
+    auto: true
 
   main:
     allow-bean-definition-overriding: true
