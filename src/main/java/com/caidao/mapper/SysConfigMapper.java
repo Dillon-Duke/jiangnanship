@@ -2,7 +2,7 @@ package com.caidao.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.entity.SysConfig;
+import com.caidao.entity.Config;
 
 /**
  * <p>
@@ -12,6 +12,6 @@ import com.caidao.entity.SysConfig;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface SysConfigMapper extends BaseMapper<SysConfig> {
+public interface SysConfigMapper extends BaseMapper<Config> {
 
 }

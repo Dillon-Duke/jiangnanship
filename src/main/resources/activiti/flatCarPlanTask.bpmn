@@ -12,7 +12,7 @@
              name=""
              targetNamespace="http://www.activiti.org/testm1589713629357"
              typeLanguage="http://www.w3.org/2001/XMLSchema">
-   <process xmlns="" id="flatCarPlanTask" isClosed="false" isExecutable="true"
+   <process id="flatCarPlanTask" isClosed="false" isExecutable="true"
             name="平板车计划流程申请"
             processType="None">
       <startEvent id="_2" name="startEvent"/>

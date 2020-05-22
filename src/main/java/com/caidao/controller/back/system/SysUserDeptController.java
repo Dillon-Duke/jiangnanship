@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2020-05-21
  */
 @RestController
-@RequestMapping("/sys-user-dept")
+@RequestMapping("/sys/dept")
 public class SysUserDeptController {
 
 }

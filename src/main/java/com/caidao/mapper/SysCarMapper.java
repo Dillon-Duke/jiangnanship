@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.SysCar;
+import com.caidao.entity.Car;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -11,6 +11,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @author Dillon
  * @since 2020-05-18
  */
-public interface SysCarMapper extends BaseMapper<SysCar> {
+public interface SysCarMapper extends BaseMapper<Car> {
 
 }

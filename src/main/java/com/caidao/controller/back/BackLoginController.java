@@ -7,15 +7,18 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
+import com.caidao.controller.back.system.SysUserController;
 import com.caidao.entity.SysUser;
 import com.caidao.param.Menu;
 import com.caidao.param.UserParam;
+import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
@@ -32,11 +35,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.EscapedErrors;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -112,8 +111,8 @@ public class BackLoginController {
 			subject.login(usernamePasswordToken);
 			token = subject.getSession().getId().toString();		
 			
-			//设置UUID
-			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token);
+			//设置UUID  默认存贮30分钟
+			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token, 30,TimeUnit.SECONDS);
 		} catch (CredentialsException e) {
 			return ResponseEntity.badRequest().body("密码错误");
 		}	catch (AccountException e) {
@@ -166,21 +165,24 @@ public class BackLoginController {
 	@PostMapping("/sys/logout")
 	@ApiOperation("退出账号")
 	public ResponseEntity<Void> logout(){
+
+		//删除用户在redis 里面的token
+		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
+		redis.delete(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
 		return ResponseEntity.ok().build();
 	}
 
 	/**
 	 * 更新自己的密码
-	 * @param password
-	 * @param newPassword
+	 * @param usernamePasswordParam
 	 * @return
 	 */
 	@PostMapping("/sys/user/password")
 	@ApiOperation("更新自己的密码")
-	public ResponseEntity<String> uptedaPass(String password, String newPassword){
+	public ResponseEntity<String> uptedaPass(@RequestBody UsernamePasswordParam usernamePasswordParam){
 		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
-		boolean updatePass = sysUserService.updatePass(sysUser, password, newPassword);
-		if (updatePass){
+		int updatePass = sysUserService.updatePass(sysUser, usernamePasswordParam);
+		if (updatePass == 1){
 			return ResponseEntity.ok("更新密码成功");
 		}
 		return ResponseEntity.ok("更新密码失败");

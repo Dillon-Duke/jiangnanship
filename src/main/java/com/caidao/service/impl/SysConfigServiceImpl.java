@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.entity.SysConfig;
+import com.caidao.entity.Config;
 import com.caidao.mapper.SysConfigMapper;
 import com.caidao.service.SysConfigService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import org.springframework.util.StringUtils;
  */
 @Service
 @Slf4j
-public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig> implements SysConfigService {
+public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, Config> implements SysConfigService {
 
 	@Autowired
 	private SysConfigMapper sysConfigMapper;
@@ -35,11 +35,11 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 	 * 获取配置字典类的分页数据
 	 */
 	@Override
-	public IPage<SysConfig> findPage(Page<SysConfig> page, SysConfig sysConfig) {
-		Assert.notNull(sysConfig, "sysConfig must not be null");
+	public IPage<Config> findPage(Page<Config> page, Config config) {
+		Assert.notNull(config, "sysConfig must not be null");
 		log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
-		IPage<SysConfig> selectPage = sysConfigMapper.selectPage(page, new LambdaQueryWrapper<SysConfig>()
-				.like(StringUtils.hasText(sysConfig.getParamKey()),SysConfig::getParamKey, sysConfig.getParamKey()));
+		IPage<Config> selectPage = sysConfigMapper.selectPage(page, new LambdaQueryWrapper<Config>()
+				.like(StringUtils.hasText(config.getParamKey()), Config::getParamKey, config.getParamKey()));
 		return selectPage;
 	}
 	
@@ -48,18 +48,18 @@ public class SysConfigServiceImpl extends ServiceImpl<SysConfigMapper, SysConfig
 	 */	
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public boolean save(SysConfig sysConfig) {
-		Assert.state(sysConfig.getParamKey() !=null
-				&& sysConfig.getParamValue() !=null
-				&& sysConfig.getRemark() !=null ,"新增参数丢失，请查询");
-		return super.save(sysConfig);
+	public boolean save(Config config) {
+		Assert.state(config.getParamKey() !=null
+				&& config.getParamValue() !=null
+				&& config.getRemark() !=null ,"新增参数丢失，请查询");
+		return super.save(config);
 	}
 
 	/**
 	 * 校验Id不能为空
 	 */
 	@Override
-	public SysConfig getById(Serializable id) {
+	public Config getById(Serializable id) {
 		Assert.state(id !=null, "Id不能为空");
 		return super.getById(id);
 	}

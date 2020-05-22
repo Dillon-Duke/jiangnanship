@@ -3,7 +3,7 @@ package com.caidao.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.SysCar;
+import com.caidao.entity.Car;
 import com.caidao.mapper.SysCarMapper;
 import com.caidao.service.SysCarService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
  * @since 2020-05-18
  */
 @Service
-public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, SysCar> implements SysCarService {
+public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements SysCarService {
 
     @Autowired
     private SysCarMapper sysCarMapper;
@@ -31,26 +31,26 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, SysCar> impleme
     /**
      * 获取车辆的当前页，页大小
      * @param page
-     * @param sysCar
+     * @param car
      * @return
      */
     @Override
-    public IPage<SysCar> findSysCarPage(Page<SysCar> page, SysCar sysCar) {
-        IPage<SysCar> carPage = sysCarMapper.selectPage(page, new LambdaQueryWrapper<SysCar>()
-                .eq(StringUtils.hasText(sysCar.getCarName()), SysCar::getCarName, sysCar.getCarName()));
+    public IPage<Car> findSysCarPage(Page<Car> page, Car car) {
+        IPage<Car> carPage = sysCarMapper.selectPage(page, new LambdaQueryWrapper<Car>()
+                .eq(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName()));
         return carPage;
     }
 
     /**
      * 复写新增车辆，增加创建日期 ，状态
-     * @param sysCar
+     * @param car
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public boolean save(SysCar sysCar) {
-        sysCar.setCreateDate(LocalDateTime.now());
-        sysCar.setState(1);
-        return super.save(sysCar);
+    public boolean save(Car car) {
+        car.setCreateDate(LocalDateTime.now());
+        car.setState(1);
+        return super.save(car);
     }
 }

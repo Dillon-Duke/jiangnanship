@@ -2,9 +2,8 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.SysCar;
+import com.caidao.entity.Car;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.SysRole;
 
 /**
  * <p>
@@ -14,13 +13,13 @@ import com.caidao.entity.SysRole;
  * @author Dillon
  * @since 2020-05-18
  */
-public interface SysCarService extends IService<SysCar> {
+public interface SysCarService extends IService<Car> {
 
     /**
      * 查询车辆分页数据
      * @param page
-     * @param sysCar
+     * @param car
      * @return
      */
-    IPage<SysCar> findSysCarPage(Page<SysCar> page, SysCar sysCar);
+    IPage<Car> findSysCarPage(Page<Car> page, Car car);
 }

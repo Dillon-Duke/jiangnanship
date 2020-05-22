@@ -1,7 +1,7 @@
 package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.entity.SysLog;
+import com.caidao.entity.Log;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.caidao.entity.SysLog;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface SysLogMapper extends BaseMapper<SysLog> {
+public interface SysLogMapper extends BaseMapper<Log> {
 
 }

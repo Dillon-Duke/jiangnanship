@@ -9,6 +9,7 @@ import com.caidao.entity.SysUser;
 import com.caidao.entity.SysUserRole;
 import com.caidao.mapper.SysUserMapper;
 import com.caidao.mapper.SysUserRoleMapper;
+import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysUserService;
 import com.caidao.util.Md5Utils;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import javax.lang.model.type.IntersectionType;
 
 /**
  * <p>
@@ -85,12 +84,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		//自定义工号
 		SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
 		sysUser.setJobNum(Integer.valueOf(format.format(new Date())+(int)(Math.random()*9000+1000)));
-		
-		//盐值更新
-		String password = sysUser.getPassword();
-		ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
-		String shiroPasswd = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
-		sysUser.setPassword(shiroPasswd);
+
+		//将密码设置为盐值密码
+		setSaltPass(sysUser, salt);
 
 		boolean save = super.save(sysUser);
 	
@@ -112,7 +108,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		}
 		return save;
 	}
-	
+
+
+
 	/**
 	 * 批量移除用户
 	 * 真删除
@@ -121,7 +119,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Transactional(rollbackFor = Exception.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 		log.info("批量移除id为{}的用户",idList);
-
 		boolean removeByIds = super.removeByIds(idList);
 		if (idList==null || idList.isEmpty()) {
 			throw new NullPointerException("批量删除用户不能为空");
@@ -151,7 +148,63 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 		sysUserMapper.batchDelete(ids);
 	}
-	
+
+	/**
+	 * 通过用户名和手机号判断用户是否存在
+	 * @param username
+	 * @param phone
+	 * @return
+	 */
+	@Override
+	public SysUser findUserByUsernameAndPhone(String username, String phone) {
+		SysUser sysUser = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+				.eq(SysUser::getUsername, username)
+				.or(false)
+				.eq(SysUser::getPhone, phone));
+		return sysUser;
+	}
+
+	/**
+	 * 忘记密码，更新用户的密码
+	 * @param sysUser
+	 * @return
+	 */
+	@Override
+	public boolean updatePassById(SysUser sysUser) {
+
+		//设置更新盐值
+		setSaltPass(sysUser,sysUser.getUserSalt());
+
+		//更新用户密码
+		sysUserMapper.updatePassById(sysUser);
+		return false;
+	}
+
+	/**
+	 * 更新自己的密码
+	 * @param sysUser
+	 * @param usernamePasswordParam
+	 * @return
+	 */
+	@Override
+	public int updatePass(SysUser sysUser, UsernamePasswordParam usernamePasswordParam) {
+
+		//获得加盐密码
+		String saltPass = getSaltPass(sysUser.getUserSalt(), usernamePasswordParam.getPassword());
+		String oldPassword = sysUser.getPassword();
+		//判断老密码是否正确
+		Assert.isTrue(oldPassword.equals(saltPass),"原密码不正确");
+
+		//设置新密码
+		sysUser.setPassword(usernamePasswordParam.getNewPassword());
+		setSaltPass(sysUser,sysUser.getUserSalt());
+		sysUser.setUpdateDate(LocalDateTime.now());
+		sysUser.setUpdateId(sysUser.getUserId());
+		int updateById = sysUserMapper.updateById(sysUser);
+		return updateById;
+
+	}
+
 	/**
 	 * 编辑之前查询用户对应的角色
 	 */
@@ -185,12 +238,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysUser sysUser) {
 		log.info("更新用户为{}的用户",sysUser.getUsername());
-		
+
 		//设置更新盐值
-		String password = sysUser.getPassword();
-		ByteSource bytes = ByteSource.Util.bytes(sysUser.getUserSalt());
-		String shiroPasswd = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
-		sysUser.setPassword(shiroPasswd);
+		setSaltPass(sysUser,sysUser.getUserSalt());
 
 		//设置更新时间
 		sysUser.setUpdateDate(LocalDateTime.now());
@@ -217,5 +267,30 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		
 		return updateById ;
 	}
-	
+
+	/**
+	 * 将密码设置为盐值密码
+	 * @param sysUser
+	 * @param salt
+	 */
+	private void setSaltPass(SysUser sysUser, String salt) {
+		//盐值更新
+		String password = sysUser.getPassword();
+		String saltPass = getSaltPass(salt, password);
+		sysUser.setPassword(saltPass);
+	}
+
+
+	/**
+	 * 获得加盐密码
+	 * @param password
+	 * @param salt
+	 * @return
+	 */
+	private String getSaltPass(String salt, String password) {
+		ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
+		return Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+	}
+
+
 }

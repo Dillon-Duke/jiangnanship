@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.time.LocalDateTime;
 import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -39,8 +41,8 @@ public class SysDept implements Serializable {
     @ApiModelProperty(value = "父级部门ID，最高级部门ID为0")
     private Integer parentId;
 
-    @ApiModelProperty(value = "预留1")
-    private String reserve1;
+    @ApiModelProperty(value = "备注")
+    private String remark;
 
     @ApiModelProperty(value = "预留2")
     private String reserve2;
@@ -54,6 +56,7 @@ public class SysDept implements Serializable {
     @ApiModelProperty(value = "预留5")
     private String reserve5;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
     private LocalDateTime createDate;
 

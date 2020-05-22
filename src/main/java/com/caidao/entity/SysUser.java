@@ -17,9 +17,6 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 /**
- * <p>
- *
- * </p>
  *
  * @author Dillon
  * @since 2020-05-15
@@ -53,7 +50,7 @@ public class SysUser implements Serializable {
     private Integer age;
 
     @ApiModelProperty(value = "电话")
-    private Long phone;
+    private String phone;
 
     @ApiModelProperty(value = "讨论工号长度、生成规则")
     private Integer jobNum;

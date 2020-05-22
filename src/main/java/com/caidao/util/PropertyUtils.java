@@ -37,4 +37,9 @@ public class PropertyUtils {
 	 */
 	public static final String X_REAL_IP = "X-real-ip";
 
+	/**
+	 * 用户修改密码短信验证的6位验证码
+	 */
+	public static final String MASSAGE_CODE = "massage_code";
+
 }

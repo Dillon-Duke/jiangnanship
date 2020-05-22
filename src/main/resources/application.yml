@@ -64,4 +64,6 @@ fdfs:
   tracker-list: #踪迹服务器tracker地址
     - 129.204.74.133:22122
 
-
+name: 平板车计划任务流程
+bpmnPublish: activiti/flatCarPlanTask.bpmn
+pngPublish: activiti/flatCarPlanTask.png

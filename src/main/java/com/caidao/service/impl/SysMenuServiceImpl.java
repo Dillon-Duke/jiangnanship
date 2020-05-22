@@ -97,6 +97,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	public List<String> getAuth2ByUslerId(Integer userId) {
 		//获取登录用户的菜单id
 		List<Object> menuIds = getMenuIds(userId);
+
+		//判断角色是否为空
+		if (menuIds == null){
+			return null;
+		}
+
 		List<Object> selectObjs = sysMenuMapper.selectObjs(new LambdaQueryWrapper<SysMenu>()
 														.select(SysMenu::getPerms)
 														.in(SysMenu::getMenuId, menuIds)
@@ -154,6 +160,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		List<Object> roleIds = sysUserRoleMapper.selectObjs(new LambdaQueryWrapper<SysUserRole>()
 				.select(SysUserRole::getRoleId).eq(SysUserRole::getUserId, userId)
 				);
+
 		//目录为空
 		if (roleIds == null ||roleIds.isEmpty()) {
 			return null;
@@ -276,10 +283,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 
 		//按钮条件过滤
 		case 2:
-			Assert.state(sysMenu.getName()!=null
-								&& sysMenu.getUrl()==null
-								&& sysMenu.getParentId()!=0
-								&& sysMenu.getPerms()!=null,
+			Assert.state(sysMenu.getName() != null
+								&& sysMenu.getPerms() != null
+								&& sysMenu.getParentId() != 0,
 								"按钮新增信息有误");
 			sysMenu.setUrl(null);
 			sysMenu.setIcon(null);

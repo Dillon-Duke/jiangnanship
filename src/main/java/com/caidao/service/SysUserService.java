@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.entity.SysUser;
+import com.caidao.param.UsernamePasswordParam;
 
 import java.util.List;
 
@@ -37,4 +38,27 @@ public interface SysUserService extends IService<SysUser> {
 	 * @param ids
 	 */
     void deleteByIds(List<Integer> ids);
+
+	/**
+	 * 通过用户名和手机号判断用户是否存在
+	 * @param username
+	 * @param phone
+	 * @return
+	 */
+    SysUser findUserByUsernameAndPhone(String username, String phone);
+
+	/**
+	 * 忘记密码，更新用户的密码
+	 * @param sysUser
+	 * @return
+	 */
+	boolean updatePassById(SysUser sysUser);
+
+	/**
+	 * 更新自己的密码
+	 * @param sysUser
+	 * @param usernamePasswordParam
+	 * @return
+	 */
+    int updatePass(SysUser sysUser, UsernamePasswordParam usernamePasswordParam);
 }

@@ -21,7 +21,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="SysConfig对象", description="")
-public class OtherConfig implements Serializable {
+public class Config implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
