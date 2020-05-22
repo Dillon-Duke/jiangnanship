@@ -1,4 +1,4 @@
-package com.caidao.controller.system;
+package com.caidao.controller.back.system;
 
 import java.io.IOException;
 import java.util.List;
@@ -56,6 +56,7 @@ public class SysUserController {
 	 */
 	@GetMapping("/page")
 	@ApiOperation("获取分页的用户数据")
+	@RequiresPermissions("sys:user:page")
 	public ResponseEntity<IPage<SysUser>> userPage(Page<SysUser> page, SysUser sysUser){
 		IPage<SysUser> usersPage = sysUserService.getUserPage(page,sysUser);
 		return ResponseEntity.ok(usersPage);
@@ -143,7 +144,6 @@ public class SysUserController {
 			redisTemplate.delete(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
 			resource.sendError(401);
 		}
-			
 		return ResponseEntity.ok().build();
 	}	
 

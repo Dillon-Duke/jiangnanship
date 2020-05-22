@@ -24,7 +24,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="SysLog对象", description="")
-public class SysLog implements Serializable {
+public class OtherLog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
