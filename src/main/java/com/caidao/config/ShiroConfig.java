@@ -16,6 +16,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author tom
  * @since 2020-5-12
@@ -66,10 +69,22 @@ public class ShiroConfig {
 	@Bean
 	public DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition() {
 		DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition = new DefaultShiroFilterChainDefinition();
-		defaultShiroFilterChainDefinition.addPathDefinition("/captcha.jpg", "anon");
-		defaultShiroFilterChainDefinition.addPathDefinition("/login", "anon");
-		defaultShiroFilterChainDefinition.addPathDefinition("/logout", "logout");
-		defaultShiroFilterChainDefinition.addPathDefinition("/sys/menu/nav", "anon");
+
+		Map<String, String> HashMap = new HashMap<>(8);
+
+		//配置对swigger权限放开
+		HashMap.put("/doc.html", "anon");
+		HashMap.put("/webjars/**", "anon");
+		HashMap.put("/v2/**", "anon");
+		HashMap.put("/swagger-resources/**", "anon");
+
+		//系统自己需要放开的页面路径
+		HashMap.put("/captcha.jpg", "anon");
+		HashMap.put("/login", "anon");
+		HashMap.put("/logout", "logout");
+		HashMap.put("/sys/menu/nav", "anon");
+
+		defaultShiroFilterChainDefinition.addPathDefinitions(HashMap);
 
 		//表示所有的路径不拦截 调试使用
 		defaultShiroFilterChainDefinition.addPathDefinition("/**", "anon");

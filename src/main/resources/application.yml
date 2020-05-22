@@ -43,16 +43,6 @@ mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-#swagger2 配置
-swagger2:
-  base-package: com.caidao.controller
-  name: jinpeng
-  url: https://www.baidu.com
-  email: 245311344@qq.com
-  title: mail-shop的数据接口
-  destription: 数据认证
-  term-of-service-url: www.yanli.ltd
-  license: Apache 2.0
 
 #fastdfs 配置类
 fdfs:

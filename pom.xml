@@ -85,6 +85,18 @@
         <!-- shiro-redis End -->
 
         <!-- Swagger Begin -->
+        <!-- 前面两个maven是为了解决swagger里面@ApiModelProperty 中example 找不到值报错添加的，进行谁优先加载使用谁里面方法的办法解决这个问题 -->
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>1.5.21</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-models</artifactId>
+            <version>1.5.21</version>
+        </dependency>
+
         <!--swagger2 -->
         <dependency>
             <groupId>io.springfox</groupId>
@@ -97,6 +109,7 @@
             <artifactId>swagger-bootstrap-ui</artifactId>
             <version>${swagger.bootstrap.ui}</version>
         </dependency>
+
         <!-- Swagger End -->
 
         <!-- lombok -->
@@ -190,6 +203,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- maven install jdk版本保持在1.8 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
