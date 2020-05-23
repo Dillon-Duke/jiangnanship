@@ -1,15 +1,10 @@
 package com.caidao.controller.front;
 
-import cn.hutool.captcha.CaptchaUtil;
-import cn.hutool.captcha.CircleCaptcha;
+import com.caidao.controller.front.flatcar.FlatcarPlanController;
 import com.caidao.entity.SysUser;
-import com.caidao.param.Menu;
 import com.caidao.param.UserParam;
-import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -19,19 +14,16 @@ import org.apache.shiro.authc.CredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author tom
@@ -39,7 +31,9 @@ import java.util.Map;
 
 @RestController
 @Slf4j
-public class LoginController {
+public class AppLoginController {
+
+	public Logger logger =  LoggerFactory.getLogger(AppLoginController.class);
 	
 	@Autowired
 	private StringRedisTemplate redis;
@@ -48,12 +42,46 @@ public class LoginController {
 	private SysUserService sysUserService;
 
 	/**
+	 * app用户登录
+	 * @param userParam
+	 * @return
+	 */
+	@ApiOperation("前台登录接口")
+	@PostMapping("/appLogin")
+	public ResponseEntity<String> login(@RequestBody UserParam userParam) {
+
+		Assert.notNull(userParam,"用户参数不能为空");
+		log.info("用户{}登录了",userParam.getPrincipal());
+
+		Subject subject = SecurityUtils.getSubject();
+
+		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(userParam.getPrincipal(), userParam.getCredentials());
+		String token = null;
+		try {
+
+			//校验登录信息
+			subject.login(usernamePasswordToken);
+			token = subject.getSession().getId().toString();
+
+			//设置UUID  默认存贮30分钟
+			redis.opsForValue().set(PropertyUtils.APP_USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token, 30, TimeUnit.SECONDS);
+		} catch (CredentialsException e) {
+			return ResponseEntity.badRequest().body("密码错误");
+		}	catch (AccountException e) {
+			return ResponseEntity.badRequest().body("账户异常");
+		}catch (AuthenticationException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+		return ResponseEntity.ok(token);
+	}
+
+	/**
 	 * 根据用户名和手机判断是否有这个人
 	 * @param username
 	 * @param phone
 	 * @return
 	 */
-	@GetMapping("/sys/user/checkNameAndPhone")
+	@GetMapping("/app/user/checkNameAndPhone")
 	@ApiOperation("检查用户名和手机是否正确")
 	public ResponseEntity<SysUser> beforeForgetPass(String username,String phone)  {
 		if (username == null || phone == null){
@@ -73,7 +101,7 @@ public class LoginController {
 	 * @param phone
 	 * @return
 	 */
-	@GetMapping("sys/user/message")
+	@GetMapping("/app/user/message")
 	@ApiOperation("调用三方接口想用户发送验证码")
 	public ResponseEntity<Void> getMessage(String phone){
 
@@ -95,7 +123,7 @@ public class LoginController {
 	 * @return
 	 */
 	@ApiOperation("忘记密码，更新用户的密码")
-	@PostMapping("/sys/user/updatePass")
+	@PostMapping("/app/user/updatePass")
 	public ResponseEntity updateUserPassword(@RequestBody SysUser sysUser , String code){
 		Assert.notNull(sysUser,"更新参数不能为空");
 		log.info("用户{}更新了密码",sysUser.getUsername());
@@ -109,6 +137,20 @@ public class LoginController {
 			return ResponseEntity.ok("用户密码更新成功");
 		}
 		return ResponseEntity.ok("用户密码更新失败");
+	}
+
+	/**
+	 * app用户退出登录
+	 * @return
+	 */
+	@PostMapping("/sys/AppLogout")
+	@ApiOperation("app退出账号")
+	public ResponseEntity<Void> logout(){
+
+		//删除用户在redis 里面的token
+		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
+		redis.delete(PropertyUtils.APP_USER_LOGIN_SESSION_ID+sysUser.getUsername());
+		return ResponseEntity.ok().build();
 	}
 
 	/**

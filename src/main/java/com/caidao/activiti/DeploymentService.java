@@ -14,10 +14,10 @@ import org.springframework.stereotype.Component;
 public class DeploymentService {
 
     @Value("${bpmnPublish}")
-    private String flatCarPLanTaskBpmn;
+    private String flatCarPlanTaskBpmn;
 
     @Value("${pngPublish}")
-    private String flatCarPLanTaskPng;
+    private String flatCarPlanTaskPng;
 
     @Value("${name}")
     private String name;
@@ -30,8 +30,8 @@ public class DeploymentService {
         DeploymentBuilder deployment = repositoryService.createDeployment();
         Deployment deploy = deployment
                 .name(name)
-                .addClasspathResource(flatCarPLanTaskBpmn)
-                .addClasspathResource(flatCarPLanTaskPng).deploy();
+                .addClasspathResource(flatCarPlanTaskBpmn)
+                .addClasspathResource(flatCarPlanTaskPng).deploy();
 
         System.out.println(deploy);
     }

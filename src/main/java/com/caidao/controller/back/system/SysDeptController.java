@@ -1,7 +1,5 @@
 package com.caidao.controller.back.system;
 
-
-import cn.hutool.core.lang.Assert;
 import com.caidao.entity.SysDept;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysDeptService;
@@ -9,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +35,7 @@ public class SysDeptController {
      * @return
      */
     @GetMapping("/page")
-    @ApiOperation("查询所有的菜单信息")
+    @ApiOperation("查询所有的部门信息")
     @RequiresPermissions("sys:dept:page")
     public ResponseEntity<List<SysDept>> getTable(){
         log.info("查询所有部门信息");
@@ -55,7 +54,7 @@ public class SysDeptController {
 
         SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
         //如果部门为空，则抛异常
-        Assert.notNull(sysDept);
+        Assert.notNull(sysDept,"新增部门信息为空");
         log.info("新增名为{}的部门",sysDept.getDeptName());
 
         sysDept.setCreateId(sysDept.getDeptId());
@@ -90,7 +89,7 @@ public class SysDeptController {
      * @return
      */
     @ApiOperation("更新部门信息")
-    @PutMapping("update")
+    @PutMapping("/update")
     @RequiresPermissions("sys:dept:update")
     public ResponseEntity<String> updateDept(@RequestBody SysDept sysDept){
 
@@ -105,6 +104,27 @@ public class SysDeptController {
             return ResponseEntity.ok("部门更新成功");
         }
         return ResponseEntity.ok("部门更新失败");
+    }
+
+    /**
+     * 删除部门信息
+     * @param id
+     * @return
+     */
+    @ApiOperation("删除系统部门")
+    @DeleteMapping("{id}")
+    @RequiresPermissions("sys:dept:delete")
+    public ResponseEntity<String> deleteDept(@PathVariable("id") Integer id){
+
+        Assert.notNull(id,"删除部门id为空");
+        log.info("删除id为{}的部门",id);
+
+        boolean remove = sysDeptService.removeById(id);
+        if (remove){
+            return ResponseEntity.ok("部门删除成功");
+        }
+        return ResponseEntity.ok("部门删除失败");
+
     }
 
 }

@@ -68,31 +68,30 @@ public class ShiroConfig {
 	 */
 	@Bean
 	public DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition() {
-		DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition = new DefaultShiroFilterChainDefinition();
+		DefaultShiroFilterChainDefinition defaultShiroFilter = new DefaultShiroFilterChainDefinition();
 
-		Map<String, String> HashMap = new HashMap<>(8);
+		Map<String, String> hashMap = new HashMap<>(8);
 
 		//配置对swigger权限放开
-		HashMap.put("/doc.html", "anon");
-		HashMap.put("/webjars/**", "anon");
-		HashMap.put("/v2/**", "anon");
-		HashMap.put("/swagger-resources/**", "anon");
+		hashMap.put("/doc.html", "anon");
+		hashMap.put("/webjars/**", "anon");
+		hashMap.put("/v2/**", "anon");
+		hashMap.put("/swagger-resources/**", "anon");
 
 		//系统自己需要放开的页面路径
-		HashMap.put("/captcha.jpg", "anon");
-		HashMap.put("/login", "anon");
-		HashMap.put("/logout", "logout");
-		HashMap.put("/sys/menu/nav", "anon");
-
-		defaultShiroFilterChainDefinition.addPathDefinitions(HashMap);
+		hashMap.put("/captcha.jpg", "anon");
+		hashMap.put("/login", "anon");
+		hashMap.put("/logout", "logout");
+		hashMap.put("/sys/menu/nav", "anon");
 
 		//表示所有的路径不拦截 调试使用
-		defaultShiroFilterChainDefinition.addPathDefinition("/**", "anon");
+		hashMap.put("/**", "anon");
 
 		//表示需要认证才可以访问
-//		defaultShiroFilterChainDefinition.addPathDefinition("/**", "authc");
+//		hashMap.put("/**", "anon");
+		defaultShiroFilter.addPathDefinitions(hashMap);
 
-		return defaultShiroFilterChainDefinition;
+		return defaultShiroFilter;
 	}
 	
 	/**

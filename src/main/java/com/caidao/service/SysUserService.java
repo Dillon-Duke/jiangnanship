@@ -23,7 +23,7 @@ public interface SysUserService extends IService<SysUser> {
 	 * @param username
 	 * @return
 	 */
-	com.caidao.entity.SysUser getUserByUsername(String username);
+	SysUser getUserByUsername(String username);
 
 	/**
 	 * 获取用户分页数据

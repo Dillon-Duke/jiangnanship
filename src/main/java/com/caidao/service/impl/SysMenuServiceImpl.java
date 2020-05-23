@@ -243,19 +243,19 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 
 
 	/**
-	 * 复写判断 如果父目录还有东西 ，则抛异常 无法删除
+	 * 复写判断 如果子目录还有东西 ，则抛异常 无法删除
 	 */
 	@Override
 	public boolean removeById(Serializable id) {
 		
-		//获取当前用户
-		SysMenu sysMenu = sysMenuMapper.selectOne(new LambdaQueryWrapper<SysMenu>()
-														.eq(SysMenu::getParentId, id));
-		if (sysMenu == null ) {
+		//获取当前用户的子用户列表
+		List<SysMenu> sysMenus = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+				.eq(SysMenu::getParentId, id));
+		if (sysMenus.size() == 0 ) {
 			return super.removeById(id);
 		}
 		//如果有父类，则抛出异常，删除失败
-		throw new RuntimeException("父类还存在，无法删除");
+		throw new RuntimeException("目录下载存在子目录，无法删除");
 	}
 
 	/**

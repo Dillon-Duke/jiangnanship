@@ -1,47 +1,41 @@
 package com.caidao.controller.back;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
-import com.caidao.controller.back.system.SysUserController;
 import com.caidao.entity.SysUser;
-import com.caidao.param.Menu;
 import com.caidao.param.UserParam;
 import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
-import com.caidao.util.RestTemplateUtils;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AccountException;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.CredentialsException;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.Assert;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.EscapedErrors;
-import org.springframework.web.bind.annotation.*;
-
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestTemplate;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.CredentialsException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.caidao.param.Menu;
+import org.apache.shiro.authc.AccountException;
+import org.apache.shiro.authc.AuthenticationException;
+import org.springframework.util.StringUtils;
 
 /**
  * @author tom
@@ -49,7 +43,9 @@ import org.springframework.web.client.RestTemplate;
 
 @RestController
 @Slf4j
-public class BackLoginController {
+public class LoginController {
+
+	public Logger logger = LoggerFactory.getLogger(LoginController.class);
 	
 	@Autowired
 	private StringRedisTemplate redis;
@@ -68,7 +64,7 @@ public class BackLoginController {
 	@ApiOperation("获取验证码")
 	@ApiImplicitParams(@ApiImplicitParam(name="uuid",value="前端传来的uuid"))
 	@GetMapping("/captcha.jpg")
-	public void validataCode(@RequestParam(required = true)String uuid,HttpServletResponse response) {
+	public void validataCode(@RequestParam(required = true)String uuid, HttpServletResponse response) {
 		//生成验证码
 		 CircleCaptcha createCircleCaptcha = CaptchaUtil.createCircleCaptcha(200, 50, 1, 2);
 		ServletOutputStream outputStream = null;
@@ -97,9 +93,9 @@ public class BackLoginController {
 	 * @param userParam
 	 * @return
 	 */
-	@ApiOperation("login接口")
+	@ApiOperation("后台登录接口")
 	@PostMapping("/login")
-	public ResponseEntity<String> login(@RequestBody UserParam userParam) {
+	public ResponseEntity<String> backlogin(@RequestBody UserParam userParam) {
 		
 		Subject subject = SecurityUtils.getSubject();
 		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(userParam.getPrincipal(), userParam.getCredentials());
@@ -112,7 +108,7 @@ public class BackLoginController {
 			token = subject.getSession().getId().toString();		
 			
 			//设置UUID  默认存贮30分钟
-			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token, 30,TimeUnit.SECONDS);
+			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token);
 		} catch (CredentialsException e) {
 			return ResponseEntity.badRequest().body("密码错误");
 		}	catch (AccountException e) {
@@ -167,8 +163,12 @@ public class BackLoginController {
 	public ResponseEntity<Void> logout(){
 
 		//删除用户在redis 里面的token
-		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
-		redis.delete(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
+		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+
+		//获取对应的登录用户session
+		String sessionKey = redis.opsForValue().get(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
+		redis.delete(PropertyUtils.USER_SESSION + sessionKey);
+		redis.delete(PropertyUtils.USER_LOGIN_SESSION_ID + sysUser.getUsername());
 		return ResponseEntity.ok().build();
 	}
 

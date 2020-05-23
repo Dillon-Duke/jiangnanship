@@ -1,5 +1,6 @@
 package com.caidao.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.caidao.entity.SysDept;
 import com.caidao.mapper.SysDeptMapper;
 import com.caidao.service.SysDeptService;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,5 +60,22 @@ public class SysDeptServiceImpl extends ServiceImpl<SysDeptMapper, SysDept> impl
     public boolean updateById(SysDept sysDept) {
         sysDept.setUpdateDate(LocalDateTime.now());
         return super.updateById(sysDept);
+    }
+
+    /**
+     * 判断部门是否有子部门，如果有，则删除失败
+     * @param id
+     * @return
+     */
+    @Override
+    public boolean removeById(Serializable id) {
+
+        //判断是否还有子部门，如果有 抛异常处理
+        List<SysDept> sysDepts = sysDeptMapper.selectList(new LambdaQueryWrapper<SysDept>()
+                                                            .eq(SysDept::getParentId, id));
+        if (sysDepts.size() != 0){
+            throw new RuntimeException("部门还有子部门，不能删除");
+        }
+        return super.removeById(id);
     }
 }

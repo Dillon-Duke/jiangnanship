@@ -13,9 +13,14 @@ public class PropertyUtils {
 	public static final String VALCODE_PRIFAX = "prifaxuuid:";
 	
 	/**
-	 * 用户登录的sessionUUID
+	 * 后台用户登录的sessionUUID
 	 */
 	public static final String USER_LOGIN_SESSION_ID = "loginSession";
+
+	/**
+	 * 前台用户登录的sessionUUID
+	 */
+	public static final String APP_USER_LOGIN_SESSION_ID = "appUserLoginSession";
 
 	/**
 	 * 用户登录后的session凭证

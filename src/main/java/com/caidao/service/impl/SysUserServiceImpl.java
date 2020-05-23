@@ -292,5 +292,4 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		return Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
 	}
 
-
 }

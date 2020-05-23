@@ -29,7 +29,7 @@ public class WebErrorLog {
 	public ResponseEntity<String> runtimeException(RuntimeException e){
 		log.error("系统内部错误",e );
 
-		return ResponseEntity.badRequest().body("系统内部错误");
+		return ResponseEntity.badRequest().body(e.getMessage());
 	}
 
 	/**
