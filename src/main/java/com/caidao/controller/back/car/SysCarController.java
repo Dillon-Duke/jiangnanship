@@ -81,6 +81,7 @@ public class SysCarController {
     @RequiresPermissions("car:car:info")
     public ResponseEntity<Car> getCarInfoById(@PathVariable("id") Integer id){
         Assert.notNull(id,"id 不能为空");
+        log.info("查询车辆id为{}的车辆信息",id);
         Car car = sysCarService.getById(id);
         return ResponseEntity.ok(car);
     }
@@ -94,6 +95,13 @@ public class SysCarController {
     @ApiOperation("更新车辆信息")
     @RequiresPermissions("car:car:update")
     public ResponseEntity<String> updateCar(@RequestBody Car car){
+
+        Assert.notNull(car,"更新车辆信息 不能为空");
+        log.info("更新车辆id为{}的车辆信息",car.getCarId());
+
+        SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
+        car.setUpdateId(principal.getUserId());
+
         boolean updateCar = sysCarService.updateById(car);
         if (updateCar){
             return ResponseEntity.ok().build();

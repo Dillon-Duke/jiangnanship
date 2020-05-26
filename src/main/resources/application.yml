@@ -40,9 +40,9 @@ mybatis-plus:
   mapper-locations:
     - classpath:/mapper/*.xml
   type-aliases-package: com.caidao.entity
+  # 是否将sql打印到控制面板(该配置会将sql语句和查询的结果都打印到控制台)
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
 
 #fastdfs 配置类
 fdfs:
@@ -54,6 +54,5 @@ fdfs:
   tracker-list: #踪迹服务器tracker地址
     - 129.204.74.133:22122
 
-name: 平板车计划任务流程
-bpmnPublish: activiti/flatCarPlanTask.bpmn
-pngPublish: activiti/flatCarPlanTask.png
+#自定义图片显示前缀路径
+fdfs-imgUpload-prifax: http://129.204.74.133:8888/

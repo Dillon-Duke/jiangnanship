@@ -1,6 +1,4 @@
-	package com.caidao.controller.back.system;
-
-import java.util.List;
+package com.caidao.controller.back.system;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,19 +7,15 @@ import com.caidao.entity.SysRole;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysRoleService;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 /**
  *
@@ -30,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/sys/role")
+@Slf4j
 public class SysRoleController {
 	
 	@Autowired
@@ -90,7 +85,7 @@ public class SysRoleController {
 	 }
 	
 	/**
-	 * 修改用户
+	 * 修改角色
 	 * @param sysRole
 	 * @return
 	 */
@@ -105,7 +100,7 @@ public class SysRoleController {
 	}
 	
 	/**
-	 * 删除用户
+	 * 删除角色
 	 * @param ids
 	 * @return
 	 */
@@ -114,6 +109,8 @@ public class SysRoleController {
 	@ApiOperation("删除角色信息")
 	@RequiresPermissions("sys:role:delete")
 	public ResponseEntity<Void> deleteSysRole(@RequestBody List<Long> ids){
+		Assert.notNull(ids,"删除角色的ids不能为空 ");
+		log.info("删除角色id为{}的角色",ids);
 		sysRoleService.removeByIds(ids);
 		return ResponseEntity.ok().build();
 	}

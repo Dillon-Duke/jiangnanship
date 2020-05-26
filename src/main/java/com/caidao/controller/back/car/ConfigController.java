@@ -1,26 +1,19 @@
-package com.caidao.controller.back.ohter;
+package com.caidao.controller.back.car;
 
-
-import java.util.List;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
 import com.caidao.entity.Config;
-import com.caidao.service.SysConfigService;
+import com.caidao.service.ConfigService;
 import io.swagger.annotations.ApiOperation;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 /**
  * <p>
@@ -31,11 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2020-03-25
  */
 @RestController
-@RequestMapping("/other/config")
-public class SysConfigController {
+@RequestMapping("/car/config")
+@Slf4j
+public class ConfigController {
 	
 	@Autowired
-	private SysConfigService sysConfigService;
+	private ConfigService configService;
 	
 	/**
 	 * 获取页面的分页数据
@@ -43,11 +37,14 @@ public class SysConfigController {
 	 * @param config
 	 * @return
 	 */
-	@GetMapping("page")
+	@GetMapping("/page")
 	@ApiOperation("获取当前页字典数据")
-	@RequiresPermissions("sys:conf:page")
 	public ResponseEntity<IPage<Config>> getSysConfigPage(Page<Config> page, Config config){
-		IPage<Config> configPage = sysConfigService.findPage(page, config);
+
+		Assert.notNull(config, "sysConfig must not be null");
+		log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
+
+		IPage<Config> configPage = configService.findPage(page, config);
 		return ResponseEntity.ok(configPage);
 	}
 	
@@ -58,9 +55,12 @@ public class SysConfigController {
 	 */
 	@PostMapping
 	@ApiOperation("新增字典数据")
-	@RequiresPermissions("sys:conf:save")
 	public ResponseEntity<Config> addSysConfig(@RequestBody Config config){
-		sysConfigService.save(config);
+
+		Assert.notNull(config,"新增数据字典参数不能为空");
+		log.info("新增参数名为{}的数据",config.getParamKey());
+
+		configService.save(config);
 		return ResponseEntity.ok().build();
 	}
 	
@@ -71,9 +71,12 @@ public class SysConfigController {
 	 */
 	@GetMapping("/info/{id}")
 	@ApiOperation("通过ID查询字典数据")
-	@RequiresPermissions("sys:conf:info")
 	public ResponseEntity<Config> beforeUpdate(@PathVariable("id") Integer id){
-		Config config = sysConfigService.getById(id);
+
+		Assert.state(id !=null, "Id不能为空");
+		log.info("新增参数ID为{}的数据",id);
+
+		Config config = configService.getById(id);
 		return ResponseEntity.ok(config);
 	}
 	
@@ -84,9 +87,12 @@ public class SysConfigController {
 	 */
 	@PutMapping
 	@ApiOperation("更新字典数据")
-	@RequiresPermissions("sys:conf:update")
 	public ResponseEntity<Config> updateSysConfig(@RequestBody Config config){
-		sysConfigService.updateById(config);
+
+		Assert.notNull(config,"更新数据字典参数不能为空");
+		log.info("更新参数名为{}的数据",config.getParamKey());
+
+		configService.updateById(config);
 		return ResponseEntity.ok().build();
 	}
 	
@@ -98,9 +104,12 @@ public class SysConfigController {
 	@SysLogs("批量删除字典数据")
 	@DeleteMapping
 	@ApiOperation("批量删除字典数据")
-	@RequiresPermissions("sys:conf:delete")
 	public ResponseEntity<Void> deleteSysConfig(@RequestBody List<Integer> configId){
-		sysConfigService.removeByIds(configId);
+
+		Assert.state(configId.size() !=0, "Id不能为空");
+		log.info("新增参数ID为{}的数据",configId);
+
+		configService.removeByIds(configId);
 		return ResponseEntity.ok().build();
 	}
 

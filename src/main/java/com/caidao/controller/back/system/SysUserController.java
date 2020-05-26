@@ -1,13 +1,7 @@
 package com.caidao.controller.back.system;
 
-import java.io.IOException;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.anno.SysLogs;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
@@ -17,15 +11,11 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -94,12 +84,12 @@ public class SysUserController {
 	 * @param ids
 	 * @return
 	 */
-//	@RequiresPermissions("sys:user:delete")
-//	@DeleteMapping
-//	public ResponseEntity<Void> beachDel(@RequestBody List<Long> ids){
-//		sysUserService.removeByIds(ids);
-//		return ResponseEntity.ok().build();
-//	}
+	@RequiresPermissions("sys:user:delete")
+	@DeleteMapping
+	public ResponseEntity<Void> beachDel(@RequestBody List<Long> ids){
+		sysUserService.removeByIds(ids);
+		return ResponseEntity.ok().build();
+	}
 
 	/**
 	 * 批量删除用户
@@ -107,14 +97,14 @@ public class SysUserController {
 	 * @param ids
 	 * @return
 	 */
-	@SysLogs("批量删除用户")
-	@RequiresPermissions("sys:user:delete")
-	@DeleteMapping
-	@ApiOperation("批量删除用户，假删除")
-	public ResponseEntity<Void> beachDel(@RequestBody List<Integer> ids){
-		sysUserService.deleteByIds(ids);
-		return ResponseEntity.ok().build();
-	}
+//	@SysLogs("批量删除用户")
+//	@RequiresPermissions("sys:user:delete")
+//	@DeleteMapping
+//	@ApiOperation("批量删除用户，假删除")
+//	public ResponseEntity<Void> beachDel(@RequestBody List<Integer> ids){
+//		sysUserService.deleteByIds(ids);
+//		return ResponseEntity.ok().build();
+//	}
 	
 	/**
 	 * 修改用户
@@ -122,9 +112,9 @@ public class SysUserController {
 	 * @return
 	 * @throws IOException 
 	 */
-	@RequiresPermissions("sys:user:update")
 	@PutMapping
 	@ApiOperation("修改用户")
+	@RequiresPermissions("sys:user:update")
 	public ResponseEntity<SysUser> updateUser(@RequestBody SysUser sysUser,HttpServletResponse resource) throws IOException{
 		SysUser sysUser2 = (SysUser)SecurityUtils.getSubject().getPrincipal();
 

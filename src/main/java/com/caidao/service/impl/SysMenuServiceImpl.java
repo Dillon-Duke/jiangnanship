@@ -4,23 +4,22 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.SysMenu;
 import com.caidao.entity.SysRoleMenu;
+import com.caidao.entity.SysUser;
 import com.caidao.entity.SysUserRole;
 import com.caidao.mapper.SysMenuMapper;
 import com.caidao.mapper.SysRoleMenuMapper;
 import com.caidao.mapper.SysUserRoleMapper;
 import com.caidao.param.Menu;
 import com.caidao.service.SysMenuService;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 
 /**
  * <p>
@@ -31,7 +30,6 @@ import org.springframework.util.Assert;
  * @since 2020-03-25
  */
 @Service
-@Slf4j
 public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> implements SysMenuService {
 	
 	@Autowired
@@ -47,13 +45,16 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 * 通过用户获取菜单
 	 */
 	@Override
-	public List<Menu> getMenuListByUserId(Integer userId) {
-		Assert.notNull(userId, "userId must not be null");
-		log.info("{}用户登录之后查询菜单",userId);
-		List<SysMenu> menuList = findMenuListByUserId(userId);
+	public List<Menu> getMenuListByUserId(SysUser user) {
+
+		//判断用户是否禁用
+		if (user.getStatus() == 0){
+			return null;
+		}
+
+		List<SysMenu> menuList = findMenuListByUserId(user.getUserId());
 
 		if (menuList == null || menuList.isEmpty()) {
-
 			return null;
 		}
 		
@@ -127,9 +128,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	private List<SysMenu> findMenuListByUserId(Integer userId) {
 		//获取登录用户的菜单id
 		List<Object> menuIds = getMenuIds(userId);
+
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单
 		if (userId == 1) {
-			List<SysMenu> selectList = sysMenuMapper.selectList(null);
+			List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+														.orderByAsc(SysMenu::getOrderNum));
 			return selectList;
 		}
 
@@ -140,7 +143,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		
 		//查询对应的menu列表
 		 List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
-				 .in(SysMenu::getMenuId, menuIds));
+				 								.in(SysMenu::getMenuId, menuIds)
+		 										.orderByAsc(SysMenu::getOrderNum));
 		 return selectList;
 	}
 
@@ -182,19 +186,19 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 */
 	@Override
 	public List<SysMenu> findSysMenu() {
-		log.info("table获取全部的菜单");
-		List<SysMenu> selectList = sysMenuMapper.selectList(null);
+		List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+									.orderByAsc(SysMenu::getOrderNum));
 		return selectList;
 	}
 	
 	/**
-	 * 新增获取菜单内容，不包括按钮
+	 * 获取菜单内容，不包括按钮
 	 */
 	@Override
 	public List<SysMenu> getListMenu() {
-		log.info("获取全部的菜单，不包括按钮");
 		List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
-				.ne(SysMenu::getType, 2));
+												.ne(SysMenu::getType, 2)
+												.orderByAsc(SysMenu::getOrderNum));
 		return selectList;
 	}
 	
@@ -206,12 +210,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	public boolean save(SysMenu sysMenu) {
 		sysMenu.setCreateDate(LocalDateTime.now());
 		sysMenu.setState(1);
-		boolean sysMenus = super.save(sysMenu);
+
 		//参数校验
 		volifyDate(sysMenu);
-		return sysMenus;
-	}
 
+		return super.save(sysMenu);
+	}
 
 	/**
 	 * 新增更新要求
@@ -224,7 +228,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 
 		//参数校验
 		volifyDate(sysMenu);
-		Assert.notNull(sysMenu.getMenuId(), "sysMenu.getMenuId() must not be null");
 
 		SysMenu sysMenu2 = sysMenuMapper.selectOne(new LambdaQueryWrapper<SysMenu>()
 										.eq(SysMenu::getMenuId, sysMenu.getMenuId()));
@@ -251,11 +254,20 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		//获取当前用户的子用户列表
 		List<SysMenu> sysMenus = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
 				.eq(SysMenu::getParentId, id));
-		if (sysMenus.size() == 0 ) {
-			return super.removeById(id);
+		if (sysMenus.size() != 0 ) {
+			//如果有父类，则抛出异常，删除失败
+			throw new RuntimeException("目录下载存在子目录，无法删除");
 		}
-		//如果有父类，则抛出异常，删除失败
-		throw new RuntimeException("目录下载存在子目录，无法删除");
+
+		//判断如果有角色绑定该菜单，则无法删除
+		List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(new LambdaQueryWrapper<SysRoleMenu>()
+				.eq(SysRoleMenu::getMenuId, id));
+		if (roleMenus.size() != 0){
+			//如果如果有角色绑定该菜单，则抛出异常，删除失败
+			throw new RuntimeException("有角色绑定该菜单，无法删除");
+		}
+		return super.removeById(id);
+
 	}
 
 	/**

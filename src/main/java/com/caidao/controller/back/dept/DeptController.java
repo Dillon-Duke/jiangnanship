@@ -1,8 +1,8 @@
-package com.caidao.controller.back.system;
+package com.caidao.controller.back.dept;
 
-import com.caidao.entity.SysDept;
+import com.caidao.entity.Dept;
 import com.caidao.entity.SysUser;
-import com.caidao.service.SysDeptService;
+import com.caidao.service.DeptService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -23,12 +23,12 @@ import java.util.List;
  * @since 2020-05-21
  */
 @RestController
-@RequestMapping("/sys/dept")
+@RequestMapping("/dept/dept")
 @Slf4j
-public class SysDeptController {
+public class DeptController {
 
     @Autowired
-    private SysDeptService sysDeptService;
+    private DeptService deptService;
 
     /**
      * 获取所有的部门信息
@@ -36,29 +36,41 @@ public class SysDeptController {
      */
     @GetMapping("/page")
     @ApiOperation("查询所有的部门信息")
-    @RequiresPermissions("sys:dept:page")
-    public ResponseEntity<List<SysDept>> getTable(){
+    @RequiresPermissions("dept:dept:page")
+    public ResponseEntity<List<Dept>> getTable(){
         log.info("查询所有部门信息");
-        List<SysDept> sysDept = sysDeptService.findSysDept();
-        return ResponseEntity.ok(sysDept);
+        List<Dept> dept = deptService.findSysDept();
+        return ResponseEntity.ok(dept);
     }
 
     /**
-     * 获取整个部门的列表
+     * 查询所有的部门列表
+     * @return
+     */
+    @GetMapping("/list")
+    @ApiOperation("查询菜单")
+    @RequiresPermissions("dept:dept:list")
+    public ResponseEntity<List<Dept>> addSysmenu(){
+        List<Dept> findDept = deptService.getListDept();
+        return ResponseEntity.ok(findDept);
+    }
+
+    /**
+     * 新增部门列表
      * @return
      */
     @ApiOperation("新增部门列表")
-    @PostMapping("/save")
-    @RequiresPermissions("sys:dept:save")
-    public ResponseEntity<String> addDept(SysDept sysDept){
+    @PostMapping
+    @RequiresPermissions("dept:dept:save")
+    public ResponseEntity<String> addDept(@RequestBody Dept dept){
 
         SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
         //如果部门为空，则抛异常
-        Assert.notNull(sysDept,"新增部门信息为空");
-        log.info("新增名为{}的部门",sysDept.getDeptName());
+        Assert.notNull(dept,"新增部门信息为空");
+        log.info("新增名为{}的部门", dept.getDeptName());
 
-        sysDept.setCreateId(sysDept.getDeptId());
-        boolean save = sysDeptService.save(sysDept);
+        dept.setCreateId(sysUser.getUserId());
+        boolean save = deptService.save(dept);
 
         if (save){
             return ResponseEntity.ok("新增部门成功");
@@ -73,32 +85,32 @@ public class SysDeptController {
      */
     @GetMapping("/info/{id}")
     @ApiOperation("通过id获取部门")
-    @RequiresPermissions("sys:dept:info")
-    public ResponseEntity<SysDept> getDeptById(@PathVariable("id") Integer id){
+    @RequiresPermissions("dept:dept:info")
+    public ResponseEntity<Dept> getDeptById(@PathVariable("id") Integer id){
 
         Assert.notNull(id,"部门id不能为空");
         log.info("获取id为{}的不们信息",id);
 
-        SysDept sysDept = sysDeptService.getById(id);
-        return ResponseEntity.ok(sysDept);
+        Dept dept = deptService.getById(id);
+        return ResponseEntity.ok(dept);
     }
 
     /**
      * 部门的更新
-     * @param sysDept
+     * @param dept
      * @return
      */
     @ApiOperation("更新部门信息")
-    @PutMapping("/update")
-    @RequiresPermissions("sys:dept:update")
-    public ResponseEntity<String> updateDept(@RequestBody SysDept sysDept){
+    @PutMapping
+    @RequiresPermissions("dept:dept:update")
+    public ResponseEntity<String> updateDept(@RequestBody Dept dept){
 
-        Assert.notNull(sysDept,"部门不能为空");
-        log.info("获取id为{}的不们信息",sysDept.getDeptId());
+        Assert.notNull(dept,"部门不能为空");
+        log.info("获取id为{}的不们信息", dept.getDeptId());
 
         SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-        sysDept.setUpdateId(sysUser.getUserId());
-        boolean update = sysDeptService.updateById(sysDept);
+        dept.setUpdateId(sysUser.getUserId());
+        boolean update = deptService.updateById(dept);
 
         if (update){
             return ResponseEntity.ok("部门更新成功");
@@ -113,13 +125,13 @@ public class SysDeptController {
      */
     @ApiOperation("删除系统部门")
     @DeleteMapping("{id}")
-    @RequiresPermissions("sys:dept:delete")
+    @RequiresPermissions("dept:dept:delete")
     public ResponseEntity<String> deleteDept(@PathVariable("id") Integer id){
 
         Assert.notNull(id,"删除部门id为空");
         log.info("删除id为{}的部门",id);
 
-        boolean remove = sysDeptService.removeById(id);
+        boolean remove = deptService.removeById(id);
         if (remove){
             return ResponseEntity.ok("部门删除成功");
         }

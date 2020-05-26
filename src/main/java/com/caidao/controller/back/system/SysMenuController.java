@@ -5,10 +5,12 @@ import com.caidao.entity.SysMenu;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysMenuService;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +34,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/sys/menu")
+@Slf4j
 public class SysMenuController {
 	
 	@Autowired
@@ -72,6 +75,8 @@ public class SysMenuController {
 	@RequiresPermissions("sys:menu:save")
 	public ResponseEntity<SysMenu> addSysMenu(@RequestBody SysMenu sysMenu){
 
+		Assert.notNull(sysMenu, "sysMenu must not be null");
+		log.info("新增菜单名为{}的菜单",sysMenu.getName());
 		//获取当前登录对象
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
 		sysMenu.setCreateId(sysUser.getUserId());
@@ -89,6 +94,10 @@ public class SysMenuController {
 	@ApiOperation("修改前获取对应的需要修改的信息")
 	@RequiresPermissions("sys:menu:info")
 	public ResponseEntity<SysMenu> getOneMenu(@PathVariable("id") Integer id){
+
+		Assert.notNull(id, " must not be null");
+		log.info("查询菜单Id为{}的菜单",id);
+
 		SysMenu sysMenu = sysMenuService.getById(id);
 		return ResponseEntity.ok(sysMenu);
 	}
@@ -102,6 +111,9 @@ public class SysMenuController {
 	@ApiOperation("更新菜单,目录或者按钮")
 	@RequiresPermissions("sys:menu:update")
 	public ResponseEntity<SysMenu> updateMenu(@RequestBody SysMenu sysMenu){
+
+		Assert.notNull(sysMenu, "sysMenu must not be null");
+		log.info("更新菜单Id为{}的菜单",sysMenu.getMenuId());
 
 		//获取当前登录对象
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
@@ -120,6 +132,9 @@ public class SysMenuController {
 	@ApiOperation("通过id删除菜单")
 	@RequiresPermissions("sys:menu:delete")
 	public ResponseEntity<SysMenu> deleteMenu(@PathVariable("id") Integer id){
+
+		Assert.notNull(id, "id must not be null");
+		log.info("删除菜单Id为{}的菜单",id);
 		sysMenuService.removeById(id);
 		return ResponseEntity.ok().build();
 	}

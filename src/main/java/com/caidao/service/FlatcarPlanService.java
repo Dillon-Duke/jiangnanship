@@ -17,7 +17,7 @@ public interface FlatcarPlanService extends IService<FlatcarPlan> {
      * @param flatcarPlan
      * @return
      */
-    boolean applyFlatcarPlan(FlatcarPlan flatcarPlan, SysUser sysUser);
+    Integer applyFlatcarPlan(FlatcarPlan flatcarPlan, SysUser sysUser);
 
     /**
      * 通过创建人id 查询任务列表
@@ -25,4 +25,13 @@ public interface FlatcarPlanService extends IService<FlatcarPlan> {
      * @return
      */
     List<FlatcarPlan> selectListByApplyId(Integer id);
+
+    /**
+     * 完成给人任务的审批
+     * @param flatcarPlan
+     * @param taskId
+     * @param reasion
+     * @return
+     */
+    Boolean complayUserTask(FlatcarPlan flatcarPlan,String taskId,String reasion);
 }

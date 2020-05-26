@@ -1,4 +1,4 @@
-package com.caidao.controller.back.ohter;
+package com.caidao.controller.back.system;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2020-05-11
  */
 @RestController
-@RequestMapping("/other/log")
+@RequestMapping("/sys/log")
 @Slf4j
 public class SysLogController {
 	

@@ -1,17 +1,9 @@
 package com.caidao.controller.back;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
 import com.caidao.entity.SysUser;
+import com.caidao.param.Menu;
 import com.caidao.param.UserParam;
 import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysMenuService;
@@ -22,6 +14,8 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AccountException;
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.CredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
@@ -30,12 +24,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import com.caidao.param.Menu;
-import org.apache.shiro.authc.AccountException;
-import org.apache.shiro.authc.AuthenticationException;
-import org.springframework.util.StringUtils;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author tom
@@ -127,12 +126,12 @@ public class LoginController {
 	@ApiOperation("用户登录查询对应菜单")
 	public ResponseEntity<Object> getMenuList(){	
 		SysUser user = (SysUser)SecurityUtils.getSubject().getPrincipal();
-		if (user == null) {
-			throw new NullPointerException("shiro无此用户");
-		}
-		log.info("{}用户登录",user.getUsername());
+
+		Assert.notNull(user,"用户信息不能为空");
+		log.info("{}用户登录之后查询菜单",user.getUsername());
+
 		Map<String, Object> result = new HashMap<String,Object>(2);
-		List<Menu> menuList = sysMenuService.getMenuListByUserId(user.getUserId());
+		List<Menu> menuList = sysMenuService.getMenuListByUserId(user);
 
 		//用户的菜单列表
 		result.put("menuList", menuList);

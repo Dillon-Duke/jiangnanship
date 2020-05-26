@@ -24,7 +24,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="SysDept对象", description="")
-public class SysDept implements Serializable {
+public class Dept implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

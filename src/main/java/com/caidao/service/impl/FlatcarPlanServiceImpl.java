@@ -1,16 +1,16 @@
 package com.caidao.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.FlatcarPlan;
 import com.caidao.entity.SysUser;
 import com.caidao.mapper.FlatcarPlanMapper;
-import com.caidao.mapper.SysUserMapper;
 import com.caidao.service.FlatcarPlanService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.service.SysUserService;
+import com.caidao.util.DateUtils;
+import com.caidao.util.PropertiesReaderUtils;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +33,9 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
     @Autowired
     private RuntimeService runtimeService;
 
+    @Autowired
+    private TaskService taskService;
+
     /**
      * 复写平板车计划流程，增加创建人信息，状态
      * @param flatcarPlan
@@ -54,7 +57,7 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean applyFlatcarPlan(FlatcarPlan flatcarPlan, SysUser sysUser) {
+    public Integer applyFlatcarPlan(FlatcarPlan flatcarPlan, SysUser sysUser) {
 
         //如果平板车计划没有id 则为新增提交任务
         if (flatcarPlan.getFlatcarId() == null){
@@ -64,6 +67,7 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
             flatcarPlan.setApplyState(1);
             flatcarPlan.setState(1);
             flatcarPlan.setApplyName(sysUser.getUsername());
+            flatcarPlan.setJobNumber("PBSQLS" + DateUtils.yyyyMMdd());
             Integer insert = flatcarPlanMapper.insert(flatcarPlan);
 
             //平板车计划任务提交成功 新增提交流程
@@ -71,7 +75,13 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
 
                 //设置业务主键
                 String businessKey = sysUser.getUsername() + "." + insert;
-                return startInstence(flatcarPlan, businessKey);
+                boolean instence = startInstence(flatcarPlan, businessKey);
+
+                if (!instence){
+                    throw new RuntimeException("提交平板车计划任务失败，请重新提交");
+                }
+                //返回新建任务实例Id
+                return insert;
 
             }else {
                 throw new RuntimeException("提交平板车计划任务失败，请重新提交");
@@ -80,17 +90,23 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
             //如果平板车计划有id 则为更新提交任务
             flatcarPlan.setUpdateId(sysUser.getUserId());
             flatcarPlan.setUpdateDate(LocalDateTime.now());
+            flatcarPlan.setJobNumber("PBSQLS" + DateUtils.yyyyMMdd());
 
             Integer updateById = flatcarPlanMapper.updateById(flatcarPlan);
             //平板车计划任务提交成功 新增提交流程
-            if (updateById != 0) {
+            if (updateById == 1) {
 
                 //设置业务主键
                 String businessKey = sysUser.getUsername() + "." + flatcarPlan.getFlatcarId();
-                return startInstence(flatcarPlan, businessKey);
+                boolean instence = startInstence(flatcarPlan, businessKey);
+                if (!instence){
+                    throw new RuntimeException("提交平板车计划任务失败，请重新提交");
+                }
+                //返回新建任务实例Id
+                return flatcarPlan.getFlatcarId();
             }
         }
-        return false;
+        return -1;
     }
 
     /**
@@ -106,6 +122,31 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
     }
 
     /**
+     * 完成给人任务的审批
+     * @param flatcarPlan
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean complayUserTask(FlatcarPlan flatcarPlan,String taskId,String reasion) {
+
+        //设置下一个审批人的名称
+        taskService.complete(taskId);
+
+        //设置审批人姓名
+        taskService.setVariableLocal(taskId,"apprName",flatcarPlan.getApprName());
+
+        //更新计划流程表里面的信息
+        flatcarPlan.setApprName(flatcarPlan.getApprName());
+        Integer update = flatcarPlanMapper.updateById(flatcarPlan);
+        //TODO 将同意原因写在一个表里面 ，以后查询的时候调用数据少
+        if (update == 1){
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 新增一个实例
      * @param flatcarPlan
      * @param businessKey
@@ -113,11 +154,14 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
      */
     private boolean startInstence(FlatcarPlan flatcarPlan, String businessKey) {
         //设置审批人姓名
-        Map<String, Object> hashMap = new HashMap<String, Object>();
-        hashMap.put("apprName",flatcarPlan.getApprName());
+        Map<String, Object> variables = new HashMap<String, Object>(1);
+        variables.put("apprName",flatcarPlan.getApprName());
+
+        Map<String, String> map = PropertiesReaderUtils.getMap();
+        String planDeploymentId = map.get("flatcarPlanDeploymentId");
 
         //启动流程实例
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("flatCarPlanTask", businessKey, hashMap);
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(planDeploymentId, businessKey, variables);
         String businessKey1 = processInstance.getBusinessKey();
 
         //判断是否启动成功

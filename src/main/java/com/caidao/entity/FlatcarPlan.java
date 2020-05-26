@@ -2,13 +2,14 @@ package com.caidao.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author Dillon
@@ -28,6 +29,9 @@ public class FlatcarPlan implements Serializable {
 
     @ApiModelProperty(value = "任务名称")
     private String jobName;
+
+    @ApiModelProperty(value = "任务工单号")
+    private String jobNumber;
 
     @ApiModelProperty(value = "预计开始时间")
     private LocalDateTime jobStarttime;
@@ -95,7 +99,7 @@ public class FlatcarPlan implements Serializable {
     @ApiModelProperty(value = "申请人姓名")
     private String applyName;
 
-    @ApiModelProperty(value = "审批状态 0：未提交 1：审批中 2：审批完成")
+    @ApiModelProperty(value = "审批状态 0：未提交 1：审批中 2：审批完成 3;审批未通过")
     private Integer applyState;
 
     @ApiModelProperty(value = "创建时间")

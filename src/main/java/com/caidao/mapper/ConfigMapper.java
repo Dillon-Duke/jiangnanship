@@ -12,6 +12,6 @@ import com.caidao.entity.Config;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface SysConfigMapper extends BaseMapper<Config> {
+public interface ConfigMapper extends BaseMapper<Config> {
 
 }

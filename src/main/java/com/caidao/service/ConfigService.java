@@ -13,7 +13,7 @@ import com.caidao.entity.Config;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface SysConfigService extends IService<Config> {
+public interface ConfigService extends IService<Config> {
 
 	/**
 	 * 获取页面的page页面
