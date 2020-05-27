@@ -3,6 +3,8 @@ package com.caidao.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.Dept;
+import com.caidao.entity.DeptDeptRole;
+import com.caidao.mapper.DeptDeptRoleMapper;
 import com.caidao.mapper.DeptMapper;
 import com.caidao.service.DeptService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
     @Autowired
     private DeptMapper deptMapper;
+
+    @Autowired
+    private DeptDeptRoleMapper deptDeptRoleMapper;
 
     /**
      * 获取部门所有人员
@@ -78,6 +83,13 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
      */
     @Override
     public boolean removeById(Serializable id) {
+
+        //判断是否还有角色关联着部门，如果有，删除失败
+        List<DeptDeptRole> deptDeptRoles = deptDeptRoleMapper.selectList(new LambdaQueryWrapper<DeptDeptRole>()
+                .eq(DeptDeptRole::getDeptId, id));
+        if ((deptDeptRoles != null ) || (!deptDeptRoles.isEmpty())) {
+            throw new RuntimeException("部门还绑有角色，不能删除");
+        }
 
         //判断是否还有子部门，如果有 抛异常处理
         List<Dept> depts = deptMapper.selectList(new LambdaQueryWrapper<Dept>()

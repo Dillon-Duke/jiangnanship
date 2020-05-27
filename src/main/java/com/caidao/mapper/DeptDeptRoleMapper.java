@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.SysUserDept;
+import com.caidao.entity.DeptDeptRole;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author Dillon
- * @since 2020-05-21
+ * @since 2020-05-27
  */
-public interface SysUserDeptMapper extends BaseMapper<SysUserDept> {
+public interface DeptDeptRoleMapper extends BaseMapper<DeptDeptRole> {
 
 }

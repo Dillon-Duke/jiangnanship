@@ -15,25 +15,28 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author Dillon
- * @since 2020-05-21
+ * @since 2020-05-27
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@ApiModel(value="SysUserDept对象", description="")
-public class SysUserDept implements Serializable {
+@ApiModel(value="DeptRoleConfig对象", description="")
+public class DeptRoleConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(value = "自增ID")
+    @ApiModelProperty(value = "主键自增ID")
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    @ApiModelProperty(value = "用户ID")
-    private Integer userId;
-
-    @ApiModelProperty(value = "部门ID")
+    @ApiModelProperty(value = "部门id")
     private Integer deptId;
+
+    @ApiModelProperty(value = "角色id")
+    private Integer roleId;
+
+    @ApiModelProperty(value = "权限id")
+    private Integer configId;
 
 
 }

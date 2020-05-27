@@ -13,18 +13,17 @@ import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysUserService;
 import com.caidao.util.Md5Utils;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.util.*;
-
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * <p>
@@ -43,7 +42,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	
 	@Autowired
 	private SysUserRoleMapper sysUserRoleMapper;
-	
+
+	/**
+	 * 通过用户名查询用户
+	 * @param username
+	 * @return
+	 */
 	@Override
 	public SysUser getUserByUsername(String username) {
 		Assert.notNull(username, "用户名不能为空");
@@ -89,12 +93,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		setSaltPass(sysUser, salt);
 
 		boolean save = super.save(sysUser);
-	
-		//判断新增用户必须传值条件 如果没有，报异常 
-		Assert.state(sysUser!=null
-				&& sysUser.getUsername()!=null
-				&& sysUser.getPassword()!=null,
-				"新增用户失败");
 
 		List<Integer> roleIds = sysUser.getRoleIdList();
 		if (roleIds == null || roleIds.isEmpty()) {
