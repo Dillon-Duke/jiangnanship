@@ -10,6 +10,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -25,6 +27,8 @@ import java.util.List;
 @RequestMapping("/dept/role")
 @Slf4j
 public class DeptRoleController {
+
+    public static final Logger logger = LoggerFactory.getLogger(DeptRoleController.class);
 
     @Autowired
     private DeptRoleService deptRoleService;

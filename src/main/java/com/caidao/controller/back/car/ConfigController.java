@@ -8,6 +8,8 @@ import com.caidao.entity.Config;
 import com.caidao.service.ConfigService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -27,6 +29,8 @@ import java.util.List;
 @RequestMapping("/car/config")
 @Slf4j
 public class ConfigController {
+
+	public static final Logger logger = LoggerFactory.getLogger(ConfigController.class);
 	
 	@Autowired
 	private ConfigService configService;

@@ -2,6 +2,7 @@ package com.caidao.activiti;
 
 import com.caidao.util.PropertiesReaderUtils;
 import org.activiti.engine.RepositoryService;
+import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.DeploymentBuilder;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
@@ -11,8 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.io.InputStream;
 import java.util.Map;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author tom
@@ -26,35 +28,39 @@ public class DeploymentController {
 
     /**
      * 平板车计划申请流程的发布
+     * @return
      */
-    @GetMapping("/flatcarPlanDeploymentPublish")
-    public ResponseEntity<Void> flatcarPlanDeploymentPublish(){
+    @GetMapping("/DeploymentPublish")
+    public ResponseEntity<Deployment> DeploymentPublish(){
 
         Map<String, String> map = PropertiesReaderUtils.getMap();
 
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("DeploymentZip"));
+
+        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
         DeploymentBuilder deployment = repositoryService.createDeployment();
-        deployment.name(map.get("flatcarPlanDeploymentName"))
-                    .addClasspathResource(map.get("flatcarPlanDeploymentBpmn"))
-                    .addClasspathResource(map.get("flatcarPlanDeploymentPng")).deploy();
-        return ResponseEntity.ok().build();
+        Deployment deploy = deployment.name(map.get("DeploymentName"))
+                .addZipInputStream(zipInputStream)
+                .deploy();
+        return ResponseEntity.ok(deploy);
     }
 
     /**
-     * 获取平板车申请流程的列表
+     * 通过名称查询已经部署的流程
      * @return
      */
-    @GetMapping("/getFlatcarPlanDeploymentId")
-    public ResponseEntity<List<ProcessDefinition>> getFlatcarPlanDeploymentId(){
+    @GetMapping("/getLastestDeployment")
+    public ResponseEntity<ProcessDefinition> getLastestDeployment(){
 
         Map<String, String> map = PropertiesReaderUtils.getMap();
-        ProcessDefinitionQuery definitionQuery = repositoryService.createProcessDefinitionQuery();
-        List<ProcessDefinition> list = definitionQuery.processDefinitionKey(map.get("flatcarPlanApply"))
-                                                        .orderByProcessDefinitionVersion()
-                                                        .desc()
-                                                        .list();
-        return ResponseEntity.ok(list);
+
+        ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+
+        ProcessDefinition flatcarPlan = processDefinitionQuery.processDefinitionName(map.get("DeploymentName"))
+                                                                .latestVersion()
+                                                                .singleResult();
+
+        return ResponseEntity.ok(flatcarPlan);
     }
-
-
 
 }

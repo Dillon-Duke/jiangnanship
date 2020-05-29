@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.util.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,8 @@ import java.util.List;
 @RequestMapping("/dept/dept")
 @Slf4j
 public class DeptController {
+
+    public static final Logger logger = LoggerFactory.getLogger(DeptController.class);
 
     @Autowired
     private DeptService deptService;

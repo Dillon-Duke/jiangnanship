@@ -25,7 +25,7 @@ import java.util.Map;
 @Slf4j
 public class FdfsFileController {
 
-    public Logger logger = LoggerFactory.getLogger(FdfsFileController.class);
+    public static final Logger logger = LoggerFactory.getLogger(FdfsFileController.class);
 
     @Autowired
     private FdfsUpAndDowService fdfsUpAndDowService;

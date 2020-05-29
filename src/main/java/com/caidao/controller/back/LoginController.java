@@ -44,7 +44,7 @@ import java.util.Map;
 @Slf4j
 public class LoginController {
 
-	public Logger logger = LoggerFactory.getLogger(LoginController.class);
+	public static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 	
 	@Autowired
 	private StringRedisTemplate redis;

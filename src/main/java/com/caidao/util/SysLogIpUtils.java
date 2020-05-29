@@ -1,5 +1,8 @@
 package com.caidao.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -9,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
  */
 
 public class SysLogIpUtils {
+
+	public static final Logger logger = LoggerFactory.getLogger(SysLogIpUtils.class);
 
 	/**
 	 * 私有化构造

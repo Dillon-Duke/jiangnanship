@@ -8,6 +8,8 @@ import com.caidao.util.PropertyUtils;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/sys/user")
 public class SysUserController {
+
+	public static final Logger logger = LoggerFactory.getLogger(SysUserController.class);
 	
 	@Autowired
 	private StringRedisTemplate redisTemplate;

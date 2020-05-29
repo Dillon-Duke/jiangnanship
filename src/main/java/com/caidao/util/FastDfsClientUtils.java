@@ -21,7 +21,7 @@ import java.io.IOException;
 @Component
 public class FastDfsClientUtils {
 
-    private final Logger logger = LoggerFactory.getLogger(FastDfsClientUtils.class);
+    public static final Logger logger = LoggerFactory.getLogger(FastDfsClientUtils.class);
 
     @Autowired
     private FastFileStorageClient fastFileStorageClient;

@@ -11,6 +11,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -30,6 +32,8 @@ import java.util.List;
 @RequestMapping("/dept/config")
 @Slf4j
 public class DeptConfigController {
+
+    public static final Logger logger = LoggerFactory.getLogger(DeptConfigController.class);
 
     @Autowired
     private DeptConfigService deptConfigService;

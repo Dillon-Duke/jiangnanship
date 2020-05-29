@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AppLoginController {
 
-	public Logger logger =  LoggerFactory.getLogger(AppLoginController.class);
+	public static final Logger logger =  LoggerFactory.getLogger(AppLoginController.class);
 	
 	@Autowired
 	private StringRedisTemplate redis;

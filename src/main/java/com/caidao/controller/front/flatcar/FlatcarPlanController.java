@@ -24,7 +24,7 @@ import java.util.List;
 @Slf4j
 public class FlatcarPlanController {
 
-    public Logger logger =  LoggerFactory.getLogger(FlatcarPlanController.class);
+    public static final Logger logger =  LoggerFactory.getLogger(FlatcarPlanController.class);
 
     @Autowired
     private FlatcarPlanService flatcarPlanService;
@@ -34,9 +34,10 @@ public class FlatcarPlanController {
      * @param flatcarPlan
      * @return
      */
-    @ApiOperation("保存一个平板车计划任务")
+    @ApiOperation("保存一个平板车计划任务,未提交状态")
     @PostMapping("/save")
     public ResponseEntity<String> saveFlatcarPlanTask(FlatcarPlan flatcarPlan){
+
         Assert.notNull(flatcarPlan,"平板车计划任务前端传值为空");
         log.info("保存一个任务名为{}的平板车任务",flatcarPlan.getJobName());
 
