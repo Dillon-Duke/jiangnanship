@@ -84,7 +84,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		}
 		sysUser.setCreateDate(LocalDateTime.now());
 
-		String salt = UUID.randomUUID().toString();
+		String salt = UUID.randomUUID().toString().replaceAll("-","");
 		sysUser.setUserSalt(salt);
 		sysUser.setState(1);
 
@@ -153,37 +153,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	}
 
 	/**
-	 * 通过用户名和手机号判断用户是否存在
-	 * @param username
-	 * @param phone
-	 * @return
-	 */
-	@Override
-	public SysUser findUserByUsernameAndPhone(String username, String phone) {
-		SysUser sysUser = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
-				.eq(SysUser::getUsername, username)
-				.or(false)
-				.eq(SysUser::getPhone, phone));
-		return sysUser;
-	}
-
-	/**
-	 * 忘记密码，更新用户的密码
-	 * @param sysUser
-	 * @return
-	 */
-	@Override
-	public boolean updatePassById(SysUser sysUser) {
-
-		//设置更新盐值
-		setSaltPass(sysUser,sysUser.getUserSalt());
-
-		//更新用户密码
-		sysUserMapper.updatePassById(sysUser);
-		return false;
-	}
-
-	/**
 	 * 更新自己的密码
 	 * @param sysUser
 	 * @param usernamePasswordParam
@@ -241,10 +210,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	public boolean updateById(SysUser sysUser) {
 
 		//查询数据库中是否有该用户名，如果有，则提示更换用户名
-		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
-				.eq(SysUser::getUsername, sysUser.getUsername()));
-		if (user != null){
-			throw new RuntimeException("该名称已被注册，请更换其他名称");
+		SysUser user = sysUserMapper.selectById(sysUser.getUserId());
+		if (!user.getUsername().equals(sysUser.getUsername())){
+			SysUser selectOne = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+					.eq(SysUser::getUsername, sysUser.getUsername()));
+			if (selectOne != null){
+				throw new RuntimeException("该名称已被注册，请更换其他名称");
+			}
 		}
 
 		//判断用户密码是否有改动过，如果有，则重新赋值 反之，则直接存入数据库

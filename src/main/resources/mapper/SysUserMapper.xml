@@ -14,11 +14,4 @@
         )
     </update>
 
-    <!-- 通过id更新用户密码 -->
-    <update id="updatePassById" parameterType="java.util.Objects">
-        update sys_user
-        set password = #{sysuser.password}
-        where user_id = #{sysuser.userId}
-    </update>
-
 </mapper>

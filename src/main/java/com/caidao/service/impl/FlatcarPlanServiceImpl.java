@@ -138,7 +138,6 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
         //更新计划流程表里面的信息
         flatcarPlan.setApprName(flatcarPlan.getApprName());
         Integer update = flatcarPlanMapper.updateById(flatcarPlan);
-        //TODO 将同意原因写在一个表里面 ，以后查询的时候调用数据少
         if (update == 1){
             return true;
         }

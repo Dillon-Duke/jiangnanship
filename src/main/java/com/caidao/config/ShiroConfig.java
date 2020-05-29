@@ -57,6 +57,7 @@ public class ShiroConfig {
 
 		//设置盐值校验
 		realm.setCredentialsMatcher(credentialsMatcher);
+		appUserRealm.setCredentialsMatcher(credentialsMatcher);
 		//设置将登录信息放在redis里面
 		sessionManager.setSessionDAO(redisSessionDAO);
 		securityManager.setSessionManager(sessionManager);
@@ -76,8 +77,8 @@ public class ShiroConfig {
 
 		//将所有的realm放在shiro中
 		Map<String, Object> hashMap = new HashMap<>();
-			hashMap.put("appUser",appUserRealm);
-			hashMap.put("backSystemUser",userRealm);
+			hashMap.put("appUserRealm",appUserRealm);
+			hashMap.put("backUserRealm",userRealm);
 		customRealmAuthenticatorConfig.setDefinedRealms(hashMap);
 
 		//配置认证策略，只要有一个Realm认证成功即可，并且返回所有认证成功信息
@@ -103,6 +104,8 @@ public class ShiroConfig {
 	public CredentialsMatcher getCredentialsMatcher() {
 		HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher("MD5");
 		hashedCredentialsMatcher.setHashIterations(1024);
+		// 这一行决定hex还是base64 false 指定用base64解密
+		hashedCredentialsMatcher.setStoredCredentialsHexEncoded(true);
 		return hashedCredentialsMatcher;
 	}
 

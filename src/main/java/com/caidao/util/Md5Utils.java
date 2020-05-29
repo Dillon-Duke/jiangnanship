@@ -49,4 +49,10 @@ public class Md5Utils {
 		return md5SaltIterateHash.toString();
 	}
 
+	public static void main(String[] args) {
+
+		System.out.println(ByteSource.Util.bytes("395892ae6ed345fd83d7cb2676b1104a".getBytes()));
+//		System.out.println(getHashAndSaltAndTime("xiaozhang", ByteSource.Util.bytes("395892ae6ed345fd83d7cb2676b1104a".getBytes()), 1024));
+	}
+
 }

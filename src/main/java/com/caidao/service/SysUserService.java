@@ -36,21 +36,6 @@ public interface SysUserService extends IService<SysUser> {
     void deleteByIds(List<Integer> ids);
 
 	/**
-	 * 通过用户名和手机号判断用户是否存在
-	 * @param username
-	 * @param phone
-	 * @return
-	 */
-    SysUser findUserByUsernameAndPhone(String username, String phone);
-
-	/**
-	 * 忘记密码，更新用户的密码
-	 * @param sysUser
-	 * @return
-	 */
-	boolean updatePassById(SysUser sysUser);
-
-	/**
 	 * 更新自己的密码
 	 * @param sysUser
 	 * @param usernamePasswordParam

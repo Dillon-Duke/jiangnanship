@@ -19,12 +19,12 @@ import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.CredentialsException;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -112,7 +112,7 @@ public class LoginController {
 		}	catch (AccountException e) {
 			return ResponseEntity.badRequest().body("账户异常");
 		}catch (AuthenticationException e) {
-			return ResponseEntity.badRequest().body("该账户不存在，如有问题，请联系管理员");
+			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 		return ResponseEntity.ok(token);
 	}

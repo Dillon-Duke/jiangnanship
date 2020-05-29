@@ -2,8 +2,8 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.DeptUser;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.entity.DeptUser;
 
 /**
  * @author Dillon
@@ -25,4 +25,19 @@ public interface DeptUserService extends IService<DeptUser> {
      * @return
      */
     DeptUser getUserByUsername(String toString);
+
+    /**
+     * 通过用户名和手机号判断用户是否存在
+     * @param username
+     * @param phone
+     * @return
+     */
+    DeptUser findUserByUsernameAndPhone(String username, String phone);
+
+    /**
+     * 忘记密码，更新用户的密码
+     * @param deptUser
+     * @return
+     */
+    boolean updatePassById(DeptUser deptUser);
 }

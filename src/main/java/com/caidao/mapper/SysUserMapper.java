@@ -22,9 +22,4 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
      */
     Integer batchDelete(List<Integer> ids);
 
-    /**
-     * 更新用户的密码
-     * @param sysUser
-     */
-    void updatePassById(SysUser sysUser);
 }

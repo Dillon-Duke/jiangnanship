@@ -1,7 +1,6 @@
 package com.caidao.controller.back.system;
 
 import com.caidao.anno.SysLogs;
-import com.caidao.controller.front.AppLoginController;
 import com.caidao.service.FdfsUpAndDowService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +65,6 @@ public class FdfsFileController {
     @ApiOperation("删除文件")
     public ResponseEntity<String> deleteFile(String filename) {
 
-        //TODO 调用该接口之后需要刷新缓存
         String file = fdfsUpAndDowService.deleteFileByFileUrl(filename);
 
         if (file == null){

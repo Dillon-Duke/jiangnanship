@@ -1,8 +1,9 @@
 package com.caidao.controller.front;
 
+import com.caidao.entity.DeptUser;
 import com.caidao.entity.SysUser;
 import com.caidao.param.UserParam;
-import com.caidao.service.SysUserService;
+import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.UserLoginTokenUtils;
 import io.swagger.annotations.ApiOperation;
@@ -41,7 +42,7 @@ public class AppLoginController {
 	private StringRedisTemplate redis;
 
 	@Autowired
-	private SysUserService sysUserService;
+	private DeptUserService deptUserService;
 
 	/**
 	 * app用户登录
@@ -85,17 +86,17 @@ public class AppLoginController {
 	 */
 	@GetMapping("/app/user/checkNameAndPhone")
 	@ApiOperation("检查用户名和手机是否正确")
-	public ResponseEntity<SysUser> beforeForgetPass(String username,String phone)  {
+	public ResponseEntity<DeptUser> beforeForgetPass(String username,String phone)  {
 		if (username == null || phone == null){
 			Assert.notNull("用户名或者手机号错误");
 		}
 
 		log.info("查询用户名为{}，手机号为{}的用户",username,phone);
-		SysUser sysUser = sysUserService.findUserByUsernameAndPhone(username,phone);
-		if (sysUser == null){
+		DeptUser deptUser = deptUserService.findUserByUsernameAndPhone(username,phone);
+		if (deptUser == null){
 			return ResponseEntity.ok(null);
 		}
-		return ResponseEntity.ok(sysUser);
+		return ResponseEntity.ok(deptUser);
 	}
 
 	/**
@@ -120,21 +121,21 @@ public class AppLoginController {
 
 	/**
 	 * 更新用户的密码
-	 * @param sysUser
+	 * @param deptUser
 	 * @param code
 	 * @return
 	 */
 	@ApiOperation("忘记密码，更新用户的密码")
 	@PostMapping("/app/user/updatePass")
-	public ResponseEntity updateUserPassword(@RequestBody SysUser sysUser , String code){
-		Assert.notNull(sysUser,"更新参数不能为空");
-		log.info("用户{}更新了密码",sysUser.getUsername());
+	public ResponseEntity updateUserPassword(@RequestBody DeptUser deptUser , String code){
+		Assert.notNull(deptUser,"更新参数不能为空");
+		log.info("用户{}更新了密码",deptUser.getUsername());
 
 		//校验验证码是否正确
-		checkCode(PropertyUtils.MASSAGE_CODE+sysUser.getPhone(),code);
+//		checkCode(PropertyUtils.MASSAGE_CODE+deptUser.getPhone(),code);
 
 		//更新用户验证码
-		boolean update = sysUserService.updatePassById(sysUser);
+		boolean update = deptUserService.updatePassById(deptUser);
 		if (update){
 			return ResponseEntity.ok("用户密码更新成功");
 		}

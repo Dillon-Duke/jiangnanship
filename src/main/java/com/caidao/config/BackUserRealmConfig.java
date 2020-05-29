@@ -5,11 +5,7 @@ import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.UserLoginTokenUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -27,7 +23,6 @@ import java.util.List;
  * @since 2020-5-12
  */
 @Configuration
-@Slf4j
 public class BackUserRealmConfig extends AuthorizingRealm {
 	
 	@Autowired
@@ -68,8 +63,6 @@ public class BackUserRealmConfig extends AuthorizingRealm {
 	 */
 	@Override
 	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) throws AuthenticationException {
-		
-		log.info("{}登录了",authcToken.getPrincipal().toString());
 
 		//将token转换为我们自己的token
 		UserLoginTokenUtils token = (UserLoginTokenUtils) authcToken;
@@ -78,9 +71,9 @@ public class BackUserRealmConfig extends AuthorizingRealm {
 		if (user == null) {
 			return null;
 		}
-		
-		//动态的生成盐值
-		ByteSource byteSource = ByteSource.Util.bytes(user.getUserSalt());
+
+		//获取数据库中的盐值
+		ByteSource byteSource = ByteSource.Util.bytes(user.getUserSalt().getBytes());
 		SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(user,user.getPassword(),byteSource,getName());
 		return simpleAuthenticationInfo;
 	}

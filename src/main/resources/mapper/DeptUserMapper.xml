@@ -3,7 +3,16 @@
 <mapper namespace="com.caidao.mapper.DeptUserMapper">
 
     <select id="selectDeptRole" parameterType="integer" resultType="map">
-        SELECT d.dept_id,d.dept_name,r.role_name FROM dept d,dept_role r,dept_dept_role dr WHERE d.dept_id = dr.dept_id AND dr.role_id = r.role_id and r.role_id = #{integer}
+        SELECT
+            d.dept_id,d.dept_name,r.role_name
+        FROM
+            dept d,dept_role r,dept_dept_role dr
+        WHERE
+            d.dept_id = dr.dept_id
+        AND
+            dr.role_id = r.role_id
+        AND
+            r.role_id = #{integer}
     </select>
 
 </mapper>

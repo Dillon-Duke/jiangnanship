@@ -13,6 +13,7 @@ import com.caidao.util.Md5Utils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -76,7 +77,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
         deptUser.setCreateDate(LocalDateTime.now());
 
-        String salt = UUID.randomUUID().toString();
+        String salt = UUID.randomUUID().toString().replaceAll("-","");
         //生成盐值
         deptUser.setUserSalt(salt);
         deptUser.setState(1);
@@ -157,10 +158,13 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     public boolean updateById(DeptUser deptUser) {
 
         //查询数据库中是否有该用户名，如果有，则提示更换用户名
-        DeptUser user1 = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
-                .eq(DeptUser::getUsername, deptUser.getUsername()));
-        if (user1 != null){
-            throw new RuntimeException("该名称已被注册，请更换其他名称");
+        DeptUser user1 = deptUserMapper.selectById(deptUser.getUserId());
+        if (!user1.getUsername().equals(deptUser.getUsername())){
+            DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+                    .eq(DeptUser::getUsername, deptUser.getUsername()));
+            if (selectOne != null){
+                throw new RuntimeException("该名称已被注册，请更换其他名称");
+            }
         }
 
         //判断密码是否重新输入过，如果输入过，则改密码，若无，则直接存数据库里面
@@ -178,10 +182,14 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         deptUser.setUpdateDate(LocalDateTime.now());
 
         //更新前先删除用户角色中间表
-        int delete = deptUserRoleMapper.delete(new LambdaQueryWrapper<DeptUserRole>()
-                .eq(DeptUserRole::getUserId, deptUser.getUserId()));
-        if (delete == 0){
-            throw new RuntimeException("部门用户删除失败，请重试");
+        List<DeptUserRole> deptUserRoles = deptUserRoleMapper.selectList(new LambdaQueryWrapper<DeptUserRole>()
+                                        .eq(DeptUserRole::getUserId, deptUser.getUserId()));
+        if ((deptUserRoles != null) && (!deptUserRoles.isEmpty())){
+            int delete = deptUserRoleMapper.delete(new LambdaQueryWrapper<DeptUserRole>()
+                    .eq(DeptUserRole::getUserId, deptUser.getUserId()));
+            if (delete == 0){
+                throw new RuntimeException("部门用户删除失败，请重试");
+            }
         }
 
         //判断为空 则直接返回
@@ -219,7 +227,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      * @return
      */
     @Override
-    @Transactional(rollbackFor = RuntimeException.class)
+    @Transactional(rollbackFor = RuntimeException.class, propagation = Propagation.REQUIRES_NEW)
     public boolean removeByIds(Collection<? extends Serializable> idList) {
 
         //判断中间表是否删除
@@ -237,6 +245,44 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         Integer batchIds = deptUserMapper.deleteBatchIds(idList);
         if (batchIds == 0){
             throw new RuntimeException("用户删除失败");
+        }
+        return true;
+    }
+
+    /**
+     * 通过用户名和手机号判断用户是否存在
+     * @param username
+     * @param phone
+     * @return
+     */
+    @Override
+    public DeptUser findUserByUsernameAndPhone(String username, String phone) {
+        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getUsername, username)
+                .or(false)
+                .eq(DeptUser::getPhone, phone));
+        return deptUser;
+    }
+
+    /**
+     * 忘记密码，更新用户的密码
+     * @param deptUser
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class, propagation= Propagation.REQUIRES_NEW)
+    public boolean updatePassById(DeptUser deptUser) {
+
+        //设置更新盐值
+        String password = deptUser.getPassword();
+        ByteSource bytes = ByteSource.Util.bytes(deptUser.getUserSalt().getBytes());
+        String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+        deptUser.setPassword(saltPass);
+
+        //更新用户密码
+        Integer update = deptUserMapper.updatePassById(deptUser);
+        if (update == 0){
+            return false;
         }
         return true;
     }
