@@ -11,6 +11,8 @@ import java.io.IOException;
 
 /**
  * @author tom
+ * @since 2020-05-25
+ * 检查用户文件上传是否符合标准 ，所有参数设置从前端传过来做校验
  */
 public class FileCheckUtils {
 

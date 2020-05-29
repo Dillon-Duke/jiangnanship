@@ -109,7 +109,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 														.in(SysMenu::getMenuId, menuIds)
 														.isNotNull(SysMenu::getPerms)
 														.ne(SysMenu::getPerms, ""));
-		ArrayList<String> result = new ArrayList<String>();
+		List<String> result = new ArrayList<String>();
 		for (Object object : selectObjs) {
 			String authorities = String.valueOf(object);
 			String[] split = authorities.split(",");

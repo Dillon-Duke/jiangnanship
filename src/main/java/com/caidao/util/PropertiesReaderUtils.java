@@ -10,6 +10,7 @@ import java.util.Properties;
 /**
  * @author tom
  * @since 2020-05-25
+ * 作用是加载资源文件里面 activiti.properties 这个文件里面的内容，将内容转换为map形式返回出去
  */
 public class PropertiesReaderUtils {
 

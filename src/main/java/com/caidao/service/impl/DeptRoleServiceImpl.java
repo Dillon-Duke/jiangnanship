@@ -7,12 +7,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.DeptDeptRole;
 import com.caidao.entity.DeptRole;
 import com.caidao.entity.DeptRoleConfig;
+import com.caidao.entity.DeptUserRole;
 import com.caidao.mapper.DeptDeptRoleMapper;
 import com.caidao.mapper.DeptRoleConfigMapper;
 import com.caidao.mapper.DeptRoleMapper;
+import com.caidao.mapper.DeptUserRoleMapper;
 import com.caidao.service.DeptRoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -35,6 +38,9 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
     private DeptDeptRoleMapper deptDeptRoleMapper;
 
     @Autowired
+    private DeptUserRoleMapper deptUserRoleMapper;
+
+    @Autowired
     private DeptRoleConfigMapper deptRoleConfigMapper;
 
     /**
@@ -48,6 +54,16 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         IPage<DeptRole> roleIPage = deptRoleMapper.selectPage(page, new LambdaQueryWrapper<DeptRole>()
                 .eq(StringUtils.hasText(deptRole.getRoleName()), DeptRole::getRoleName, deptRole.getRoleName()));
         return roleIPage;
+    }
+
+    /**
+     * 获取部门所有的角色
+     * @return
+     */
+    @Override
+    public List<DeptRole> getDeptRoleList() {
+        List<DeptRole> deptRoles = deptRoleMapper.selectList(null);
+        return deptRoles;
     }
 
     /**
@@ -176,13 +192,21 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean removeByIds(Collection<? extends Serializable> idList) {
 
+        //判断如果有用户存在，则不能删除角色
+        List<DeptUserRole> userRoles = deptUserRoleMapper.selectList(new LambdaQueryWrapper<DeptUserRole>()
+                                        .in(DeptUserRole::getRoleId, idList));
+        if ((!userRoles.isEmpty()) && (userRoles == null)){
+            throw new RuntimeException("该角色上面有绑定的用户，不能删除");
+        }
+
         for (Serializable serializable : idList) {
-            //更新角色之前，先删除对应的部门
+            //删除角色之前，先删除对应的部门
             deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
                     .in(DeptDeptRole::getRoleId, serializable));
-            //更新角色之前，先删除对应的部门
+            //删除角色之前，先删除对应的权限
             deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleConfig>()
                     .in(DeptRoleConfig::getRoleId, serializable));
         }

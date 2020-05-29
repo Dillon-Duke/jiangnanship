@@ -45,6 +45,19 @@ public class DeptRoleController {
     }
 
     /**
+     * 获取部门所有的角色
+     * @return
+     */
+    @ApiOperation("获取部门所有的角色")
+    @GetMapping("list")
+    @RequiresPermissions("dept:role:list")
+    public ResponseEntity<List<DeptRole>> getDeptRoleList(){
+        log.info("获取部门角色列表");
+        List<DeptRole> roleList = deptRoleService.getDeptRoleList();
+        return ResponseEntity.ok(roleList);
+    }
+
+    /**
      * 新增用户角色列表
      * @param deptRole
      * @return
@@ -107,7 +120,7 @@ public class DeptRoleController {
     }
 
     /**
-     * 更新部门角色
+     * 删除部门角色
      * @param ids
      * @return
      */

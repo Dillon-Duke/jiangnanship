@@ -9,6 +9,7 @@ import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
+import com.caidao.util.UserLoginTokenUtils;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
@@ -17,7 +18,6 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.CredentialsException;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,23 +97,22 @@ public class LoginController {
 	public ResponseEntity<String> backlogin(@RequestBody UserParam userParam) {
 		
 		Subject subject = SecurityUtils.getSubject();
-		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(userParam.getPrincipal(), userParam.getCredentials());
+		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.BACK_USER_REALM);
 		String token = null;
 		try {
 			//校验验证码
 			checkCode(userParam.getSessionUUID(),userParam.getImageCode());
 			//校验登录信息
-			subject.login(usernamePasswordToken);
+			subject.login(userLoginTokenUtils);
 			token = subject.getSession().getId().toString();		
-			
-			//设置UUID  默认存贮30分钟
+
 			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token);
 		} catch (CredentialsException e) {
 			return ResponseEntity.badRequest().body("密码错误");
 		}	catch (AccountException e) {
 			return ResponseEntity.badRequest().body("账户异常");
 		}catch (AuthenticationException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
+			return ResponseEntity.badRequest().body("该账户不存在，如有问题，请联系管理员");
 		}
 		return ResponseEntity.ok(token);
 	}

@@ -11,6 +11,7 @@ import javax.sql.DataSource;
 /**
  * @author tom
  * @since 2020-5-12
+ * 工作流配置，将工作流的5个service交给spring管理
  */
 
 @Configuration

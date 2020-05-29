@@ -56,7 +56,7 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = RuntimeException.class)
     public Integer applyFlatcarPlan(FlatcarPlan flatcarPlan, SysUser sysUser) {
 
         //如果平板车计划没有id 则为新增提交任务
@@ -69,12 +69,11 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
             flatcarPlan.setApplyName(sysUser.getUsername());
             flatcarPlan.setJobNumber("PBSQLS" + DateUtils.yyyyMMdd());
             Integer insert = flatcarPlanMapper.insert(flatcarPlan);
-
             //平板车计划任务提交成功 新增提交流程
-            if (insert != null){
+            if (insert != 0){
 
                 //设置业务主键
-                String businessKey = sysUser.getUsername() + "." + insert;
+                String businessKey = sysUser.getUsername() + "." + flatcarPlan.getFlatcarId();
                 boolean instence = startInstence(flatcarPlan, businessKey);
 
                 if (!instence){
@@ -165,9 +164,9 @@ public class FlatcarPlanServiceImpl extends ServiceImpl<FlatcarPlanMapper, Flatc
         String businessKey1 = processInstance.getBusinessKey();
 
         //判断是否启动成功
-        if (businessKey == businessKey1){
-            return true;
+        if (businessKey != businessKey1){
+            throw new RuntimeException("平板车计划任务申请失败");
         }
-        return false;
+        return true;
     }
 }

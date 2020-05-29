@@ -1,16 +1,15 @@
 package com.caidao.config;
 
-import java.io.Serializable;
-import java.util.UUID;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
 import com.caidao.util.PropertyUtils;
 import org.apache.shiro.util.StringUtils;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.context.annotation.Configuration;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @author tom
@@ -18,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
  */
 
 @Configuration
-public class TokenSessionManage extends DefaultWebSessionManager {
+public class TokenSessionManageConfig extends DefaultWebSessionManager {
 
 	/**
 	 * 使用自定义的token

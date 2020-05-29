@@ -9,10 +9,6 @@ import com.caidao.param.UsernamePasswordParam;
 import java.util.List;
 
 /**
- * <p>
- *  服务类
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */

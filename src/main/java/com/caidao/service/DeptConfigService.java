@@ -30,4 +30,11 @@ public interface DeptConfigService extends IService<DeptConfig> {
      * @return
      */
     List<DeptConfig> getListDept();
+
+    /**
+     * 获取用户的所有权限
+     * @param userId
+     * @return
+     */
+    List<String> getPowerByUserId(Integer userId);
 }

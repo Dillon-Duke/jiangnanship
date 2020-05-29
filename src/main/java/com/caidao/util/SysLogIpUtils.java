@@ -4,6 +4,8 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author tom
+ * @since
+ * 该类作用是在记录日志的时候，如果在多台nginx的情况下，找到用户的真是IP
  */
 
 public class SysLogIpUtils {

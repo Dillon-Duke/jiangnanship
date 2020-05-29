@@ -12,7 +12,6 @@ import com.caidao.mapper.SysUserRoleMapper;
 import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysUserService;
 import com.caidao.util.Md5Utils;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,6 @@ import java.util.*;
  * @since 2020-03-25
  */
 @Service
-@Slf4j
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
 	@Autowired
@@ -51,7 +49,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	public SysUser getUserByUsername(String username) {
 		Assert.notNull(username, "用户名不能为空");
-		log.info("查询用户名为{}的用户",username);
 		SysUser sysUser = sysUserMapper
 				.selectOne(new LambdaQueryWrapper<SysUser>()
 				.eq(SysUser ::getUsername ,username));
@@ -63,7 +60,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 */
 	@Override
 	public IPage<SysUser> getUserPage(Page<SysUser> page, SysUser sysUser) {
-		log.info("当前页{}，页大小{}",page.getSize(),page.getCurrent());
 		IPage<SysUser> usersPage = sysUserMapper.selectPage(page, new LambdaQueryWrapper<SysUser>()
 				.like(StringUtils.hasText(sysUser.getUsername()),SysUser::getUsername,sysUser.getUsername())
 		.ne(SysUser::getUsername,"admin")
@@ -75,10 +71,17 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 * 新增用户时新增用户角色中间表
 	 */
 	@Override
+	@Transactional(rollbackFor = RuntimeException.class)
 	public boolean save(SysUser sysUser) {
 		
 		Assert.notNull(sysUser, "sysUser must not be null");
-		log.info("新增用户{}",sysUser);
+
+		//查询数据库中是否有该用户名，如果有，则提示更换用户名
+		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+				.eq(SysUser::getUsername, sysUser.getUsername()));
+		if (user != null){
+			throw new RuntimeException("该名称已被注册，请更换其他名称");
+		}
 		sysUser.setCreateDate(LocalDateTime.now());
 
 		String salt = UUID.randomUUID().toString();
@@ -114,9 +117,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 * 真删除
 	 */
 	@Override
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = NullPointerException.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
-		log.info("批量移除id为{}的用户",idList);
 		boolean removeByIds = super.removeByIds(idList);
 		if (idList==null || idList.isEmpty()) {
 			throw new NullPointerException("批量删除用户不能为空");
@@ -130,7 +132,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 * @param ids
 	 */
 	@Override
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = RuntimeException.class)
 	public void deleteByIds(List<Integer> ids) {
 
 		//批量更新 设置状态为0
@@ -144,7 +146,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 //		//将主键传到mapper sql批量删除
 //		this.updateBatchById(sysUsers,100);
 
-		sysUserMapper.batchDelete(ids);
+		Integer integer = sysUserMapper.batchDelete(ids);
+		if (integer == 0){
+			throw new RuntimeException("用户删除失败");
+		}
 	}
 
 	/**
@@ -208,7 +213,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 */
 	@Override
 	public SysUser getById(Serializable id) {
-		log.info("查询id为{}的用户所存在的角色",id);
 		if (id == null || id=="") {
 			throw new NullPointerException("id为空");
 		}
@@ -235,10 +239,20 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysUser sysUser) {
-		log.info("更新用户为{}的用户",sysUser.getUsername());
 
-		//设置更新盐值
-		setSaltPass(sysUser,sysUser.getUserSalt());
+		//查询数据库中是否有该用户名，如果有，则提示更换用户名
+		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+				.eq(SysUser::getUsername, sysUser.getUsername()));
+		if (user != null){
+			throw new RuntimeException("该名称已被注册，请更换其他名称");
+		}
+
+		//判断用户密码是否有改动过，如果有，则重新赋值 反之，则直接存入数据库
+		SysUser user1 = sysUserMapper.selectById(sysUser.getUserId());
+		if (user1.getPassword() != sysUser.getPassword()){
+			//设置更新盐值
+			setSaltPass(sysUser,sysUser.getUserSalt());
+		}
 
 		//设置更新时间
 		sysUser.setUpdateDate(LocalDateTime.now());

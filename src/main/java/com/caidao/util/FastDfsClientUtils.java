@@ -14,6 +14,8 @@ import java.io.IOException;
 
 /**
  * @author tom
+ * @since 2020-05-15
+ * fastdfs文件上传的真实工具类
  */
 
 @Component

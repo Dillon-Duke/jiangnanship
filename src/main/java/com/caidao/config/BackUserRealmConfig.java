@@ -1,11 +1,11 @@
 package com.caidao.config;
 
-import java.util.HashSet;
-import java.util.List;
-
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
+import com.caidao.util.PropertyUtils;
+import com.caidao.util.UserLoginTokenUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -19,16 +19,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author tom
  * @since 2020-5-12
  */
-
-@Configuration 
+@Configuration
 @Slf4j
-public class UserRealm extends AuthorizingRealm {
+public class BackUserRealmConfig extends AuthorizingRealm {
 	
 	@Autowired
 	private SysUserService sysUserService;
@@ -40,6 +40,11 @@ public class UserRealm extends AuthorizingRealm {
 	@Autowired
 	@Lazy
 	private SysMenuService sysMenuService;
+
+	@Override
+	public String getName() {
+		return PropertyUtils.BACK_USER_REALM;
+	}
 	
 	/**
 	 * 授权
@@ -62,9 +67,12 @@ public class UserRealm extends AuthorizingRealm {
 	 * 登录认证
 	 */
 	@Override
-	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) throws AuthenticationException {
 		
-		log.info("{}登录了",token.getPrincipal().toString());
+		log.info("{}登录了",authcToken.getPrincipal().toString());
+
+		//将token转换为我们自己的token
+		UserLoginTokenUtils token = (UserLoginTokenUtils) authcToken;
 
 		SysUser user = sysUserService.getUserByUsername(token.getPrincipal().toString());
 		if (user == null) {
@@ -73,7 +81,7 @@ public class UserRealm extends AuthorizingRealm {
 		
 		//动态的生成盐值
 		ByteSource byteSource = ByteSource.Util.bytes(user.getUserSalt());
-		SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(user,user.getPassword(),byteSource,user.getUsername());
+		SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(user,user.getPassword(),byteSource,getName());
 		return simpleAuthenticationInfo;
 	}
 

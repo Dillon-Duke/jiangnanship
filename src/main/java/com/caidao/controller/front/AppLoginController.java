@@ -1,17 +1,16 @@
 package com.caidao.controller.front;
 
-import com.caidao.controller.front.flatcar.FlatcarPlanController;
 import com.caidao.entity.SysUser;
 import com.caidao.param.UserParam;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
+import com.caidao.util.UserLoginTokenUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.CredentialsException;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
@@ -20,7 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -55,12 +57,12 @@ public class AppLoginController {
 
 		Subject subject = SecurityUtils.getSubject();
 
-		UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(userParam.getPrincipal(), userParam.getCredentials());
+		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.APP_USER_REALM);
 		String token = null;
 		try {
 
 			//校验登录信息
-			subject.login(usernamePasswordToken);
+			subject.login(userLoginTokenUtils);
 			token = subject.getSession().getId().toString();
 
 			//设置UUID  默认存贮30分钟

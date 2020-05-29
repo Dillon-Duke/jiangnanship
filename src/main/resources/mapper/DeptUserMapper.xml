@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.caidao.mapper.DeptUserMapper">
+
+    <select id="selectDeptRole" parameterType="integer" resultType="map">
+        SELECT d.dept_id,d.dept_name,r.role_name FROM dept d,dept_role r,dept_dept_role dr WHERE d.dept_id = dr.dept_id AND dr.role_id = r.role_id and r.role_id = #{integer}
+    </select>
+
+</mapper>

@@ -10,7 +10,6 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * RestTemplate 远程调用工具类
- *
  * @author tom
  * @createDate 2020-05-21
  *

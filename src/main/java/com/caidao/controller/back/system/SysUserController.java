@@ -73,7 +73,7 @@ public class SysUserController {
 	@RequiresPermissions("sys:user:info")
 	@GetMapping("info/{id}")
 	@ApiOperation("通过id获取用户数据")
-	public ResponseEntity<SysUser> getUserById(@PathVariable("id") long id){
+	public ResponseEntity<SysUser> getUserById(@PathVariable("id") Integer id){
 		SysUser sysUser = sysUserService.getById(id);
 		return ResponseEntity.ok(sysUser);
 	}

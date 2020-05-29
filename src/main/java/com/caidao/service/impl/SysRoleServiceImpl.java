@@ -138,7 +138,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	 * @Transactional(noRollbackFor = RuntimeException.class)  让unchecked例外不回滚
 	 */
 	@Override
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = RuntimeException.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 
 		//删除之前判断是否还有用户绑定角色 要是有，则删除失败，抛出异常

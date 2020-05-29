@@ -6,6 +6,7 @@ import org.apache.shiro.util.ByteSource;
 /**
  * @author tom
  * @since 2020-5-12
+ * 处理用户密码的盐值生成类，目前用户使用的是 {哈希+加盐+次数} 前两个没有使用
  */
 
 public class Md5Utils {
@@ -46,10 +47,6 @@ public class Md5Utils {
 	public static String getHashAndSaltAndTime(String password,ByteSource bytes,Integer hashIterations) {
 		Md5Hash md5SaltIterateHash = new Md5Hash(password, bytes, hashIterations);
 		return md5SaltIterateHash.toString();
-	}
-
-	public static void main(String[] args) {
-		System.out.println(getHashAndSaltAndTime("1",ByteSource.Util.bytes("11111111111111112222333344445555".getBytes()),1024));
 	}
 
 }

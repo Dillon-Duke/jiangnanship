@@ -1,7 +1,10 @@
 package com.caidao.config;
 
+import org.apache.shiro.authc.Authenticator;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.authc.pam.FirstSuccessfulStrategy;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
@@ -14,9 +17,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,16 +43,56 @@ public class ShiroConfig {
 	 * @param sessionManager
 	 * @return
 	 */
-@Bean
-	public DefaultWebSecurityManager defaultWebSecurityManager(UserRealm realm, CredentialsMatcher credentialsMatcher, TokenSessionManage sessionManager, @Qualifier("SessionDAO") SessionDAO redisSessionDAO) {
-		DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();	
-		securityManager.setRealm(realm);
+	@Bean
+	public DefaultWebSecurityManager defaultWebSecurityManager(BackUserRealmConfig realm, AppUserRealmConfig appUserRealm, Authenticator authenticator, CredentialsMatcher credentialsMatcher, TokenSessionManageConfig sessionManager, @Qualifier("SessionDAO") SessionDAO redisSessionDAO) {
+		DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
+
+		securityManager.setAuthenticator(authenticator);
+
+		List<Realm> list = new ArrayList<>();
+		list.add(realm);
+		list.add(appUserRealm);
+
+		securityManager.setRealms(list);
+
 		//设置盐值校验
 		realm.setCredentialsMatcher(credentialsMatcher);
 		//设置将登录信息放在redis里面
 		sessionManager.setSessionDAO(redisSessionDAO);
 		securityManager.setSessionManager(sessionManager);
 		return securityManager;
+	}
+
+	/**
+	 * 配置使用自定义认证器，可以实现多Realm认证，并且可以指定特定Realm处理特定类型的验证
+	 */
+	@Bean
+	public CustomRealmAuthenticatorConfig customRealmAuthenticatorConfig(AppUserRealmConfig appUserRealm , BackUserRealmConfig userRealm , FirstSuccessfulStrategy successfulStrategy){
+		CustomRealmAuthenticatorConfig customRealmAuthenticatorConfig = new CustomRealmAuthenticatorConfig();
+
+		//设置刷新缓存
+		userRealm.setCachingEnabled(true);
+		appUserRealm.setCachingEnabled(true);
+
+		//将所有的realm放在shiro中
+		Map<String, Object> hashMap = new HashMap<>();
+			hashMap.put("appUser",appUserRealm);
+			hashMap.put("backSystemUser",userRealm);
+		customRealmAuthenticatorConfig.setDefinedRealms(hashMap);
+
+		//配置认证策略，只要有一个Realm认证成功即可，并且返回所有认证成功信息
+		customRealmAuthenticatorConfig.setAuthenticationStrategy(successfulStrategy);
+		return customRealmAuthenticatorConfig;
+	}
+
+	/**
+	 * 将shiro认证中的第一个认证成功策略放在spring中
+	 * @return
+	 */
+	@Bean
+	public FirstSuccessfulStrategy firstSuccessfulStrategy(){
+		FirstSuccessfulStrategy successfulStrategy = new FirstSuccessfulStrategy();
+		return successfulStrategy;
 	}
 
 	/**
