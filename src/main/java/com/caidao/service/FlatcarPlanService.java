@@ -1,8 +1,8 @@
 package com.caidao.service;
 
-import com.caidao.entity.FlatcarPlan;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.SysUser;
+import com.caidao.entity.DeptUser;
+import com.caidao.entity.FlatcarPlan;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public interface FlatcarPlanService extends IService<FlatcarPlan> {
      * @param flatcarPlan
      * @return
      */
-    Integer applyFlatcarPlan(FlatcarPlan flatcarPlan, SysUser sysUser);
+    Integer applyFlatcarPlan(FlatcarPlan flatcarPlan, DeptUser deptUser);
 
     /**
      * 通过创建人id 查询任务列表
@@ -34,4 +34,6 @@ public interface FlatcarPlanService extends IService<FlatcarPlan> {
      * @return
      */
     Boolean complayUserTask(FlatcarPlan flatcarPlan,String taskId,String reasion);
+
+    void getUserApplyTask(DeptUser deptUser);
 }

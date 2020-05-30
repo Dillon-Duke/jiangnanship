@@ -4,8 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.Dept;
 import com.caidao.entity.DeptDeptRole;
-import com.caidao.mapper.DeptDeptRoleMapper;
-import com.caidao.mapper.DeptMapper;
+import com.caidao.entity.DeptRole;
+import com.caidao.entity.DeptUser;
+import com.caidao.mapper.*;
 import com.caidao.service.DeptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,12 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
 
     @Autowired
     private DeptMapper deptMapper;
+
+    @Autowired
+    private DeptUserMapper deptUserMapper;
+
+    @Autowired
+    private DeptRoleMapper deptRoleMapper;
 
     @Autowired
     private DeptDeptRoleMapper deptDeptRoleMapper;
@@ -84,11 +91,29 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Override
     public boolean removeById(Serializable id) {
 
-        //判断是否还有角色关联着部门，如果有，删除失败
+        //判断部门下面是否还有用户，如果有，删除失败
+        List<DeptUser> deptUsers = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getUserDeptId, id));
+        if ((deptUsers != null ) || (!deptUsers.isEmpty())) {
+            throw new RuntimeException("部门还绑有用户，不能删除");
+        }
+
+        //查询部门下面所有的角色
         List<DeptDeptRole> deptDeptRoles = deptDeptRoleMapper.selectList(new LambdaQueryWrapper<DeptDeptRole>()
+                .select(DeptDeptRole::getRoleId)
                 .eq(DeptDeptRole::getDeptId, id));
-        if ((deptDeptRoles != null ) || (!deptDeptRoles.isEmpty())) {
-            throw new RuntimeException("部门还绑有角色，不能删除");
+
+        //删除对应的角色表
+        int delete = deptRoleMapper.delete(new LambdaQueryWrapper<DeptRole>().in(DeptRole::getRoleId, deptDeptRoles));
+        if (delete == 0){
+            throw new RuntimeException("删除部门失败，请重试");
+        }
+
+        //删除对应的角色中间表
+        int delete1 = deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
+                .eq(DeptDeptRole::getDeptId, id));
+        if (delete1 == 0){
+            throw new RuntimeException("删除部门失败，请重试");
         }
 
         //判断是否还有子部门，如果有 抛异常处理

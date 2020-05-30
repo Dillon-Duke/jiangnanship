@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author tom
@@ -106,7 +107,8 @@ public class LoginController {
 			subject.login(userLoginTokenUtils);
 			token = subject.getSession().getId().toString();		
 
-			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token);
+			//设置token30分钟过期
+			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token,30, TimeUnit.MINUTES);
 		} catch (CredentialsException e) {
 			return ResponseEntity.badRequest().body("密码错误");
 		}	catch (AccountException e) {

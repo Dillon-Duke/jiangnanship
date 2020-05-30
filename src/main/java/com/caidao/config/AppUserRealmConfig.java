@@ -1,7 +1,6 @@
 package com.caidao.config;
 
 import com.caidao.entity.DeptUser;
-import com.caidao.entity.SysUser;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
@@ -18,6 +17,7 @@ import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +28,11 @@ import java.util.List;
  */
 @Configuration
 public class AppUserRealmConfig extends AuthorizingRealm {
+
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+    //TODO 在用户进行前后端交互的时候需要刷新redis里面的存储时间
 
     @Autowired
     private DeptUserService deptUserService;
@@ -51,9 +56,10 @@ public class AppUserRealmConfig extends AuthorizingRealm {
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
 
-        SysUser user = (SysUser)principals.getPrimaryPrincipal();
+        DeptUser user = (DeptUser)principals.getPrimaryPrincipal();
         //获得登录用户的所有权限
         List<String> powerByUserId = deptConfigService.getPowerByUserId(user.getUserId());
+
         if (powerByUserId == null || powerByUserId.isEmpty()) {
             return null;
         }

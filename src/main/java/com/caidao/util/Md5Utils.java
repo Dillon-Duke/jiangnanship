@@ -51,8 +51,7 @@ public class Md5Utils {
 
 	public static void main(String[] args) {
 
-		System.out.println(ByteSource.Util.bytes("395892ae6ed345fd83d7cb2676b1104a".getBytes()));
-//		System.out.println(getHashAndSaltAndTime("xiaozhang", ByteSource.Util.bytes("395892ae6ed345fd83d7cb2676b1104a".getBytes()), 1024));
+		System.out.println(getHashAndSaltAndTime("admin", ByteSource.Util.bytes("fadeb682-2538-4e92-811c-f6e30dd56cbf".getBytes()), 1024));
 	}
 
 }

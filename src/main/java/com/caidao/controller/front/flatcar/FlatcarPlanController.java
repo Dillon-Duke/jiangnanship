@@ -1,5 +1,6 @@
 package com.caidao.controller.front.flatcar;
 
+import com.caidao.entity.DeptUser;
 import com.caidao.entity.FlatcarPlan;
 import com.caidao.entity.SysUser;
 import com.caidao.service.FlatcarPlanService;
@@ -62,13 +63,26 @@ public class FlatcarPlanController {
         Assert.notNull(flatcarPlan,"平板车计划任务前端传值为空");
         log.info("申请一个任务名为{}的平板车任务",flatcarPlan.getJobName());
 
-        SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-        Integer result = flatcarPlanService.applyFlatcarPlan(flatcarPlan,sysUser);
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        Integer result = flatcarPlanService.applyFlatcarPlan(flatcarPlan,deptUser);
         if (result == -1){
             //如果返回-1 则表示新增用户申请失败
             return ResponseEntity.ok(-1);
         }
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 查询平板车任务审批列表
+     * @return
+     */
+    @ApiOperation("查询平板车任务的审批列表")
+    @GetMapping("getApplyTask")
+    public ResponseEntity<Void> getUserApplyTask(){
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        log.info("查询需要审批的任务");
+        flatcarPlanService.getUserApplyTask(deptUser);
+        return null;
     }
 
     /**
@@ -94,12 +108,12 @@ public class FlatcarPlanController {
     @GetMapping("usertasklist/{id}")
     public ResponseEntity<List<FlatcarPlan>> getFlatcarPlanListByUser(@PathVariable("id") Integer id){
 
-        SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
-        log.info("获取用户{}的任务列表",sysUser.getUsername());
+        DeptUser deptUser = (DeptUser)SecurityUtils.getSubject().getPrincipal();
+        log.info("获取用户{}的任务列表",deptUser.getUsername());
 
         //判断是否查看别人的任务
         if (id == null){
-            id = sysUser.getUserId();
+            id = deptUser.getUserId();
         }
 
         List<FlatcarPlan> planList = flatcarPlanService.selectListByApplyId(id);

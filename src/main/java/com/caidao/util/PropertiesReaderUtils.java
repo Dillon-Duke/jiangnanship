@@ -2,6 +2,7 @@ package com.caidao.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,8 +24,11 @@ public class PropertiesReaderUtils {
         //处理映射配置信息
         Properties mappingProperties = new Properties();
         InputStream mappingPropertiesInStream = loader.getResourceAsStream("activiti.properties");
+
+        //使用inputstreamreder 解决属性类从数据流中加载中文乱码的问题
+        InputStreamReader inputStreamReader = new InputStreamReader(mappingPropertiesInStream);
         try {
-            mappingProperties.load(mappingPropertiesInStream);
+            mappingProperties.load(inputStreamReader);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

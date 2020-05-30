@@ -6,13 +6,11 @@ import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.FirstSuccessfulStrategy;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
-import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.crazycake.shiro.IRedisManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
-import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -55,7 +53,7 @@ public class ShiroConfig {
 
 		securityManager.setRealms(list);
 
-		//设置盐值校验
+		//设置通过盐值校验
 		realm.setCredentialsMatcher(credentialsMatcher);
 		appUserRealm.setCredentialsMatcher(credentialsMatcher);
 		//设置将登录信息放在redis里面
@@ -125,17 +123,22 @@ public class ShiroConfig {
 		hashMap.put("/v2/**", "anon");
 		hashMap.put("/swagger-resources/**", "anon");
 
-		//系统自己需要放开的页面路径
+		//系统后台需要放开的页面路径
 		hashMap.put("/captcha.jpg", "anon");
 		hashMap.put("/login", "anon");
 		hashMap.put("/logout", "logout");
 		hashMap.put("/sys/menu/nav", "anon");
 
+		//系统前台需要放开的页面路径
+		hashMap.put("/appLogin", "anon");
+		hashMap.put("/Authorities", "anon");
+		hashMap.put("/AppLogout", "anon");
+
 		//表示所有的路径不拦截 调试使用
 		hashMap.put("/**", "anon");
 
 		//表示需要认证才可以访问
-//		hashMap.put("/**", "anon");
+//		hashMap.put("/**", "authc");
 		defaultShiroFilter.addPathDefinitions(hashMap);
 
 		return defaultShiroFilter;
@@ -164,29 +167,6 @@ public class ShiroConfig {
 //		设置redis连接池使用
 //		redisManager.setJedisPool(jedisPool);
 		return redisManager;
-	}
-	
-	/**
-	 * 生成切面的类 需要注入security manager
-	 * @param securityManager
-	 * @return
-	 */
-	@Bean   
-	public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(DefaultWebSecurityManager securityManager) {
-		AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor = new AuthorizationAttributeSourceAdvisor();
-		authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
-		return authorizationAttributeSourceAdvisor;
-	}
-	
-	/**
-	 * 使用切面 强制使用cglib创建，因为controller里面没有接口
-	 * @return
-	 */
-	@Bean
-	public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator() {
-		DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator = new DefaultAdvisorAutoProxyCreator();
-		defaultAdvisorAutoProxyCreator.setProxyTargetClass(true);
-		return defaultAdvisorAutoProxyCreator;
 	}
 
 }

@@ -21,10 +21,6 @@ import java.util.List;
 
 
 /**
- * <p>
- *  前端控制器
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */

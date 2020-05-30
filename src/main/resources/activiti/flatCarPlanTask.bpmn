@@ -12,14 +12,14 @@
              name=""
              targetNamespace="http://www.activiti.org/testm1589713629357"
              typeLanguage="http://www.w3.org/2001/XMLSchema">
-   <process xmlns="" id="latCarPlanTask" isClosed="false" isExecutable="true"
+   <process id="flatCarPlanTaskApply" isClosed="false" isExecutable="true"
             name="平板车计划任务申请"
             processType="None">
       <startEvent id="_2" name="StartEvent"/>
       <endEvent id="_3" name="EndEvent"/>
-      <userTask activiti:assignee="${operationAreaName}" activiti:exclusive="true" id="_4"
+      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_4"
                 name="作业区申请"/>
-      <userTask activiti:assignee="${deptTransName}" activiti:exclusive="true" id="_5"
+      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_5"
                 name="部门驳运申请"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_6" name="ExclusiveGateway"/>
       <sequenceFlow id="_7" sourceRef="_2" targetRef="_6"/>
@@ -88,7 +88,7 @@
                        documentation="background=#3C3F41;count=1;horizontalcount=1;orientation=0;width=842.4;height=1195.2;imageableWidth=832.4;imageableHeight=1185.2;imageableX=5.0;imageableY=5.0"
                        id="Diagram-_1"
                        name="New Diagram">
-      <bpmndi:BPMNPlane bpmnElement="latCarPlanTask">
+      <bpmndi:BPMNPlane bpmnElement="flatCarPlanTaskApply">
          <bpmndi:BPMNShape bpmnElement="_2" id="Shape-_2">
             <dc:Bounds height="32.0" width="32.0" x="25.0" y="90.0"/>
             <bpmndi:BPMNLabel>

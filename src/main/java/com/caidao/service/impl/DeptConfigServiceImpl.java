@@ -6,19 +6,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.DeptConfig;
 import com.caidao.entity.DeptRoleConfig;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.DeptUserRole;
 import com.caidao.mapper.DeptConfigMapper;
 import com.caidao.mapper.DeptRoleConfigMapper;
-import com.caidao.mapper.DeptUserMapper;
-import com.caidao.mapper.DeptUserRoleMapper;
 import com.caidao.service.DeptConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,13 +28,7 @@ import java.util.List;
 public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptConfig> implements DeptConfigService {
 
     @Autowired
-    private DeptUserMapper deptUserMapper;
-
-    @Autowired
     private DeptConfigMapper deptConfigMapper;
-
-    @Autowired
-    private DeptUserRoleMapper deptUserRoleMapper;
 
     @Autowired
     private DeptRoleConfigMapper deptRoleConfigMapper;
@@ -71,27 +64,19 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptCon
     @Override
     public List<String> getPowerByUserId(Integer userId) {
 
-        //通过用户id查询对应的角色id
-        List<Object> roleList = deptUserRoleMapper.selectObjs(new LambdaQueryWrapper<DeptUserRole>()
-                                                            .select(DeptUserRole::getRoleId)
-                                                            .eq(DeptUserRole::getUserId, userId));
-        if (roleList == null || roleList.isEmpty()){
+        //获取权限ID
+        List<Integer> list = deptConfigMapper.getPowerIDs(userId);
+        if (list == null || list.isEmpty()){
             return null;
         }
 
-        //查询用户属于哪个部门
-        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
-                                                .select(DeptUser::getUserDeptId)
-                                                .eq(DeptUser::getUserId, userId));
-        //获取对应的权限列表
-        List<Object> roleConfigs = deptRoleConfigMapper.selectObjs(new LambdaQueryWrapper<DeptRoleConfig>()
-                                                .select(DeptRoleConfig::getConfigId)
-                                                .eq(DeptRoleConfig::getDeptId, deptUser)
-                                                .or(false)
-                                                .in(DeptRoleConfig::getRoleId, roleList));
+        //获得对应的权限信息
+        List<Object> deptConfigs = deptConfigMapper.selectObjs(new LambdaQueryWrapper<DeptConfig>()
+                .select(DeptConfig::getParamValue)
+                .in(DeptConfig::getConfId, list));
 
         List<String> result = new ArrayList<String>();
-        for (Object object : roleConfigs) {
+        for (Object object : deptConfigs) {
             String authorities = String.valueOf(object);
             String[] split = authorities.split(",");
             for (String string : split) {
@@ -113,5 +98,23 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptCon
         deptConfig.setState(1);
 
         return super.save(deptConfig);
+    }
+
+    /**
+     * 删除i权限的时候需要一起删除角色权限中间表
+     * @param idList
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public boolean removeByIds(Collection<? extends Serializable> idList) {
+
+        //删除权限之前需要删除查询是否有角色在使用该权限，如果有，则删除失败
+        List<DeptRoleConfig> deptRoleConfigs = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleConfig>()
+                .in(DeptRoleConfig::getConfigId, idList));
+        if (deptRoleConfigs.size() != 0 || (!deptRoleConfigs.isEmpty())){
+            throw new RuntimeException("还有角色在使用该权限，删除失败");
+        }
+        return super.removeByIds(idList);
     }
 }

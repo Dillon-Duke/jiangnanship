@@ -198,15 +198,15 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         //判断如果有用户存在，则不能删除角色
         List<DeptUserRole> userRoles = deptUserRoleMapper.selectList(new LambdaQueryWrapper<DeptUserRole>()
                                         .in(DeptUserRole::getRoleId, idList));
-        if ((!userRoles.isEmpty()) && (userRoles == null)){
+        if ((!userRoles.isEmpty()) || (userRoles != null)){
             throw new RuntimeException("该角色上面有绑定的用户，不能删除");
         }
 
         for (Serializable serializable : idList) {
-            //删除角色之前，先删除对应的部门
+            //删除角色之前，先删除对应的角色部门中间表
             deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
                     .in(DeptDeptRole::getRoleId, serializable));
-            //删除角色之前，先删除对应的权限
+            //删除角色之前，先删除对应的权限中间表
             deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleConfig>()
                     .in(DeptRoleConfig::getRoleId, serializable));
         }

@@ -1,6 +1,7 @@
-package com.caidao.activiti;
+package com.caidao.controller.activiti;
 
 import com.caidao.util.PropertiesReaderUtils;
+import io.swagger.annotations.ApiOperation;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.DeploymentBuilder;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
 
@@ -30,6 +32,7 @@ public class DeploymentController {
      * 平板车计划申请流程的发布
      * @return
      */
+    @ApiOperation("发布工作流程任务")
     @GetMapping("/DeploymentPublish")
     public ResponseEntity<Deployment> DeploymentPublish(){
 
@@ -49,18 +52,36 @@ public class DeploymentController {
      * 通过名称查询已经部署的流程
      * @return
      */
-    @GetMapping("/getLastestDeployment")
-    public ResponseEntity<ProcessDefinition> getLastestDeployment(){
-
-        Map<String, String> map = PropertiesReaderUtils.getMap();
+    @ApiOperation("通过流程任务的名字查询流程任务")
+    @GetMapping("/getLastestDeploymentByName")
+    public ResponseEntity<List<ProcessDefinition>> getLastestDeploymentByName( String DeploymentName){
 
         ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
 
-        ProcessDefinition flatcarPlan = processDefinitionQuery.processDefinitionName(map.get("DeploymentName"))
-                                                                .latestVersion()
-                                                                .singleResult();
+        List<ProcessDefinition> list = processDefinitionQuery.processDefinitionName(DeploymentName)
+                                                                .orderByProcessDefinitionVersion()
+                                                                .desc()
+                                                                .list();
+        //TODO 之后再看看这个接口是不是需要，字段需要返回哪些，直接返回字段的类型不匹配报错，需要新建实体类转一下
+        System.out.println(list);
+        return null;
+    }
 
-        return ResponseEntity.ok(flatcarPlan);
+    /**
+     * 通过key查询已经部署的流程
+     * @return
+     */
+    @ApiOperation("通过流程任务的key查询流程任务")
+    @GetMapping("/getLastestDeploymentByKey")
+    public ResponseEntity<ProcessDefinition> getLastestDeploymentByKey(String DeploymentKey){
+
+        ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
+
+        ProcessDefinition flatcarPlan = processDefinitionQuery.processDefinitionKey(DeploymentKey)
+                .latestVersion()
+                .singleResult();
+        //TODO 之后再看看这个接口是不是需要，字段需要返回哪些，直接返回字段的类型不匹配报错，需要新建实体类转一下
+        return ResponseEntity.ok(null);
     }
 
 }

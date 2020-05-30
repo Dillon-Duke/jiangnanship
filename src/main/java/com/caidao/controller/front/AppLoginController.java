@@ -3,6 +3,7 @@ package com.caidao.controller.front;
 import com.caidao.entity.DeptUser;
 import com.caidao.entity.SysUser;
 import com.caidao.param.UserParam;
+import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.UserLoginTokenUtils;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,6 +45,9 @@ public class AppLoginController {
 
 	@Autowired
 	private DeptUserService deptUserService;
+
+	@Autowired
+	private DeptConfigService deptConfigService;
 
 	/**
 	 * app用户登录
@@ -76,6 +81,21 @@ public class AppLoginController {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 		return ResponseEntity.ok(token);
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	@ApiOperation("获得用户的权限")
+	@GetMapping("/Authorities")
+	public ResponseEntity<List<String>> getUserAuthorities(){
+		DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+		if (deptUser == null){
+			return null;
+		}
+		List<String> deptUserAuthorities = deptConfigService.getPowerByUserId(deptUser.getUserId());
+		return ResponseEntity.ok(deptUserAuthorities);
 	}
 
 	/**
@@ -146,7 +166,7 @@ public class AppLoginController {
 	 * app用户退出登录
 	 * @return
 	 */
-	@PostMapping("/sys/AppLogout")
+	@PostMapping("/AppLogout")
 	@ApiOperation("app退出账号")
 	public ResponseEntity<Void> logout(){
 
