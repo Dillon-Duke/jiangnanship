@@ -16,6 +16,9 @@ public class UserParam {
 	
 	@ApiModelProperty("用户密码")
 	private String credentials;
+
+	@ApiModelProperty("用户新密码")
+	private String newCredentials;
 	
 	@ApiModelProperty("验证码")
 	private String imageCode;

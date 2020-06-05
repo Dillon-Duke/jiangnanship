@@ -2,7 +2,7 @@ package com.caidao.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.entity.Config;
+import com.caidao.entity.CarConfig;
 
 /**
  * <p>
@@ -12,6 +12,6 @@ import com.caidao.entity.Config;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface ConfigMapper extends BaseMapper<Config> {
+public interface CarConfigMapper extends BaseMapper<CarConfig> {
 
 }

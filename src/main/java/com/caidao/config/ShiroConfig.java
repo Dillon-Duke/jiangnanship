@@ -34,32 +34,44 @@ public class ShiroConfig {
 	
 	@Value("${spring.redis.port}")
 	private Integer port;
+
 	
 	/**
 	 * securitymanager 安全配置
-	 * @param realm
+	 * @param AuthConfig
 	 * @param sessionManager
 	 * @return
 	 */
 	@Bean
-	public DefaultWebSecurityManager defaultWebSecurityManager(BackUserRealmConfig realm, AppUserRealmConfig appUserRealm, Authenticator authenticator, CredentialsMatcher credentialsMatcher, TokenSessionManageConfig sessionManager, @Qualifier("SessionDAO") SessionDAO redisSessionDAO) {
+	public DefaultWebSecurityManager defaultWebSecurityManager(CustomerAuthrizerConfig AuthConfig, BackUserRealmConfig backRealm, AppUserRealmConfig appRealm, Authenticator authenticator, CredentialsMatcher credMatcher, TokenSessionManageConfig sessionManager, @Qualifier("SessionDAO") SessionDAO redisSessionDAO) {
 		DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
 
 		securityManager.setAuthenticator(authenticator);
 
+		//不同的角色对应不同的认证方法  这个方法一定要放在前面，很狗血的问题，放到后面就会报异常 No realms have been configured!  One or more realms must be present to execute an authorization oper
+		securityManager.setAuthorizer(AuthConfig);
 		List<Realm> list = new ArrayList<>();
-		list.add(realm);
-		list.add(appUserRealm);
+		list.add(backRealm);
+		list.add(appRealm);
 
 		securityManager.setRealms(list);
 
 		//设置通过盐值校验
-		realm.setCredentialsMatcher(credentialsMatcher);
-		appUserRealm.setCredentialsMatcher(credentialsMatcher);
+		backRealm.setCredentialsMatcher(credMatcher);
+		appRealm.setCredentialsMatcher(credMatcher);
 		//设置将登录信息放在redis里面
 		sessionManager.setSessionDAO(redisSessionDAO);
 		securityManager.setSessionManager(sessionManager);
 		return securityManager;
+	}
+
+	/**
+	 * 配置自定义的权限认证，不同的用户进入不同的realm里面进行认证
+	 */
+	@Bean
+	public CustomerAuthrizerConfig customerAuthrizerConfig(){
+		CustomerAuthrizerConfig customerAuthrizerConfig = new CustomerAuthrizerConfig();
+		return customerAuthrizerConfig;
 	}
 
 	/**
@@ -74,7 +86,7 @@ public class ShiroConfig {
 		appUserRealm.setCachingEnabled(true);
 
 		//将所有的realm放在shiro中
-		Map<String, Object> hashMap = new HashMap<>();
+		Map<String, Object> hashMap = new HashMap<>(2);
 			hashMap.put("appUserRealm",appUserRealm);
 			hashMap.put("backUserRealm",userRealm);
 		customRealmAuthenticatorConfig.setDefinedRealms(hashMap);
@@ -113,9 +125,9 @@ public class ShiroConfig {
 	 */
 	@Bean
 	public DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition() {
-		DefaultShiroFilterChainDefinition defaultShiroFilter = new DefaultShiroFilterChainDefinition();
+		DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition = new DefaultShiroFilterChainDefinition();
 
-		Map<String, String> hashMap = new HashMap<>(8);
+		Map<String, String> hashMap = new HashMap<>(12);
 
 		//配置对swigger权限放开
 		hashMap.put("/doc.html", "anon");
@@ -139,9 +151,9 @@ public class ShiroConfig {
 
 		//表示需要认证才可以访问
 //		hashMap.put("/**", "authc");
-		defaultShiroFilter.addPathDefinitions(hashMap);
 
-		return defaultShiroFilter;
+		defaultShiroFilterChainDefinition.addPathDefinitions(hashMap);
+		return defaultShiroFilterChainDefinition;
 	}
 	
 	/**

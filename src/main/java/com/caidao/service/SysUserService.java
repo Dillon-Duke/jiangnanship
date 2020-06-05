@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.entity.SysUser;
-import com.caidao.param.UsernamePasswordParam;
+import com.caidao.param.UserParam;
 
 import java.util.List;
 
@@ -38,8 +38,8 @@ public interface SysUserService extends IService<SysUser> {
 	/**
 	 * 更新自己的密码
 	 * @param sysUser
-	 * @param usernamePasswordParam
+	 * @param userParam
 	 * @return
 	 */
-    int updatePass(SysUser sysUser, UsernamePasswordParam usernamePasswordParam);
+    int updatePass(SysUser sysUser, UserParam userParam);
 }

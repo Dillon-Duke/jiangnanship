@@ -69,8 +69,11 @@ public class FlatcarPlan implements Serializable {
     @ApiModelProperty(value = "物品分段 ")
     private String goodsPart;
 
-    @ApiModelProperty(value = "附件")
-    private String fujian;
+    @ApiModelProperty(value = "附件名称")
+    private String fujianName;
+
+    @ApiModelProperty(value = "附件上传的真实地址")
+    private String fujianUrl;
 
     @ApiModelProperty(value = "预估时间")
     private Integer estTime;

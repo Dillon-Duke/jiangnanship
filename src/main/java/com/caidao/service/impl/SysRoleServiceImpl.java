@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.SysRole;
 import com.caidao.entity.SysRoleMenu;
 import com.caidao.entity.SysUserRole;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.SysRoleMapper;
 import com.caidao.mapper.SysRoleMenuMapper;
 import com.caidao.mapper.SysUserRoleMapper;
@@ -59,10 +60,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean save(SysRole sysRole) {
-		Assert.notNull(sysRole, "sysRole must not be null");
-		log.info("新增角色{}",sysRole);
 		if (sysRole.getRoleName() == null || sysRole.getCreateId() == null ) {
-			throw new RuntimeException("新增角色参数错误");
+			throw new MyException("1009","新增角色参数错误");
 		}
 		sysRole.setCreateDate(LocalDateTime.now());
 		sysRole.setState(1);
@@ -87,16 +86,13 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysRole sysRole) {
-		Assert.notNull(sysRole, "sysRole must not be null");
-		log.info("修改角色{}",sysRole);
 
 		sysRole.setUpdateDate(LocalDateTime.now());
 		if (sysRole.getRoleId() == null || sysRole.getRoleName() == null ) {
-			throw new RuntimeException("修改角色参数错误");
+			throw new MyException("1010","修改角色参数错误");
 		}
 		
 		boolean updateById = super.updateById(sysRole);
-		
 		List<Integer> menuIdLists = sysRole.getMenuIdList();
 					
 		if (!menuIdLists.isEmpty()&&updateById) {
@@ -146,7 +142,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 			SysUserRole sysUserRole = sysUserRoleMapper.selectOne(new LambdaQueryWrapper<SysUserRole>()
 					.eq(SysUserRole::getRoleId, serializable));
 			if (sysUserRole != null){
-				throw new RuntimeException("id为" + sysUserRole.getUserId() + "的用户绑定该角色，删除失败");
+				throw new MyException("1011","id为" + sysUserRole.getUserId() + "的用户绑定该角色，删除失败");
 			}
 		}
 

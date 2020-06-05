@@ -1,11 +1,11 @@
 package com.caidao.param;
 
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
 
 /**
  * @author tom
@@ -14,11 +14,6 @@ import lombok.Data;
 
 @Data
 public class Menu implements Serializable {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 
 	@ApiModelProperty("菜单id")
 	private Integer menuId;

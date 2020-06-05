@@ -4,8 +4,8 @@ package com.caidao.controller.back.car;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
-import com.caidao.entity.Config;
-import com.caidao.service.ConfigService;
+import com.caidao.entity.CarConfig;
+import com.caidao.service.CarConfigService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -28,12 +28,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/car/config")
 @Slf4j
-public class ConfigController {
+public class CarConfigController {
 
-	public static final Logger logger = LoggerFactory.getLogger(ConfigController.class);
+	public static final Logger logger = LoggerFactory.getLogger(CarConfigController.class);
 	
 	@Autowired
-	private ConfigService configService;
+	private CarConfigService configService;
 	
 	/**
 	 * 获取页面的分页数据
@@ -43,12 +43,12 @@ public class ConfigController {
 	 */
 	@GetMapping("/page")
 	@ApiOperation("获取当前页字典数据")
-	public ResponseEntity<IPage<Config>> getSysConfigPage(Page<Config> page, Config config){
+	public ResponseEntity<IPage<CarConfig>> getSysConfigPage(Page<CarConfig> page, CarConfig config){
 
 		Assert.notNull(config, "sysConfig must not be null");
 		log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
 
-		IPage<Config> configPage = configService.findPage(page, config);
+		IPage<CarConfig> configPage = configService.findPage(page, config);
 		return ResponseEntity.ok(configPage);
 	}
 	
@@ -59,7 +59,7 @@ public class ConfigController {
 	 */
 	@PostMapping
 	@ApiOperation("新增字典数据")
-	public ResponseEntity<Config> addSysConfig(@RequestBody Config config){
+	public ResponseEntity<CarConfig> addSysConfig(@RequestBody CarConfig config){
 
 		Assert.notNull(config,"新增数据字典参数不能为空");
 		log.info("新增参数名为{}的数据",config.getParamKey());
@@ -75,12 +75,12 @@ public class ConfigController {
 	 */
 	@GetMapping("/info/{id}")
 	@ApiOperation("通过ID查询字典数据")
-	public ResponseEntity<Config> beforeUpdate(@PathVariable("id") Integer id){
+	public ResponseEntity<CarConfig> beforeUpdate(@PathVariable("id") Integer id){
 
 		Assert.state(id !=null, "Id不能为空");
 		log.info("新增参数ID为{}的数据",id);
 
-		Config config = configService.getById(id);
+		CarConfig config = configService.getById(id);
 		return ResponseEntity.ok(config);
 	}
 	
@@ -91,7 +91,7 @@ public class ConfigController {
 	 */
 	@PutMapping
 	@ApiOperation("更新字典数据")
-	public ResponseEntity<Config> updateSysConfig(@RequestBody Config config){
+	public ResponseEntity<CarConfig> updateSysConfig(@RequestBody CarConfig config){
 
 		Assert.notNull(config,"更新数据字典参数不能为空");
 		log.info("更新参数名为{}的数据",config.getParamKey());

@@ -1,11 +1,8 @@
 package com.caidao.aspect;
 
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-
-import javax.servlet.http.HttpServletRequest;
-
+import cn.hutool.json.JSONUtil;
 import com.caidao.anno.SysLogs;
+import com.caidao.entity.DeptUser;
 import com.caidao.entity.Log;
 import com.caidao.entity.SysUser;
 import com.caidao.service.SysLogService;
@@ -20,7 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import cn.hutool.json.JSONUtil;
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 
 /**
  * @author Dillon
@@ -58,8 +57,13 @@ public class SysLogAspectj {
 		log.setOperation(operation.value());
 		
 		//从反射中获取方法的参数 使用huto的json工具
-		Object[] args = joinPoint.getArgs();		
-		log.setParams(args == null?"":JSONUtil.toJsonStr(args));
+		Object[] args = joinPoint.getArgs();
+		String jsonStr = JSONUtil.toJsonStr(args);
+
+		if (jsonStr.length() > 250){
+			jsonStr = jsonStr.substring(0,250) + "...";
+		}
+		log.setParams(args == null?"": jsonStr);
 		
 		//方法结束的时间减去方法开始的时间为方法调用的时间
 
@@ -69,8 +73,13 @@ public class SysLogAspectj {
 		log.setTime(end-start);
 		
 		//设置操作用户 从session中查询用户 找到用户名
-		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-		log.setUsername(sysUser.getUsername());
+		try {
+			DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+			log.setUsername(deptUser.getUsername());
+		} catch (Exception e){
+			SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+			log.setUsername(sysUser.getUsername());
+		}
 		
 		//将日志记录在数据库中
 		sysLogService.save(log);

@@ -3,9 +3,9 @@ package com.caidao.controller.back;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
 import com.caidao.entity.SysUser;
+import com.caidao.exception.MyException;
 import com.caidao.param.Menu;
 import com.caidao.param.UserParam;
-import com.caidao.param.UsernamePasswordParam;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
@@ -15,9 +15,6 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AccountException;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.CredentialsException;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
@@ -64,7 +61,7 @@ public class LoginController {
 	@ApiOperation("获取验证码")
 	@ApiImplicitParams(@ApiImplicitParam(name="uuid",value="前端传来的uuid"))
 	@GetMapping("/captcha.jpg")
-	public void validataCode(@RequestParam(required = true)String uuid, HttpServletResponse response) {
+	public void validataCode(@RequestParam(required = true)String uuid, HttpServletResponse response) throws IOException {
 		//生成验证码
 		 CircleCaptcha createCircleCaptcha = CaptchaUtil.createCircleCaptcha(200, 50, 1, 2);
 		ServletOutputStream outputStream = null;
@@ -73,7 +70,7 @@ public class LoginController {
 			createCircleCaptcha.write(outputStream);
 			redis.opsForValue().set(PropertyUtils.VALCODE_PRIFAX+uuid, createCircleCaptcha.getCode(), Duration.ofSeconds(60));
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new IOException(e.getMessage());
 		}finally {
 			if (outputStream !=null) {
 				try {
@@ -100,22 +97,16 @@ public class LoginController {
 		Subject subject = SecurityUtils.getSubject();
 		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.BACK_USER_REALM);
 		String token = null;
-		try {
-			//校验验证码
-			checkCode(userParam.getSessionUUID(),userParam.getImageCode());
-			//校验登录信息
-			subject.login(userLoginTokenUtils);
-			token = subject.getSession().getId().toString();		
 
-			//设置token30分钟过期
-			redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token,30, TimeUnit.MINUTES);
-		} catch (CredentialsException e) {
-			return ResponseEntity.badRequest().body("密码错误");
-		}	catch (AccountException e) {
-			return ResponseEntity.badRequest().body("账户异常");
-		}catch (AuthenticationException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
-		}
+		//校验验证码
+		checkCode(userParam.getSessionUUID(),userParam.getImageCode());
+		//校验登录信息
+		subject.login(userLoginTokenUtils);
+		token = subject.getSession().getId().toString();
+
+		//设置token30分钟过期
+		redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token,30, TimeUnit.MINUTES);
+
 		return ResponseEntity.ok(token);
 	}
 	
@@ -174,14 +165,14 @@ public class LoginController {
 
 	/**
 	 * 更新自己的密码
-	 * @param usernamePasswordParam
+	 * @param userParam
 	 * @return
 	 */
 	@PostMapping("/sys/user/password")
 	@ApiOperation("更新自己的密码")
-	public ResponseEntity<String> uptedaPass(@RequestBody UsernamePasswordParam usernamePasswordParam){
+	public ResponseEntity<String> uptedaPass(@RequestBody UserParam userParam){
 		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
-		int updatePass = sysUserService.updatePass(sysUser, usernamePasswordParam);
+		int updatePass = sysUserService.updatePass(sysUser, userParam);
 		if (updatePass == 1){
 			return ResponseEntity.ok("更新密码成功");
 		}
@@ -193,18 +184,16 @@ public class LoginController {
 	 */
 	private void checkCode(String sessionUuid, String imageCode) {
 		if (!StringUtils.hasText(imageCode) ||!StringUtils.hasText(sessionUuid) ) {
-			throw new AuthenticationException("验证码校验失败");
+			throw new MyException("0007","验证码校验失败");
 		}
-
 		//获取redis里面的验证码并校验
 		String redisImageCode = redis.opsForValue().get(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
 		if (!StringUtils.hasText(redisImageCode)) {
-			throw new AuthenticationException("验证码超时，请重新验证");
+			throw new MyException("0005","验证码超时，请重新验证");
 		}
 		if (!imageCode.equals(redisImageCode)) {
-			throw new AuthenticationException("验证码错误，请重新输入");
+			throw new MyException("0006","验证码错误，请重新输入");
 		}
-
 		//验证码使用之后 删除
 		redis.delete(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
 	}

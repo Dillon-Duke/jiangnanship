@@ -51,9 +51,9 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      */
     @Override
     public IPage<DeptRole> getDeptRolePage(Page<DeptRole> page , DeptRole deptRole) {
-        IPage<DeptRole> roleIPage = deptRoleMapper.selectPage(page, new LambdaQueryWrapper<DeptRole>()
+        IPage<DeptRole> selectPage = deptRoleMapper.selectPage(page, new LambdaQueryWrapper<DeptRole>()
                 .eq(StringUtils.hasText(deptRole.getRoleName()), DeptRole::getRoleName, deptRole.getRoleName()));
-        return roleIPage;
+        return selectPage;
     }
 
     /**

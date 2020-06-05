@@ -41,9 +41,9 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptCon
      */
     @Override
     public IPage<DeptConfig> findPage(Page<DeptConfig> page, DeptConfig deptConfig) {
-        IPage<DeptConfig> configIPage = deptConfigMapper.selectPage(page, new LambdaQueryWrapper<DeptConfig>()
+        IPage<DeptConfig> selectPage = deptConfigMapper.selectPage(page, new LambdaQueryWrapper<DeptConfig>()
                 .eq(StringUtils.hasText(deptConfig.getParamKey()), DeptConfig::getParamKey, deptConfig.getParamKey()));
-        return configIPage;
+        return selectPage;
     }
 
     /**
@@ -65,7 +65,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptCon
     public List<String> getPowerByUserId(Integer userId) {
 
         //获取权限ID
-        List<Integer> list = deptConfigMapper.getPowerIDs(userId);
+        List<Integer> list = deptConfigMapper.getpowerids(userId);
         if (list == null || list.isEmpty()){
             return null;
         }

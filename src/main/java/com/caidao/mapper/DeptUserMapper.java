@@ -14,11 +14,17 @@ import java.util.Map;
  */
 public interface DeptUserMapper extends BaseMapper<DeptUser> {
 
+    /**
+     * 查询新增用户对应的角色和部门信息
+     * @param integer
+     * @return
+     */
     Map<String, Object> selectDeptRole(@PathVariable("integer") Integer integer);
 
     /**
      * 忘记密码更新用户的密码
      * @param deptUser
+     * @return 返回的是更新部门用户的条数
      */
     @Update("update dept_user set password = #{deptUser.password} where user_id = #{deptUser.userId}")
     Integer updatePassById(@Param("deptUser") DeptUser deptUser);

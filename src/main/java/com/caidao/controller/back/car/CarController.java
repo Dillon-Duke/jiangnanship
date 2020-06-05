@@ -31,9 +31,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/car/car")
 @Slf4j
-public class SysCarController {
+public class CarController {
 
-    public static final Logger logger = LoggerFactory.getLogger(SysCarController.class);
+    public static final Logger logger = LoggerFactory.getLogger(CarController.class);
 
     @Autowired
     private SysCarService sysCarService;
@@ -115,15 +115,15 @@ public class SysCarController {
 
     /**
      * 删除信息 真删除
-     * @param ids
+     * @param cars
      * @return
      */
     @SysLogs("删除车辆信息")
     @DeleteMapping
     @ApiOperation("删除车辆信息")
     @RequiresPermissions("car:car:delete")
-    public ResponseEntity<String> deleteByIds(@RequestBody List<Integer> ids){
-        boolean removeByIds = sysCarService.removeByIds(ids);
+    public ResponseEntity<String> deleteByIds(@RequestBody List<Car> cars){
+        boolean removeByIds = sysCarService.batchRemoveByIds(cars);
         if (removeByIds){
             return ResponseEntity.ok().build();
         }

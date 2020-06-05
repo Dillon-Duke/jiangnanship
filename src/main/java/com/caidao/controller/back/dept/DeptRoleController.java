@@ -91,7 +91,7 @@ public class DeptRoleController {
     @GetMapping("info/{id}")
     @ApiOperation("通过id获取角色")
     @RequiresPermissions("dept:role:info")
-    public ResponseEntity<DeptRole> getSysRoleById(@PathVariable("id") Long id){
+    public ResponseEntity<DeptRole> getSysRoleById(@PathVariable("id") Integer id){
 
         Assert.notNull(id,"角色id{}不能为空");
         log.info("查询角色id为{}的部门角色",id);

@@ -19,5 +19,5 @@ public interface DeptConfigMapper extends BaseMapper<DeptConfig> {
      * @return
      */
     @Select("SELECT config_id from dept_role_config WHERE dept_id = (SELECT user_dept_id FROM dept_user WHERE user_id = #{userId}) AND role_id = (SELECT role_id FROM dept_user_role WHERE user_id = #{userId})")
-    List<Integer> getPowerIDs(@Param("userId") Integer userId);
+    List<Integer> getpowerids(@Param("userId") Integer userId);
 }

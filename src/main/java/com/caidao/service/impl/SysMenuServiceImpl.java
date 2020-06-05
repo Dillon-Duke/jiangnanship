@@ -6,6 +6,7 @@ import com.caidao.entity.SysMenu;
 import com.caidao.entity.SysRoleMenu;
 import com.caidao.entity.SysUser;
 import com.caidao.entity.SysUserRole;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.SysMenuMapper;
 import com.caidao.mapper.SysRoleMenuMapper;
 import com.caidao.mapper.SysUserRoleMapper;
@@ -60,7 +61,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		
 		List<Menu> rootone = new ArrayList<>();
 		
-		//TODO 暂时没有明白什么意思 以后再说
 		//设置一级树形菜单
 		for (SysMenu sysMenu : menuList) {
 			if (sysMenu.getParentId() == 0) {
@@ -154,11 +154,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	private List<Object> getMenuIds(Integer userId) {
 		
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单权限
-				if (userId == 1) {
-					List<Object> menuIds = sysMenuMapper.selectObjs(new LambdaQueryWrapper<SysMenu>()
-							.select(SysMenu::getMenuId));
-					return menuIds;
-				}
+		if (userId == 1) {
+			List<Object> menuIds = sysMenuMapper.selectObjs(new LambdaQueryWrapper<SysMenu>()
+										.select(SysMenu::getMenuId));
+			return menuIds;
+		}
 		
 		//查询对应的role  id
 		List<Object> roleIds = sysUserRoleMapper.selectObjs(new LambdaQueryWrapper<SysUserRole>()
@@ -234,12 +234,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		
 		//判断数据库中是否还有该用户
 		if (sysMenu2 == null) {
-				throw new RuntimeException("请查看该用户是否存在");
+				throw new MyException("1017","请查看该用户是否存在");
 		}
 		
 		//判断修改后菜单类型是否正确
 		if (!sysMenu.getType().equals(sysMenu2.getType())) {
-				throw new RuntimeException("菜单类型修改错误");
+				throw new MyException("1016","菜单类型修改错误");
 		}
 		return super.updateById(sysMenu);
 	}
@@ -256,7 +256,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 				.eq(SysMenu::getParentId, id));
 		if (sysMenus.size() != 0 ) {
 			//如果有父类，则抛出异常，删除失败
-			throw new RuntimeException("目录下载存在子目录，无法删除");
+			throw new MyException("1015","目录下载存在子目录，无法删除");
 		}
 
 		//判断如果有角色绑定该菜单，则无法删除
@@ -264,7 +264,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 				.eq(SysRoleMenu::getMenuId, id));
 		if (roleMenus.size() != 0){
 			//如果如果有角色绑定该菜单，则抛出异常，删除失败
-			throw new RuntimeException("有角色绑定该菜单，无法删除");
+			throw new MyException("1013","有角色绑定该菜单，无法删除");
 		}
 		return super.removeById(id);
 
@@ -286,26 +286,20 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 			break;
 		//菜单条件过滤
 		case 1:
-			Assert.state(sysMenu.getName()!=null
-								&& sysMenu.getParentId()!=0
-								&& sysMenu.getUrl()!=null
-								, "菜单新增信息有误");
+			Assert.state(sysMenu.getName()!=null && sysMenu.getParentId()!=0 && sysMenu.getUrl()!=null,"菜单新增信息有误");
 			sysMenu.setPerms(null);
 			break;
 
 		//按钮条件过滤
 		case 2:
-			Assert.state(sysMenu.getName() != null
-								&& sysMenu.getPerms() != null
-								&& sysMenu.getParentId() != 0,
-								"按钮新增信息有误");
+			Assert.state(sysMenu.getName() != null && sysMenu.getPerms() != null && sysMenu.getParentId() != 0,"按钮新增信息有误");
 			sysMenu.setUrl(null);
 			sysMenu.setIcon(null);
 			break;
 
 		//抛出异常
 		default:
-				throw new RuntimeException("菜单类型不合法");
+				throw new MyException("1014","菜单类型不合法");
 		}
 	}
 

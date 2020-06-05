@@ -26,10 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * <p>
- *  前端控制器
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */
@@ -52,6 +48,9 @@ public class SysMenuController {
 	@ApiOperation("获取所有的菜单列表 包括目录 菜单 按钮")
 	@RequiresPermissions("sys:menu:page")
 	public ResponseEntity<List<SysMenu>> getSysMenu(){
+
+		log.info("获取所有菜单信息");
+
 		List<SysMenu> sysMenus = sysMenuService.findSysMenu();
 		return ResponseEntity.ok(sysMenus);
 	}
@@ -64,6 +63,9 @@ public class SysMenuController {
 	@ApiOperation("查询菜单")
 	@RequiresPermissions("sys:menu:list")
 	public ResponseEntity<List<SysMenu>> addSysmenu(){
+
+		log.info("查询系统菜单列表");
+
 		List<SysMenu> findSysMenu = sysMenuService.getListMenu();
 		return ResponseEntity.ok(findSysMenu);
 	}
@@ -79,7 +81,7 @@ public class SysMenuController {
 	@RequiresPermissions("sys:menu:save")
 	public ResponseEntity<SysMenu> addSysMenu(@RequestBody SysMenu sysMenu){
 
-		Assert.notNull(sysMenu, "sysMenu must not be null");
+		Assert.notNull(sysMenu, "系统菜单不能为空");
 		log.info("新增菜单名为{}的菜单",sysMenu.getName());
 		//获取当前登录对象
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
@@ -99,7 +101,7 @@ public class SysMenuController {
 	@RequiresPermissions("sys:menu:info")
 	public ResponseEntity<SysMenu> getOneMenu(@PathVariable("id") Integer id){
 
-		Assert.notNull(id, " must not be null");
+		Assert.notNull(id, "id不能为空");
 		log.info("查询菜单Id为{}的菜单",id);
 
 		SysMenu sysMenu = sysMenuService.getById(id);
@@ -116,7 +118,7 @@ public class SysMenuController {
 	@RequiresPermissions("sys:menu:update")
 	public ResponseEntity<SysMenu> updateMenu(@RequestBody SysMenu sysMenu){
 
-		Assert.notNull(sysMenu, "sysMenu must not be null");
+		Assert.notNull(sysMenu, "系统菜单不能为空");
 		log.info("更新菜单Id为{}的菜单",sysMenu.getMenuId());
 
 		//获取当前登录对象
@@ -137,8 +139,9 @@ public class SysMenuController {
 	@RequiresPermissions("sys:menu:delete")
 	public ResponseEntity<SysMenu> deleteMenu(@PathVariable("id") Integer id){
 
-		Assert.notNull(id, "id must not be null");
+		Assert.notNull(id, "id不能为空");
 		log.info("删除菜单Id为{}的菜单",id);
+
 		sysMenuService.removeById(id);
 		return ResponseEntity.ok().build();
 	}

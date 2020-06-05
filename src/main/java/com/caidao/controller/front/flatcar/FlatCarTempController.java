@@ -6,11 +6,10 @@ import com.caidao.util.ActivitiObj2MapUtils;
 import com.caidao.util.PropertiesReaderUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.history.HistoricTaskInstanceQuery;
+import org.activiti.engine.identity.User;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
@@ -22,19 +21,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * @author Dillon
- * @since 2020-05-23
+ * @author tom
+ * @since 2020-06-05
  */
+
 @RestController
-@RequestMapping("/flatcar/plan")
+@RequestMapping("/flatCar/temp")
 @Slf4j
-public class FlatcarPlanController {
+public class FlatCarTempController {
+
+    @Autowired
+    private ProcessEngine processEngine;
 
     @Autowired
     private RuntimeService runtimeService;
@@ -45,11 +45,11 @@ public class FlatcarPlanController {
     @Autowired
     private HistoryService historyService;
 
-    public static final Logger logger =  LoggerFactory.getLogger(FlatcarPlanController.class);
+    public static final Logger logger =  LoggerFactory.getLogger(FlatCarTempController.class);
 
-    @ApiOperation("开始一个平板车计划流程")
+    @ApiOperation("开始一个平板车临时流程")
     @GetMapping("/start")
-    public ResponseEntity<String> startPlanTasks(){
+    public ResponseEntity<String> startTempTasks() throws Exception {
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("用户{}申请了一个流程",deptUser.getUsername());
@@ -60,8 +60,9 @@ public class FlatcarPlanController {
         String BusinessKey = "1";
         Map<String, Object> variables = new HashMap<>(1);
         variables.put("startName",deptUser.getUsername());
-        variables.put("dept","部门驳运申请");
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PropertiesReaderUtils.getMap().get("flatcarPlanDeploymentId"),BusinessKey,variables);
+        // TODO 需要从后台方面查询是哪一个部门申请的，
+        variables.put("dept","驳运部门申请");
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PropertiesReaderUtils.getMap().get("flatcarTempDeploymentId"),BusinessKey,variables);
         return ResponseEntity.ok(processInstance.getProcessInstanceId());
     }
 
@@ -71,7 +72,7 @@ public class FlatcarPlanController {
      */
     @ApiOperation("获取当前用户的任务列表")
     @GetMapping("/taskList")
-    public ResponseEntity<List<Map<String, Object>>> getUserOwnTask(){
+    public ResponseEntity<List<Map<String, Object>>> getUserOwnTask() {
 
         //TODO 在衍生任务进行时是否需要更新数据库？
 
@@ -80,7 +81,7 @@ public class FlatcarPlanController {
         //activiti中获取需要审批的任务列表
         List<Map<String, Object>> listMap = new ArrayList<>();
         TaskQuery taskQuery = taskService.createTaskQuery();
-        List<Task> taskList =taskQuery.processDefinitionKey(PropertiesReaderUtils.getMap().get("flatcarPlanDeploymentId"))
+        List<Task> taskList =taskQuery.processDefinitionKey(PropertiesReaderUtils.getMap().get("flatcarTempDeploymentId"))
                 .taskAssignee(deptUser.getUsername())
                 .orderByTaskId()
                 .desc()
@@ -100,31 +101,31 @@ public class FlatcarPlanController {
      */
     @ApiOperation("任务指派给别人")
     @PostMapping("/toOtherUser")
-    public ResponseEntity<Void> toOtherUser(String taskId, DeptUser deptUser){
+    public ResponseEntity<Void> toOtherUser(String taskId, String deptUserName) {
 
         Assert.notNull(taskId,"任务ID不能为空");
-        Assert.notNull(deptUser.getUsername(),"用户名称不能为空");
-        log.info("任务id为{}交给{}",taskId,deptUser.getUsername());
+        Assert.notNull(deptUserName,"用户名称不能为空");
+        log.info("任务id为{}交给{}",taskId,deptUserName);
 
-        taskService.setOwner(taskId, deptUser.getUsername());
+        taskService.setOwner(taskId, deptUserName);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * 流程任务的完成
+     * 下一个任务是个人的调用流程任务的完成
      * @param taskId
-     * @param deptUser
+     * @param deptUserName
      * @return
      */
     @GetMapping("/taking")
-    @ApiOperation("执行衍生任务")
-    public ResponseEntity<Void> takingPlanTask(String taskId,DeptUser deptUser){
+    @ApiOperation("下一个任务是个人的调用流程任务")
+    public ResponseEntity<Void> takingTempTask(String taskId,String deptUserName) {
 
         //TODO 在衍生任务进行时是否需要更新数据库？
 
         //设置下一个办理人
         Map<String, Object> map = new HashMap<>(1);
-        map.put("applyName",deptUser.getUsername());
+        map.put("applyName",deptUserName);
         taskService.setVariables(taskId,map);
         taskService.complete(taskId);
 
@@ -132,12 +133,52 @@ public class FlatcarPlanController {
     }
 
     /**
-     * 衍生任务的完成
+     * 下一个任务是组的调用流程任务
+     * @param taskId
+     * @param userNameList
+     * @return
+     */
+    @GetMapping("/takingGroup")
+    @ApiOperation("下一个任务是组的调用流程任务")
+    public ResponseEntity<Void> takingTempGroupTask(String taskId,@RequestParam(value = "userNameList") List<String> userNameList){
+
+        Assert.notNull(userNameList,"组成员不能为空");
+        log.info("平板车计划任务中新增组成员{}",userNameList);
+        IdentityService service = processEngine.getIdentityService();
+        User user = service.newUser("1");
+        for (String string : userNameList) {
+            if ((user.getFirstName()+user.getLastName()) == string){
+                taskService.addCandidateUser(taskId,"1");
+            }
+            user.setFirstName("lao");
+            user.setLastName("wang");
+            service.saveUser(user);
+            taskService.addCandidateUser(taskId,"2");
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+//    @GetMapping("/takingGroup")
+//    @ApiOperation("下一个任务是组的调用流程任务")
+//    public ResponseEntity<Void> takingTempGroupTask(String taskId,@RequestParam(value = "userNameList") List<String> userNameList){
+//
+//        Assert.notNull(userNameList,"组成员不能为空");
+//        log.info("平板车计划任务中新增组成员{}",userNameList);
+//
+//        //TODO 在衍生任务进行时是否需要更新数据库？
+//        taskService.setVariable(taskId,"canditidateUser",userNameList);
+//        taskService.complete(taskId);
+//        return ResponseEntity.ok().build();
+//    }
+
+    /**
+     * 临时任务的完成
      * @param taskId
      * @return
      */
     @GetMapping("/end")
-    @ApiOperation("结束衍生任务")
+    @ApiOperation("结束临时任务")
     public ResponseEntity<Void> endPlanTask(String taskId){
         //TODO 完成数据库状态更新
         taskService.complete(taskId);
@@ -149,18 +190,25 @@ public class FlatcarPlanController {
      * @return
      */
     @ApiOperation("获取用户的组任务")
-    @GetMapping("/listPlanOwnerGroupTask")
-    public ResponseEntity<List<Task>> listPlanOwnerGroupTask(){
+    @GetMapping("/listTempOwnerGroupTask")
+    public ResponseEntity<List<Map<String, Object>>> listTempOwnerGroupTask(){
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("查询用户名为{}的组任务列表",deptUser.getUsername());
 
+        List<Map<String, Object>> listMap = new ArrayList<>();
         List<Task> list = taskService.createTaskQuery()
-                .processDefinitionKey(PropertiesReaderUtils.getMap().get("flatcarPlanDeploymentId"))
+                .processDefinitionKey(PropertiesReaderUtils.getMap().get("flatcarTempDeploymentId"))
                 .taskCandidateUser(deptUser.getUsername())
                 .list();
 
-        return ResponseEntity.ok(list);
+        String[] ps = { "id", "name","processInstanceId"};
+        for (Task task : list) {
+            Map<String, Object> map = ActivitiObj2MapUtils.obj2map(task, ps);
+            listMap.add(map);
+        }
+
+        return ResponseEntity.ok(listMap);
     }
 
     /**
@@ -169,8 +217,8 @@ public class FlatcarPlanController {
      * @return
      */
     @ApiOperation("用户来拾取组任务")
-    @GetMapping("/getPlanOwnerGroupTask")
-    public ResponseEntity<Void> getPlanOwnerGroupTask(String taskId){
+    @GetMapping("/getTempOwnerGroupTask")
+    public ResponseEntity<Void> getTempOwnerGroupTask(String taskId){
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("拾取用户名为{}的组任务列表",deptUser.getUsername());
@@ -185,8 +233,8 @@ public class FlatcarPlanController {
      * @return
      */
     @ApiOperation("用户归还组任务")
-    @GetMapping("/backPlanOwnerGroupTask")
-    public ResponseEntity<Void> backPlanOwnerGroupTask(String taskId){
+    @GetMapping("/backTempOwnerGroupTask")
+    public ResponseEntity<Void> backTempOwnerGroupTask(String taskId){
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("拾取用户名为{}的组任务列表",deptUser.getUsername());
@@ -200,16 +248,20 @@ public class FlatcarPlanController {
      * @return
      */
     @ApiOperation("用户历史任务查询")
-    @GetMapping("/userHistory")
+    @PostMapping("/userHistory")
     public ResponseEntity<List<HistoricTaskInstance>> getHistoryTask(@RequestBody ActivitiParam activitiParam){
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-
         log.info("用户{}查询历史记录",deptUser.getUsername());
 
         HistoricTaskInstanceQuery instanceQuery = historyService.createHistoricTaskInstanceQuery();
-        List<HistoricTaskInstance> list = instanceQuery.taskAssignee(deptUser.getUsername()).taskName(activitiParam.getTaskName()).orderByHistoricTaskInstanceEndTime().desc().list();
 
+        List<HistoricTaskInstance> list = null;
+        if (activitiParam.getTaskName() == null || activitiParam.getTaskName().isEmpty() || activitiParam.getTaskName() == ""){
+            list = instanceQuery.taskAssignee(deptUser.getUsername()).orderByHistoricTaskInstanceEndTime().desc().list();
+        } else {
+            list = instanceQuery.taskAssignee(deptUser.getUsername()).taskName(activitiParam.getTaskName()).orderByHistoricTaskInstanceEndTime().desc().list();
+        }
         return ResponseEntity.ok(list);
     }
 

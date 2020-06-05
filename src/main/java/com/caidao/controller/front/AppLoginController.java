@@ -152,7 +152,7 @@ public class AppLoginController {
 		log.info("用户{}更新了密码",deptUser.getUsername());
 
 		//校验验证码是否正确
-//		checkCode(PropertyUtils.MASSAGE_CODE+deptUser.getPhone(),code);
+		checkCode(PropertyUtils.MASSAGE_CODE+deptUser.getPhone(),code);
 
 		//更新用户验证码
 		boolean update = deptUserService.updatePassById(deptUser);

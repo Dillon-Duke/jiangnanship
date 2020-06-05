@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.FlatcarPlan;
+import com.caidao.entity.ApplyReason;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author Dillon
- * @since 2020-05-23
+ * @since 2020-06-01
  */
-public interface FlatcarPlanMapper extends BaseMapper<FlatcarPlan> {
+public interface ApplyReasonMapper extends BaseMapper<ApplyReason> {
 
 }

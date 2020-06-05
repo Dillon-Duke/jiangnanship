@@ -3,7 +3,9 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.Config;
+import com.caidao.entity.SysConfig;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,14 +15,19 @@ import com.caidao.entity.Config;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface ConfigService extends IService<Config> {
+public interface SysConfigService extends IService<SysConfig> {
 
 	/**
 	 * 获取页面的page页面
 	 * @param page
-	 * @param config
+	 * @param sysConfig
 	 * @return
 	 */
-	IPage<Config> findPage(Page<Config> page, Config config);
+	IPage<SysConfig> findPage(Page<SysConfig> page, SysConfig sysConfig);
 
+	/**
+	 * 查询菜单权限
+	 * @return
+	 */
+	List<SysConfig> getListMenu();
 }

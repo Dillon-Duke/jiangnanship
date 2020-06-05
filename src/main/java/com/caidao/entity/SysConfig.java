@@ -2,12 +2,13 @@ package com.caidao.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 /**
  * <p>
@@ -21,7 +22,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="SysConfig对象", description="")
-public class Config implements Serializable {
+public class SysConfig implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,6 +35,9 @@ public class Config implements Serializable {
 
     @ApiModelProperty(value = "value")
     private String paramValue;
+
+    @ApiModelProperty(value = "权限对应的菜单ID")
+    private String sysMenuId;
 
     @ApiModelProperty(value = "备注")
     private String remark;

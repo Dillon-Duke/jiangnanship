@@ -7,13 +7,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.SysUser;
 import com.caidao.entity.SysUserRole;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.SysUserMapper;
 import com.caidao.mapper.SysUserRoleMapper;
-import com.caidao.param.UsernamePasswordParam;
+import com.caidao.param.UserParam;
 import com.caidao.service.SysUserService;
 import com.caidao.util.Md5Utils;
+import com.caidao.util.PropertyUtils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -37,6 +40,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 	@Autowired
 	private SysUserMapper sysUserMapper;
+
+	@Autowired
+	private StringRedisTemplate redisTemplate;
 	
 	@Autowired
 	private SysUserRoleMapper sysUserRoleMapper;
@@ -62,6 +68,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	public IPage<SysUser> getUserPage(Page<SysUser> page, SysUser sysUser) {
 		IPage<SysUser> usersPage = sysUserMapper.selectPage(page, new LambdaQueryWrapper<SysUser>()
 				.like(StringUtils.hasText(sysUser.getUsername()),SysUser::getUsername,sysUser.getUsername())
+				.like(StringUtils.hasText(sysUser.getPhone()),SysUser::getPhone,sysUser.getPhone())
 		.ne(SysUser::getUsername,"admin")
 		.eq(SysUser::getState,1));
 		return usersPage;
@@ -80,7 +87,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
 				.eq(SysUser::getUsername, sysUser.getUsername()));
 		if (user != null){
-			throw new RuntimeException("该名称已被注册，请更换其他名称");
+			throw new MyException("1006","该名称已被注册，请更换其他名称");
 		}
 		sysUser.setCreateDate(LocalDateTime.now());
 
@@ -148,27 +155,28 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 		Integer integer = sysUserMapper.batchDelete(ids);
 		if (integer == 0){
-			throw new RuntimeException("用户删除失败");
+			throw new MyException("1007","用户删除失败");
 		}
 	}
 
 	/**
 	 * 更新自己的密码
 	 * @param sysUser
-	 * @param usernamePasswordParam
+	 * @param userParam
 	 * @return
 	 */
 	@Override
-	public int updatePass(SysUser sysUser, UsernamePasswordParam usernamePasswordParam) {
+	public int updatePass(SysUser sysUser, UserParam userParam) {
 
 		//获得加盐密码
-		String saltPass = getSaltPass(sysUser.getUserSalt(), usernamePasswordParam.getPassword());
+		ByteSource bytes = ByteSource.Util.bytes(sysUser.getUserSalt().getBytes());
+		String saltPass = Md5Utils.getHashAndSaltAndTime(userParam.getCredentials(), bytes, 1024);
 		String oldPassword = sysUser.getPassword();
 		//判断老密码是否正确
 		Assert.isTrue(oldPassword.equals(saltPass),"原密码不正确");
 
 		//设置新密码
-		sysUser.setPassword(usernamePasswordParam.getNewPassword());
+		sysUser.setPassword(userParam.getNewCredentials());
 		setSaltPass(sysUser,sysUser.getUserSalt());
 		sysUser.setUpdateDate(LocalDateTime.now());
 		sysUser.setUpdateId(sysUser.getUserId());
@@ -215,7 +223,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			SysUser selectOne = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
 					.eq(SysUser::getUsername, sysUser.getUsername()));
 			if (selectOne != null){
-				throw new RuntimeException("该名称已被注册，请更换其他名称");
+				throw new MyException("1008","该名称已被注册，请更换其他名称");
 			}
 		}
 
@@ -230,10 +238,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		sysUser.setUpdateDate(LocalDateTime.now());
 		
 		boolean updateById = super.updateById(sysUser);
-		Assert.state(sysUser!=null
-				&& sysUser.getPassword()!=null
-				&& sysUser.getUsername()!=null,
-				"更新用户失败，请查找传值信息");
+		Assert.state(sysUser!=null && sysUser.getPassword()!=null && sysUser.getUsername()!=null, "更新用户失败，请查找传值信息");
 		
 		//删除之前的用户角色对应之后重新更新
 		sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, sysUser.getUserId()));
@@ -248,6 +253,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			sysUserRole.setRoleId(idList);
 			sysUserRoleMapper.insert(sysUserRole);
 		}
+
+		//获取对应的登录用户session
+		String sessionKey = redisTemplate.opsForValue().get(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
+
+		//判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
+		if (sessionKey != null) {
+			redisTemplate.delete(PropertyUtils.USER_SESSION+sessionKey);
+			redisTemplate.delete(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
+		}
 		
 		return updateById ;
 	}
@@ -260,20 +274,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	private void setSaltPass(SysUser sysUser, String salt) {
 		//盐值更新
 		String password = sysUser.getPassword();
-		String saltPass = getSaltPass(salt, password);
-		sysUser.setPassword(saltPass);
-	}
-
-
-	/**
-	 * 获得加盐密码
-	 * @param password
-	 * @param salt
-	 * @return
-	 */
-	private String getSaltPass(String salt, String password) {
 		ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
-		return Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+		String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+		sysUser.setPassword(saltPass);
 	}
 
 }

@@ -1,28 +1,62 @@
 package com.caidao.exception;
 
-import org.mybatis.logging.Logger;
-import org.mybatis.logging.LoggerFactory;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.apache.shiro.authc.AccountException;
+import org.apache.shiro.authc.CredentialsException;
+import org.apache.shiro.authz.AuthorizationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 /**
- * @author tom
- * @since 2020-5-12
+ * @Author dillon
+ * @Date 2020/3/22 15:02
+ * @Version 1.0
+ *
+ * 全局异常捕获 拦截web错误日志
  */
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GolbalExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(GolbalExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(GolbalExceptionHandler.class);
 
-    @ResponseBody
-    @ExceptionHandler(value = Exception.class)
-    public Object defaultErrorHandler(HttpServletRequest request,Exception e){
-        return null;
-    }
+    /** 自定义异常抛出显示 */
+    @ExceptionHandler(RuntimeException.class)
+	public ResponseEntity<String> runtimeException(RuntimeException runtimeException){
+		log.info("自定义异常",runtimeException);
+		return ResponseEntity.badRequest().body(runtimeException.getMessage());
+	}
 
+	/** 用户权限认证 无权抛异常 */
+	@ExceptionHandler(AuthorizationException.class)
+	public ResponseEntity<String> authorizationException(AuthorizationException authorizationException){
+		log.info("用户无此权限",authorizationException);
+		return ResponseEntity.status(0001).body("用户无此权限");
+	}
+
+	/** 用户权限认证 用户密码错误 */
+	@ExceptionHandler(CredentialsException.class)
+	public ResponseEntity<String> credentialsException(CredentialsException credentialsException){
+		log.info("用户密码错误",credentialsException);
+		return ResponseEntity.status(0002).body("用户密码错误");
+	}
+
+	/** 用户权限认证 用户账户异常 */
+	@ExceptionHandler(AccountException.class)
+	public ResponseEntity<String> accountException(AccountException accountException){
+		log.info("用户账户异常",accountException);
+		return ResponseEntity.status(0003).body("用户账户异常");
+	}
+
+	/** 用户权限认证 IO异常 */
+	@ExceptionHandler(IOException.class)
+	public ResponseEntity<String> iOException(IOException iOException){
+		log.info("IO异常",iOException);
+		return ResponseEntity.status(0004).body(iOException.getMessage());
+	}
 
 }
