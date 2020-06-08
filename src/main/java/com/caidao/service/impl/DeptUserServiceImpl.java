@@ -5,13 +5,18 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.DeptUser;
+import com.caidao.entity.DeptUserCar;
 import com.caidao.entity.DeptUserRole;
+import com.caidao.exception.MyException;
+import com.caidao.mapper.DeptUserCarMapper;
 import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.DeptUserRoleMapper;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.Md5Utils;
+import com.caidao.util.PropertyUtils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +35,12 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
     @Autowired
     private DeptUserMapper deptUserMapper;
+
+    @Autowired
+    private DeptUserCarMapper deptUserCarMapper;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private DeptUserRoleMapper deptUserRoleMapper;
@@ -72,7 +83,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         DeptUser user = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
                 .eq(DeptUser::getUsername, deptUser.getUsername()));
         if (user != null){
-            throw new RuntimeException("该名称已被注册，请更换其他名称");
+            throw new MyException("该名称已被注册，请更换其他名称");
         }
 
         deptUser.setCreateDate(LocalDateTime.now());
@@ -118,7 +129,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
         //判断是否插入成功
         if (userId == 0){
-            throw new RuntimeException("部门用户新增失败");
+            throw new MyException("部门用户新增失败");
         }
         return true;
     }
@@ -163,7 +174,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
                     .eq(DeptUser::getUsername, deptUser.getUsername()));
             if (selectOne != null){
-                throw new RuntimeException("该名称已被注册，请更换其他名称");
+                throw new MyException("该名称已被注册，请更换其他名称");
             }
         }
 
@@ -188,7 +199,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             int delete = deptUserRoleMapper.delete(new LambdaQueryWrapper<DeptUserRole>()
                     .eq(DeptUserRole::getUserId, deptUser.getUserId()));
             if (delete == 0){
-                throw new RuntimeException("部门用户删除失败，请重试");
+                throw new MyException("部门用户删除失败，请重试");
             }
         }
 
@@ -217,6 +228,15 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             deptUser.setUserDeptName(map.get("dept_name").toString());
         }
 
+        //获取对应的登录用户session
+        String sessionKey = redisTemplate.opsForValue().get(PropertyUtils.APP_USER_LOGIN_SESSION_ID+deptUser.getUsername());
+
+        //判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
+        if (sessionKey != null) {
+            redisTemplate.delete(PropertyUtils.USER_SESSION+sessionKey);
+            redisTemplate.delete(PropertyUtils.APP_USER_LOGIN_SESSION_ID+deptUser.getUsername());
+        }
+
         return super.updateById(deptUser);
     }
 
@@ -238,13 +258,13 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             count+=delete;
         }
         if (count == 0){
-            throw new RuntimeException("用户角色删除失败");
+            throw new MyException("用户角色删除失败");
         }
 
         //判断部门用户表是否删除
         Integer batchIds = deptUserMapper.deleteBatchIds(idList);
         if (batchIds == 0){
-            throw new RuntimeException("用户删除失败");
+            throw new MyException("用户删除失败");
         }
         return true;
     }
@@ -285,5 +305,66 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             return false;
         }
         return true;
+    }
+
+    /**
+     * 获取有空余时间的司机
+     * @return
+     */
+    @Override
+    public HashMap<String, Object> getFreeDriver(DeptUser deptUser) {
+
+        //查询用户车辆表当天所有有任务的人
+        List<DeptUserCar> deptUserCarList = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
+                                        .orderByAsc(DeptUserCar::getUsereId));
+
+        //获取该部门所有的空闲人员
+        List<DeptUser> deptUserList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                                                    .eq(DeptUser::getUserDeptId, deptUser.getUserDeptId())
+                                                    .eq(DeptUser::getUserRoleId, deptUser.getUserRoleId()));
+
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("freeDriver",deptUserList);
+        map.put("taskDriver",deptUserCarList);
+
+        return map;
+
+    }
+
+    /**
+     * 获取司机的任务
+     * @param id
+     * @return
+     */
+    @Override
+    public List<DeptUserCar> getFreeDriverById(Integer id) {
+
+        List<DeptUserCar> deptUserCars = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
+                .eq(DeptUserCar::getUsereId, id));
+
+        return deptUserCars;
+
+    }
+
+    /**
+     * 用户车辆绑定
+     * @param deptUserCars
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean userBindCar(List<DeptUserCar> deptUserCars) {
+
+        int count = 0;
+        for (DeptUserCar deptUserCar : deptUserCars) {
+            int insert = deptUserCarMapper.insert(deptUserCar);
+            count += insert;
+        }
+
+        if (deptUserCars.size() != count){
+            throw new MyException("绑定用户失败");
+        }
+        return true;
+
     }
 }

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 前端手机页面realm登录授权使用
  * @author tom
  * @since 2020-05-28
  */

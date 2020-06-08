@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 
 /**
+ * 该类是让事务生效
  * @author tom
  * @since 2020-05-30
  */
@@ -27,7 +28,6 @@ public class TransactionManagerConfig {
 
     @Bean
     public Object testBean(@Qualifier("platformTransactionManager") PlatformTransactionManager platformTransactionManager) {
-        System.out.println(">>>>>>>>>>" + platformTransactionManager.getClass().getName());
         return new Object();
     }
 

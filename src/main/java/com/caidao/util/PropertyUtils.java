@@ -9,6 +9,11 @@ package com.caidao.util;
 public class PropertyUtils {
 
 	/**
+	 * 密钥长度 于原文长度对应 以及越长速度越慢
+	 */
+	public static final int KEY_SIZE = 1024;
+
+	/**
 	 * app用户
 	 */
 	public static final String APP_USER_REALM = "appUserRealm";

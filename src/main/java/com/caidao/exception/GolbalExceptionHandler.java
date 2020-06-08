@@ -35,28 +35,28 @@ public class GolbalExceptionHandler {
 	@ExceptionHandler(AuthorizationException.class)
 	public ResponseEntity<String> authorizationException(AuthorizationException authorizationException){
 		log.info("用户无此权限",authorizationException);
-		return ResponseEntity.status(0001).body("用户无此权限");
+		return ResponseEntity.badRequest().body("用户无此权限");
 	}
 
 	/** 用户权限认证 用户密码错误 */
 	@ExceptionHandler(CredentialsException.class)
 	public ResponseEntity<String> credentialsException(CredentialsException credentialsException){
 		log.info("用户密码错误",credentialsException);
-		return ResponseEntity.status(0002).body("用户密码错误");
+		return ResponseEntity.badRequest().body("用户密码错误");
 	}
 
 	/** 用户权限认证 用户账户异常 */
 	@ExceptionHandler(AccountException.class)
 	public ResponseEntity<String> accountException(AccountException accountException){
 		log.info("用户账户异常",accountException);
-		return ResponseEntity.status(0003).body("用户账户异常");
+		return ResponseEntity.badRequest().body("用户账户异常");
 	}
 
 	/** 用户权限认证 IO异常 */
 	@ExceptionHandler(IOException.class)
 	public ResponseEntity<String> iOException(IOException iOException){
 		log.info("IO异常",iOException);
-		return ResponseEntity.status(0004).body(iOException.getMessage());
+		return ResponseEntity.badRequest().body(iOException.getMessage());
 	}
 
 }

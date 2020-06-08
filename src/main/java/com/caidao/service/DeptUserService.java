@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.entity.DeptUser;
+import com.caidao.entity.DeptUserCar;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Dillon
@@ -40,4 +44,24 @@ public interface DeptUserService extends IService<DeptUser> {
      * @return
      */
     boolean updatePassById(DeptUser deptUser);
+
+    /**
+     * 获取有空余时间的司机
+     * @return
+     */
+    HashMap<String, Object> getFreeDriver(DeptUser deptUser);
+
+    /**
+     * 获取司机的任务
+     * @param id
+     * @return
+     */
+    List<DeptUserCar> getFreeDriverById(Integer id);
+
+    /**
+     * 用户车辆绑定
+     * @param deptUserCars
+     * @return
+     */
+    boolean userBindCar(List<DeptUserCar> deptUserCars);
 }

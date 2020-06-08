@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.entity.DeptConfig;
 import com.caidao.entity.DeptRoleConfig;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptConfigMapper;
 import com.caidao.mapper.DeptRoleConfigMapper;
 import com.caidao.service.DeptConfigService;
@@ -113,7 +114,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptCon
         List<DeptRoleConfig> deptRoleConfigs = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleConfig>()
                 .in(DeptRoleConfig::getConfigId, idList));
         if (deptRoleConfigs.size() != 0 || (!deptRoleConfigs.isEmpty())){
-            throw new RuntimeException("还有角色在使用该权限，删除失败");
+            throw new MyException("还有角色在使用该权限，删除失败");
         }
         return super.removeByIds(idList);
     }

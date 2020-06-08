@@ -2,6 +2,7 @@ package com.caidao.controller.front;
 
 import com.caidao.entity.DeptUser;
 import com.caidao.entity.SysUser;
+import com.caidao.exception.MyException;
 import com.caidao.param.UserParam;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
@@ -10,9 +11,6 @@ import com.caidao.util.UserLoginTokenUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AccountException;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.CredentialsException;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
@@ -62,24 +60,16 @@ public class AppLoginController {
 		log.info("用户{}登录了",userParam.getPrincipal());
 
 		Subject subject = SecurityUtils.getSubject();
-
 		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.APP_USER_REALM);
 		String token = null;
-		try {
 
-			//校验登录信息
-			subject.login(userLoginTokenUtils);
-			token = subject.getSession().getId().toString();
+		//校验登录信息
+		subject.login(userLoginTokenUtils);
+		token = subject.getSession().getId().toString();
 
-			//设置UUID  默认存贮30分钟
-			redis.opsForValue().set(PropertyUtils.APP_USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token, 30, TimeUnit.SECONDS);
-		} catch (CredentialsException e) {
-			return ResponseEntity.badRequest().body("密码错误");
-		}	catch (AccountException e) {
-			return ResponseEntity.badRequest().body("账户异常");
-		}catch (AuthenticationException e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
-		}
+		//设置UUID  默认存贮30分钟
+		redis.opsForValue().set(PropertyUtils.APP_USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token, 30, TimeUnit.SECONDS);
+
 		return ResponseEntity.ok(token);
 	}
 
@@ -181,16 +171,16 @@ public class AppLoginController {
 	 */
 	private void checkCode(String massageCode, String code) {
 		if (!StringUtils.hasText(code) || !StringUtils.hasText(massageCode)) {
-			throw new AuthenticationException("验证码校验失败");
+			throw new MyException("验证码校验失败");
 		}
 
 		//获取redis里面的验证码并校验
 		String redisImageCode = redis.opsForValue().get(PropertyUtils.VALCODE_PRIFAX + massageCode);
 		if (!StringUtils.hasText(redisImageCode)) {
-			throw new AuthenticationException("验证码超时，请重新验证");
+			throw new MyException("验证码超时，请重新验证");
 		}
 		if (!code.equals(redisImageCode)) {
-			throw new AuthenticationException("验证码错误，请重新输入");
+			throw new MyException("验证码错误，请重新输入");
 		}
 	}
 }

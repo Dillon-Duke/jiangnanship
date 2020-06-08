@@ -87,7 +87,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
 				.eq(SysUser::getUsername, sysUser.getUsername()));
 		if (user != null){
-			throw new MyException("1006","该名称已被注册，请更换其他名称");
+			throw new MyException("该名称已被注册，请更换其他名称");
 		}
 		sysUser.setCreateDate(LocalDateTime.now());
 
@@ -128,7 +128,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 		boolean removeByIds = super.removeByIds(idList);
 		if (idList==null || idList.isEmpty()) {
-			throw new NullPointerException("批量删除用户不能为空");
+			throw new MyException("批量删除用户不能为空");
 		}
 		return removeByIds;
 	}
@@ -155,7 +155,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 		Integer integer = sysUserMapper.batchDelete(ids);
 		if (integer == 0){
-			throw new MyException("1007","用户删除失败");
+			throw new MyException("用户删除失败");
 		}
 	}
 
@@ -191,7 +191,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	public SysUser getById(Serializable id) {
 		if (id == null || id=="") {
-			throw new NullPointerException("id为空");
+			throw new MyException("id为空");
 		}
 		SysUser sysUser = super.getById(id);
 		Integer userId = sysUser.getUserId();
@@ -223,7 +223,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			SysUser selectOne = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
 					.eq(SysUser::getUsername, sysUser.getUsername()));
 			if (selectOne != null){
-				throw new MyException("1008","该名称已被注册，请更换其他名称");
+				throw new MyException("该名称已被注册，请更换其他名称");
 			}
 		}
 
@@ -256,7 +256,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 		//获取对应的登录用户session
 		String sessionKey = redisTemplate.opsForValue().get(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
-
 		//判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
 		if (sessionKey != null) {
 			redisTemplate.delete(PropertyUtils.USER_SESSION+sessionKey);

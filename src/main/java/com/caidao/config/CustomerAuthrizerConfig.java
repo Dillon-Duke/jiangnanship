@@ -8,6 +8,7 @@ import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
 
 /**
+ * 此类是判定授权的时候调用哪个realm，查询对应的权限信息
  * @author tom
  * @since 2020-06-02
  */

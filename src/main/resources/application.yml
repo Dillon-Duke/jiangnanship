@@ -13,10 +13,10 @@ spring:
   servlet:
     multipart:
       #设置单个文件的最大值
-      max-file-size: 50MB
+      max-file-size: 10MB
 
       #设置单次请求文件最大值
-      max-request-size: 50MB
+      max-request-size: 10MB
 
   aop:
     #开启切面编程
@@ -40,6 +40,15 @@ spring:
     #&nullCatalogMeansCurrent=true 指代工作流在扫描的时候只扫描当前数据库，没有表则创建表 不要去扫描所有数据库
     url: jdbc:mysql://129.204.74.133:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+#    #前端表格传过来时间格式化
+#  mvc:
+#    date-format: yyyy-MM-dd HH:mm:ss
+#
+#  #针对json格式前端时间格式化
+#  jackson:
+#    date-format: yyyy-MM-dd HH:mm:ss
+#    time-zone: GMT+8
 
 
 #mybatis配置

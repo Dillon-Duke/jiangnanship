@@ -2,8 +2,8 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.Car;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.entity.Car;
 
 import java.util.List;
 
@@ -27,4 +27,17 @@ public interface SysCarService extends IService<Car> {
      * @return
      */
     boolean batchRemoveByIds(List<Car> cars);
+
+    /**
+     * 查询数据库可用车辆
+     * @return
+     */
+    Integer getCarCount();
+
+    /**
+     * 根据条件查询可用车辆信息
+     * @return
+     */
+    List<Car> selectConditionCar(Car car);
+
 }

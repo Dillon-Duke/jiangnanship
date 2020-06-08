@@ -29,19 +29,8 @@ public class SwaggerConfig {
 
     /**
      * 全局参数
-     *
      * @return List<Parameter>
      */
-    private List<Parameter> parameter() {
-        List<Parameter> params = new ArrayList<>();
-        params.add(new ParameterBuilder().name("token")
-                .description("认证令牌")
-                .modelRef(new ModelRef("string"))
-                .parameterType("header")
-                .required(false).build());
-        return params;
-    }
-
     @Bean
     public Docket sysApi() {
         return new Docket(DocumentationType.SWAGGER_2)
@@ -53,12 +42,22 @@ public class SwaggerConfig {
                 .build().globalOperationParameters(parameter());
     }
 
+    private List<Parameter> parameter() {
+        List<Parameter> params = new ArrayList<>();
+        params.add(new ParameterBuilder().name("token")
+                .description("认证令牌")
+                .modelRef(new ModelRef("string"))
+                .parameterType("header")
+                .required(false).build());
+        return params;
+    }
+
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("Spring Shiro for Spring Boot")
-                .description("这是一个基于springboot shiro 的一个单体架构")
+                .title("江南造船厂接口")
+                .description("江南造船厂接口分前端和后端，具体的接口信息可以看文档")
                 .termsOfServiceUrl("")
-                .contact(new Contact("niugang", "", "niugang@xdja.com"))
+                .contact(new Contact("Tom", "", "245311344@QQ.com"))
                 .version("1.0")
                 .build();
     }

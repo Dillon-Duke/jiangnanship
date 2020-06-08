@@ -6,6 +6,7 @@ import com.caidao.entity.Dept;
 import com.caidao.entity.DeptDeptRole;
 import com.caidao.entity.DeptRole;
 import com.caidao.entity.DeptUser;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.*;
 import com.caidao.service.DeptService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         List<DeptUser> deptUsers = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
                 .eq(DeptUser::getUserDeptId, id));
         if ((deptUsers != null ) || (!deptUsers.isEmpty())) {
-            throw new RuntimeException("部门还绑有用户，不能删除");
+            throw new MyException("部门还绑有用户，不能删除");
         }
 
         //查询部门下面所有的角色
@@ -106,21 +107,21 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         //删除对应的角色表
         int delete = deptRoleMapper.delete(new LambdaQueryWrapper<DeptRole>().in(DeptRole::getRoleId, deptDeptRoles));
         if (delete == 0){
-            throw new RuntimeException("删除部门失败，请重试");
+            throw new MyException("删除部门失败，请重试");
         }
 
         //删除对应的角色中间表
         int delete1 = deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
                 .eq(DeptDeptRole::getDeptId, id));
         if (delete1 == 0){
-            throw new RuntimeException("删除部门失败，请重试");
+            throw new MyException("删除部门失败，请重试");
         }
 
         //判断是否还有子部门，如果有 抛异常处理
         List<Dept> depts = deptMapper.selectList(new LambdaQueryWrapper<Dept>()
                                                             .eq(Dept::getParentId, id));
         if (depts.size() != 0){
-            throw new RuntimeException("部门还有子部门，不能删除");
+            throw new MyException("部门还有子部门，不能删除");
         }
         return super.removeById(id);
     }

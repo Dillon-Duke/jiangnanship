@@ -8,6 +8,7 @@ import com.caidao.entity.DeptDeptRole;
 import com.caidao.entity.DeptRole;
 import com.caidao.entity.DeptRoleConfig;
 import com.caidao.entity.DeptUserRole;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptDeptRoleMapper;
 import com.caidao.mapper.DeptRoleConfigMapper;
 import com.caidao.mapper.DeptRoleMapper;
@@ -199,7 +200,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<DeptUserRole> userRoles = deptUserRoleMapper.selectList(new LambdaQueryWrapper<DeptUserRole>()
                                         .in(DeptUserRole::getRoleId, idList));
         if ((!userRoles.isEmpty()) || (userRoles != null)){
-            throw new RuntimeException("该角色上面有绑定的用户，不能删除");
+            throw new MyException("该角色上面有绑定的用户，不能删除");
         }
 
         for (Serializable serializable : idList) {

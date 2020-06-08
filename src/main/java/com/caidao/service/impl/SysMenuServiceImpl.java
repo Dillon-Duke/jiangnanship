@@ -234,12 +234,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		
 		//判断数据库中是否还有该用户
 		if (sysMenu2 == null) {
-				throw new MyException("1017","请查看该用户是否存在");
+				throw new MyException("请查看该用户是否存在");
 		}
 		
 		//判断修改后菜单类型是否正确
 		if (!sysMenu.getType().equals(sysMenu2.getType())) {
-				throw new MyException("1016","菜单类型修改错误");
+				throw new MyException("菜单类型修改错误");
 		}
 		return super.updateById(sysMenu);
 	}
@@ -256,7 +256,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 				.eq(SysMenu::getParentId, id));
 		if (sysMenus.size() != 0 ) {
 			//如果有父类，则抛出异常，删除失败
-			throw new MyException("1015","目录下载存在子目录，无法删除");
+			throw new MyException("目录下载存在子目录，无法删除");
 		}
 
 		//判断如果有角色绑定该菜单，则无法删除
@@ -264,7 +264,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 				.eq(SysRoleMenu::getMenuId, id));
 		if (roleMenus.size() != 0){
 			//如果如果有角色绑定该菜单，则抛出异常，删除失败
-			throw new MyException("1013","有角色绑定该菜单，无法删除");
+			throw new MyException("有角色绑定该菜单，无法删除");
 		}
 		return super.removeById(id);
 
@@ -299,7 +299,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 
 		//抛出异常
 		default:
-				throw new MyException("1014","菜单类型不合法");
+				throw new MyException("菜单类型不合法");
 		}
 	}
 

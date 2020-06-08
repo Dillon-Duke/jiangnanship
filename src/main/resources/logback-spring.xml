@@ -138,6 +138,7 @@
         </filter>
     </appender>
 
+    <!-- 日志级别 4 种 info debug warn error -->
     <root level="info">
         <!-- 输出日志到控台 -->
         <appender-ref ref="CONSOLE" />

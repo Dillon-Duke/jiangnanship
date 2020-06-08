@@ -63,7 +63,7 @@ public class LoginController {
 	@GetMapping("/captcha.jpg")
 	public void validataCode(@RequestParam(required = true)String uuid, HttpServletResponse response) throws IOException {
 		//生成验证码
-		 CircleCaptcha createCircleCaptcha = CaptchaUtil.createCircleCaptcha(200, 50, 1, 2);
+		 CircleCaptcha createCircleCaptcha = CaptchaUtil.createCircleCaptcha(200, 50, 2, 2);
 		ServletOutputStream outputStream = null;
 		try {
 			outputStream = response.getOutputStream();
@@ -77,8 +77,6 @@ public class LoginController {
 					outputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
-				}finally {
-					outputStream = null;
 				}
 			}
 		}
@@ -184,15 +182,15 @@ public class LoginController {
 	 */
 	private void checkCode(String sessionUuid, String imageCode) {
 		if (!StringUtils.hasText(imageCode) ||!StringUtils.hasText(sessionUuid) ) {
-			throw new MyException("0007","验证码校验失败");
+			throw new MyException("验证码校验失败");
 		}
 		//获取redis里面的验证码并校验
 		String redisImageCode = redis.opsForValue().get(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
 		if (!StringUtils.hasText(redisImageCode)) {
-			throw new MyException("0005","验证码超时，请重新验证");
+			throw new MyException("验证码超时，请重新验证");
 		}
 		if (!imageCode.equals(redisImageCode)) {
-			throw new MyException("0006","验证码错误，请重新输入");
+			throw new MyException("验证码错误，请重新输入");
 		}
 		//验证码使用之后 删除
 		redis.delete(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
