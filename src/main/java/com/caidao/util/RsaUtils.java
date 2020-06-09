@@ -1,5 +1,6 @@
 package com.caidao.util;
 
+
 import javax.crypto.Cipher;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
@@ -12,7 +13,6 @@ import java.util.Map;
 
 /**
  * 用户登录的加密解密算法
- * 数据的加密解密使用对称的base64进行加密解密
  * @author tom
  * @since 2020-06-08
  */
@@ -21,16 +21,16 @@ public class RsaUtils {
     /**
      * 用于封装随机产生的公钥与私钥
      */
-    private static Map<Integer, String> keyMap = new HashMap<>(2);
-
+    private static Map<Integer, String> keyMap = new HashMap<Integer, String>();
     /**
      * 随机生成密钥对
+     * @return
      */
-    public static void genKeyPair(String username) throws NoSuchAlgorithmException {
+    public static Map<Integer, String> genKeyPair(String userId) throws NoSuchAlgorithmException {
         // KeyPairGenerator类用于生成公钥和私钥对，基于RSA算法生成对象
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
         // 初始化密钥对生成器
-        keyPairGen.initialize(PropertyUtils.KEY_SIZE,new SecureRandom(username.getBytes()));
+        keyPairGen.initialize(PropertyUtils.KEY_SIZE, new SecureRandom(userId.getBytes()));
         // 生成一个密钥对，保存在keyPair中
         KeyPair keyPair = keyPairGen.generateKeyPair();
         // 得到私钥
@@ -45,9 +45,11 @@ public class RsaUtils {
         keyMap.put(0, publicKeyString);
         //1表示私钥
         keyMap.put(1, privateKeyString);
+        return keyMap;
     }
     /**
      * RSA公钥加密
+     *
      * @param str       加密字符串
      * @param publicKey 公钥
      * @return 密文
@@ -65,6 +67,7 @@ public class RsaUtils {
     }
     /**
      * RSA私钥解密
+     *
      * @param str        加密字符串
      * @param privateKey 私钥
      * @return 明文
@@ -85,13 +88,12 @@ public class RsaUtils {
     public static void main(String[] args) throws Exception {
         long temp = System.currentTimeMillis();
         //生成公钥和私钥
-        genKeyPair("zhangsan");
+        genKeyPair("1");
         //加密字符串
         System.out.println("公钥:" + keyMap.get(0));
         System.out.println("私钥:" + keyMap.get(1));
         System.out.println("生成密钥消耗时间:" + (System.currentTimeMillis() - temp) / 1000.0 + "秒");
-        String message = "试!@#$";
-        System.out.println(message.getBytes().length);
+        String message = "{" + "username" + ":" + "zhangsan" + ";" + "password" + ":" + "123" + "}";
         System.out.println("原文:" + message);
         temp = System.currentTimeMillis();
         String messageEn = encrypt(message, keyMap.get(0));
@@ -103,3 +105,4 @@ public class RsaUtils {
         System.out.println("解密消耗时间:" + (System.currentTimeMillis() - temp) / 1000.0 + "秒");
     }
 }
+

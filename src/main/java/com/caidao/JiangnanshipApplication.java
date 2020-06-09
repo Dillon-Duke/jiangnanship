@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
  * @since 2020-05-12
  */
 
+/** 开启数据加密注解 */
 @MapperScan("com.caidao.mapper")
 @SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 public class JiangnanshipApplication {

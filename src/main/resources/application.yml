@@ -41,6 +41,21 @@ spring:
     url: jdbc:mysql://129.204.74.133:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+#进行数据加密
+  #spring.encrypt.responseEncryptUriList[1]=/encryptEntity
+  #spring.encrypt.responseEncryptUriList[2]=/save
+  #spring.encrypt.responseEncryptUriList[3]=/encryptEntityXml
+  #spring.encrypt.responseEncryptUriList[4]=/decryptEntityXml
+  #spring.encrypt.urlPatterns[0]=/user/*
+  #spring.encrypt.urlPatterns[1]=/save/*
+  #spring.encrypt.requestDecyptUriIgnoreList[0]=/save
+  #spring.encrypt.responseEncryptUriIgnoreList[0]=/encryptEntity
+  #spring.encrypt.responseEncryptUriIgnoreList[1]=/save
+  encrypt:
+    #base64定义的key
+    key: shujujiamibase64
+    responseEncryptUriList[0]: /encryptStr
+
 #    #前端表格传过来时间格式化
 #  mvc:
 #    date-format: yyyy-MM-dd HH:mm:ss

@@ -1,12 +1,15 @@
 package com.caidao.controller.front;
 
+import com.caidao.anno.AppBaseMsgs;
+import com.caidao.anno.DecryptData;
+import com.caidao.entity.AppBaseMsg;
 import com.caidao.entity.DeptUser;
 import com.caidao.entity.SysUser;
 import com.caidao.exception.MyException;
-import com.caidao.param.UserParam;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
+import com.caidao.util.RsaUtils;
 import com.caidao.util.UserLoginTokenUtils;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,29 +53,54 @@ public class AppLoginController {
 
 	/**
 	 * app用户登录
-	 * @param userParam
+	 * @param appBaseMsg
 	 * @return
 	 */
+	@AppBaseMsgs
+	@DecryptData
 	@ApiOperation("前台登录接口")
 	@PostMapping("/appLogin")
-	public ResponseEntity<String> login(@RequestBody UserParam userParam) {
+	public ResponseEntity<String> login(@RequestBody AppBaseMsg appBaseMsg) {
 
-		Assert.notNull(userParam,"用户参数不能为空");
-		log.info("用户{}登录了",userParam.getPrincipal());
+		Assert.notNull(appBaseMsg,"用户参数不能为空");
+		log.info("用户Id为{}请求登录",appBaseMsg.getUserId());
 
-		Subject subject = SecurityUtils.getSubject();
-		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.APP_USER_REALM);
-		String token = null;
+		try {
+            //获取对象的公钥和私钥
+            Map<Integer, String> map = RsaUtils.genKeyPair(appBaseMsg.getUserId());
 
-		//校验登录信息
-		subject.login(userLoginTokenUtils);
-		token = subject.getSession().getId().toString();
+            //判断没有公钥信息，则返回公钥
+            String encrypt = appBaseMsg.getEncrypt();
+            if (encrypt == null || encrypt.isEmpty()) {
+                //返回对应的公钥
+                return ResponseEntity.ok(map.get(0));
+            }
 
-		//设置UUID  默认存贮30分钟
-		redis.opsForValue().set(PropertyUtils.APP_USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token, 30, TimeUnit.SECONDS);
+            //判断公钥信息是否一样
+            if (!encrypt.equals(map.get(0))) {
+                throw new MyException("公钥信息不匹配");
+            }
 
-		return ResponseEntity.ok(token);
-	}
+            //TODO 以后看前端传过来的json格式是什么样的，考虑做一个json的工具类
+			String encryption = appBaseMsg.getEncryption();
+			String username = "zhangsan";
+			String password = "123";
+			Subject subject = SecurityUtils.getSubject();
+			UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(username, password,PropertyUtils.APP_USER_REALM);
+			String token;
+
+			//校验登录信息
+			subject.login(userLoginTokenUtils);
+			token = subject.getSession().getId().toString();
+
+			//设置UUID  默认存贮30分钟
+			redis.opsForValue().set(PropertyUtils.APP_USER_LOGIN_SESSION_ID+username, token, 30, TimeUnit.SECONDS);
+
+			return ResponseEntity.ok(token);
+		} catch (Exception e){
+			throw new MyException("账号或者密码错误，登录失败");
+		}
+    }
 
 	/**
 	 *

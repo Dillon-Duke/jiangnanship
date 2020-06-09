@@ -192,7 +192,6 @@
             <artifactId>slf4j-api</artifactId>
             <version>${log4f.version}</version>
         </dependency>
-
         <!-- log4j Dependency End -->
 
         <!-- 单元测试 -->
