@@ -32,7 +32,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author tom
@@ -102,9 +101,6 @@ public class LoginController {
 		subject.login(userLoginTokenUtils);
 		token = subject.getSession().getId().toString();
 
-		//设置token30分钟过期
-		redis.opsForValue().set(PropertyUtils.USER_LOGIN_SESSION_ID+userParam.getPrincipal(), token,30, TimeUnit.MINUTES);
-
 		return ResponseEntity.ok(token);
 	}
 	
@@ -155,9 +151,8 @@ public class LoginController {
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
 
 		//获取对应的登录用户session
-		String sessionKey = redis.opsForValue().get(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
-		redis.delete(PropertyUtils.USER_SESSION + sessionKey);
-		redis.delete(PropertyUtils.USER_LOGIN_SESSION_ID + sysUser.getUsername());
+		String token = SecurityUtils.getSubject().getSession().getId().toString();
+		redis.delete(PropertyUtils.USER_SESSION + token);
 		return ResponseEntity.ok().build();
 	}
 

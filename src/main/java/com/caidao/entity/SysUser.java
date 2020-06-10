@@ -90,6 +90,10 @@ public class SysUser implements Serializable {
     @ApiModelProperty(value = "是否可用 1：可用 0：停用")
     private Integer state;
 
+    @ApiModelProperty(value = "是否创建手机端账户")
+    @TableField(exist = false)
+    private String deptUserAdd;
+
     @ApiModelProperty(value = "角色菜单关联Id")
     @TableField(exist = false)
     private List<Integer> roleIdList = new ArrayList<Integer>(0);

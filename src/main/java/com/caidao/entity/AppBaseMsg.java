@@ -73,7 +73,8 @@ public class AppBaseMsg implements Serializable {
     @ApiModelProperty("消息体加密内容")
     private String encryption;
 
-    @ApiModelProperty("前端传值的公钥")
+    @ApiModelProperty("UUID")
     @TableField(exist = false)
-    private String encrypt;
+    private String uuid;
+
 }

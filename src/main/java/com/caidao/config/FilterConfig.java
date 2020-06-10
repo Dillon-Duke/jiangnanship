@@ -15,7 +15,7 @@ public class FilterConfig {
     public FilterRegistrationBean sessionExpireFilter(){
         FilterRegistrationBean registrationBean = new FilterRegistrationBean();
         registrationBean.setFilter(new JsonIllegalCharacterFilter());
-        registrationBean.addUrlPatterns("/*");
+        registrationBean.addUrlPatterns("/app*");
         registrationBean.setOrder(1);
         return registrationBean;
     }

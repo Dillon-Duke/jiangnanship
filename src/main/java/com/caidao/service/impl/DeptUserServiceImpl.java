@@ -14,6 +14,7 @@ import com.caidao.mapper.DeptUserRoleMapper;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -229,12 +230,11 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
 
         //获取对应的登录用户session
-        String sessionKey = redisTemplate.opsForValue().get(PropertyUtils.APP_USER_LOGIN_SESSION_ID+deptUser.getUsername());
+        String token = SecurityUtils.getSubject().getSession().getId().toString();
 
         //判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
-        if (sessionKey != null) {
-            redisTemplate.delete(PropertyUtils.USER_SESSION+sessionKey);
-            redisTemplate.delete(PropertyUtils.APP_USER_LOGIN_SESSION_ID+deptUser.getUsername());
+        if (token != null) {
+            redisTemplate.delete(PropertyUtils.USER_SESSION+token);
         }
 
         return super.updateById(deptUser);

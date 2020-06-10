@@ -35,7 +35,7 @@ public class SysLogAspectj {
 	private SysLogService sysLogService;
 	
 	@Around("@annotation(com.caidao.anno.SysLogs)")
-	public Object sysLogAround(ProceedingJoinPoint joinPoint) throws Throwable {
+	public Object sysLogAroundAspectj(ProceedingJoinPoint joinPoint) throws Throwable {
 		
 		Log log = new Log();
 		
@@ -66,7 +66,6 @@ public class SysLogAspectj {
 		log.setParams(args == null?"": jsonStr);
 		
 		//方法结束的时间减去方法开始的时间为方法调用的时间
-
 		Long start = System.currentTimeMillis();
 		Object result = joinPoint.proceed(joinPoint.getArgs());
 		Long end = System.currentTimeMillis();
@@ -83,7 +82,6 @@ public class SysLogAspectj {
 		
 		//将日志记录在数据库中
 		sysLogService.save(log);
-		
 		return result;
 	}
 

@@ -70,6 +70,8 @@ public class AppUserRealmConfig extends AuthorizingRealm {
         //更新shiro里面账号信息的过期时间
         String token = SecurityUtils.getSubject().getSession().getId().toString();
         redisTemplate.expire(PropertyUtils.USER_SESSION + token, 30, TimeUnit.MINUTES);
+        redisTemplate.expire(PropertyUtils.APP_USER_PRIVATE_KEY + token, 30, TimeUnit.MINUTES);
+        redisTemplate.expire(PropertyUtils.APP_USER_PUBLIC_KEY+ token, 30, TimeUnit.MINUTES);
 
         simpleAuthorizationInfo.setStringPermissions(new HashSet<>(powerByUserId));
         return simpleAuthorizationInfo;

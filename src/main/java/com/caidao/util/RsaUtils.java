@@ -26,11 +26,11 @@ public class RsaUtils {
      * 随机生成密钥对
      * @return
      */
-    public static Map<Integer, String> genKeyPair(String userId) throws NoSuchAlgorithmException {
+    public static Map<Integer, String> genKeyPair() throws NoSuchAlgorithmException {
         // KeyPairGenerator类用于生成公钥和私钥对，基于RSA算法生成对象
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
         // 初始化密钥对生成器
-        keyPairGen.initialize(PropertyUtils.KEY_SIZE, new SecureRandom(userId.getBytes()));
+        keyPairGen.initialize(PropertyUtils.KEY_SIZE, new SecureRandom());
         // 生成一个密钥对，保存在keyPair中
         KeyPair keyPair = keyPairGen.generateKeyPair();
         // 得到私钥
@@ -86,23 +86,16 @@ public class RsaUtils {
         return outStr;
     }
     public static void main(String[] args) throws Exception {
-        long temp = System.currentTimeMillis();
-        //生成公钥和私钥
-        genKeyPair("1");
-        //加密字符串
-        System.out.println("公钥:" + keyMap.get(0));
-        System.out.println("私钥:" + keyMap.get(1));
-        System.out.println("生成密钥消耗时间:" + (System.currentTimeMillis() - temp) / 1000.0 + "秒");
-        String message = "{" + "username" + ":" + "zhangsan" + ";" + "password" + ":" + "123" + "}";
+
+        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCWHrdSwXP5VBqVBtuiDAS43UhmQFuRNraAjtT+Lg2yEN16g0j9bPhyHQkzWjUL00GxuVHqSLvt2jCCsZInQNBkVvsQxlkaPQW+xp3KgGl1/IqsojaiTxOkrd1Uyvh0E3bKYP7LAwly3sYxuwgESQK9Qpq+h2QDm8/sxdPTMVGFkwIDAQAB";
+        String pri = "MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAJYet1LBc/lUGpUG26IMBLjdSGZAW5E2toCO1P4uDbIQ3XqDSP1s+HIdCTNaNQvTQbG5UepIu+3aMIKxkidA0GRW+xDGWRo9Bb7GncqAaXX8iqyiNqJPE6St3VTK+HQTdspg/ssDCXLexjG7CARJAr1Cmr6HZAObz+zF09MxUYWTAgMBAAECgYA8Zh9cLHl811nam+fCSxObTWzTtxEgW+MR1mXb3quj+SUjJa84R5+uSgBpqOGu4FCOMQHEQX9bM25RJyCmqm0tU9OcDLNUjhXL3V5B3phi8R16yXnzOBoNSX999Ll26s99vENzjkgtmRXPqlttPt/w5F6LBDjHds3uYaVI1XIwAQJBAM88y+PRIywZiZ4C3bKL92HEmtTG3XZkqra6KBAQ9VP/ywCfKKVIAOJXJ7MyBcto0gI/nIAx5onOJHeBdVPXJ8kCQQC5cWCISOKMKXhj2MH1/6eFpLYVn6VK4n82ZFhW8uCSCxvYSM0RXrBrn7sdyVZ34Yhp1lLHKK4BpNbBtCEF6ih7AkAOlKV3wugpmyZekq8Md+KQ42dNXyyHvu9v6csVzkukfFPJGGmgr184jY9CgVt9A0P7WoRlVJ12xqU0L0yU+IdZAkAHqlUYLRMYQhqU3f/egEvXbWCNckTt3IDvqaQxK+b2gnkLLq8zWZunRzn/2DO3zt3Jqi9PxjGzJbIu3ZhD21MDAkBGwnr3p4P+ocm8bop3THCiyGX5PBXHuMzZknai3MjudRcev+yietEJv8JFpFBGmljI6EAvdSjmjqtY+MjjKqaB";
+        String message = "{'username':'zhangsan','password':'123'}";
         System.out.println("原文:" + message);
-        temp = System.currentTimeMillis();
-        String messageEn = encrypt(message, keyMap.get(0));
-        System.out.println("密文:" + messageEn);
-        System.out.println("加密消耗时间:" + (System.currentTimeMillis() - temp) / 1000.0 + "秒");
-        temp = System.currentTimeMillis();
-        String messageDe = decrypt(messageEn, keyMap.get(1));
+        String messageEn = encrypt(message, pub);
+        System.out.println("加密：" + messageEn);
+        String messageDe = decrypt(messageEn, pri);
         System.out.println("解密:" + messageDe);
-        System.out.println("解密消耗时间:" + (System.currentTimeMillis() - temp) / 1000.0 + "秒");
+
     }
 }
 

@@ -5,15 +5,18 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.caidao.entity.DeptUser;
 import com.caidao.entity.SysUser;
 import com.caidao.entity.SysUserRole;
 import com.caidao.exception.MyException;
+import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.SysUserMapper;
 import com.caidao.mapper.SysUserRoleMapper;
 import com.caidao.param.UserParam;
 import com.caidao.service.SysUserService;
 import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -40,6 +43,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 	@Autowired
 	private SysUserMapper sysUserMapper;
+
+	@Autowired
+	private DeptUserMapper deptUserMapper;
 
 	@Autowired
 	private StringRedisTemplate redisTemplate;
@@ -104,6 +110,26 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 		boolean save = super.save(sysUser);
 
+		//判断是否需要创建部门角色
+		String userAdd = sysUser.getDeptUserAdd();
+		if ("true".equals(userAdd)){
+			DeptUser deptUser = new DeptUser();
+			deptUser.setUsername(sysUser.getUsername());
+			deptUser.setPassword(sysUser.getPassword());
+			deptUser.setUserSalt(sysUser.getUserSalt());
+			deptUser.setAge(sysUser.getAge());
+			deptUser.setSex(sysUser.getSex());
+			deptUser.setPhone(sysUser.getPhone());
+			deptUser.setJobNum(sysUser.getJobNum());
+			deptUser.setUserRoleName("无");
+			deptUser.setUserDeptName("无");
+			deptUser.setCreateId(sysUser.getCreateId());
+			deptUser.setCreateDate(LocalDateTime.now());
+			deptUser.setState(1);
+			deptUserMapper.insert(deptUser);
+		}
+
+		//设置用户角色列表
 		List<Integer> roleIds = sysUser.getRoleIdList();
 		if (roleIds == null || roleIds.isEmpty()) {
 			return save;
@@ -254,12 +280,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			sysUserRoleMapper.insert(sysUserRole);
 		}
 
-		//获取对应的登录用户session
-		String sessionKey = redisTemplate.opsForValue().get(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
+		String token = SecurityUtils.getSubject().getSession().getId().toString();
 		//判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
-		if (sessionKey != null) {
-			redisTemplate.delete(PropertyUtils.USER_SESSION+sessionKey);
-			redisTemplate.delete(PropertyUtils.USER_LOGIN_SESSION_ID+sysUser.getUsername());
+		if (token != null) {
+			redisTemplate.delete(PropertyUtils.USER_SESSION+token);
 		}
 		
 		return updateById ;

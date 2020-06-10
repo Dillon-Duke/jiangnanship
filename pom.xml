@@ -194,6 +194,15 @@
         </dependency>
         <!-- log4j Dependency End -->
 
+        <!-- fastJSON START -->
+        <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.68</version>
+        </dependency>
+        <!-- fastJSON END -->
+
         <!-- 单元测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

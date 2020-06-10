@@ -1,4 +1,4 @@
-package com.caidao.filter;
+package com.caidao.filter.wrapper;
 
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
@@ -9,9 +9,9 @@ import java.io.*;
 /**
  * @author tom
  */
-public class RequestWrapper extends HttpServletRequestWrapper {
+public class JsonRequestWrapper extends HttpServletRequestWrapper {
     private final String body;
-    public RequestWrapper(HttpServletRequest request) {
+    public JsonRequestWrapper(HttpServletRequest request) {
         super(request);
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = null;
