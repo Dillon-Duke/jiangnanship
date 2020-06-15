@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.entity.Car;
+import com.caidao.pojo.Car;
 import com.caidao.mapper.SysCarMapper;
 import com.caidao.service.SysCarService;
 import com.caidao.util.FastDfsClientUtils;

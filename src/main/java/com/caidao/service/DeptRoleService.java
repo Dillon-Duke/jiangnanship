@@ -2,7 +2,7 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.DeptRole;
+import com.caidao.pojo.DeptRole;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;

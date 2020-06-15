@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.AppBaseMsg;
+import com.caidao.pojo.AppBaseMsg;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

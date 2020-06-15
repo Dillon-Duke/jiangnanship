@@ -1,6 +1,6 @@
 package com.caidao.config;
 
-import com.caidao.entity.DeptUser;
+import com.caidao.pojo.DeptUser;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;

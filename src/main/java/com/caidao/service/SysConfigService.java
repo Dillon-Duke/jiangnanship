@@ -3,7 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.SysConfig;
+import com.caidao.pojo.SysConfig;
 
 import java.util.List;
 

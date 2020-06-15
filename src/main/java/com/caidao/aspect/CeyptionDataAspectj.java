@@ -2,7 +2,7 @@ package com.caidao.aspect;
 
 
 import com.caidao.anno.DecryptData;
-import com.caidao.entity.AppBaseMsg;
+import com.caidao.pojo.AppBaseMsg;
 import com.caidao.exception.MyException;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.RsaUtils;

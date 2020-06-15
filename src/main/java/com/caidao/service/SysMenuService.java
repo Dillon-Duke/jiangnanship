@@ -1,8 +1,8 @@
 package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.SysMenu;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.SysMenu;
+import com.caidao.pojo.SysUser;
 import com.caidao.param.Menu;
 
 import java.util.List;

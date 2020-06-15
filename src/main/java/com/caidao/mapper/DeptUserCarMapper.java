@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.DeptUserCar;
+import com.caidao.pojo.DeptUserCar;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

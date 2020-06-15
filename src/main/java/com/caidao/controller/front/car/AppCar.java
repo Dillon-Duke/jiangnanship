@@ -3,14 +3,14 @@ package com.caidao.controller.front.car;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.Car;
+import com.caidao.common.ResponseEntity;
+import com.caidao.pojo.Car;
 import com.caidao.service.SysCarService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public class AppCar {
      */
     @GetMapping("/page")
     @ApiOperation("获取分页车辆信息")
-    public ResponseEntity<IPage<Car>> getRoleList(Page<Car> page , Car car){
+    public ResponseEntity getRoleList(Page<Car> page , Car car){
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<Car> sysRoles = sysCarService.findSysCarPage(page, car);
         return ResponseEntity.ok(sysRoles);
@@ -46,7 +46,7 @@ public class AppCar {
      */
     @ApiOperation("查询数据库可用车辆")
     @GetMapping("/count")
-    public ResponseEntity<Integer> getCarCount(){
+    public ResponseEntity getCarCount(){
 
         log.info("查询数据库可用车辆");
         Integer count = sysCarService.getCarCount();

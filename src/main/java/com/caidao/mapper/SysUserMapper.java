@@ -2,7 +2,7 @@ package com.caidao.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.SysUser;
 
 import java.util.List;
 

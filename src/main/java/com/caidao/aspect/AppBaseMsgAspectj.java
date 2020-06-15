@@ -1,6 +1,6 @@
 package com.caidao.aspect;
 
-import com.caidao.entity.AppBaseMsg;
+import com.caidao.pojo.AppBaseMsg;
 import com.caidao.exception.MyException;
 import com.caidao.service.AppBaseMsgService;
 import com.caidao.util.RsaUtils;

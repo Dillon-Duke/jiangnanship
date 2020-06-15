@@ -1,10 +1,12 @@
 package com.caidao.controller.front;
 
+
 import com.alibaba.fastjson.JSONObject;
 import com.caidao.anno.AppBaseMsgs;
 import com.caidao.anno.DecryptData;
-import com.caidao.entity.AppBaseMsg;
-import com.caidao.entity.DeptUser;
+import com.caidao.common.ResponseEntity;
+import com.caidao.pojo.AppBaseMsg;
+import com.caidao.pojo.DeptUser;
 import com.caidao.exception.MyException;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
@@ -16,12 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Assert;
+import org.apache.shiro.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
@@ -58,13 +59,13 @@ public class AppLoginController {
 	 */
 	@ApiOperation("获取用户登录的公钥")
 	@GetMapping("/getPublicKey")
-	public ResponseEntity<Map<String, String>> getAppUserPublicKey() throws NoSuchAlgorithmException {
+	public ResponseEntity<Map<String,String>> getAppUserPublicKey() throws NoSuchAlgorithmException {
 
 		log.info("获取用户登录用的公钥");
 		//获取加密解密数据
 		Map<Integer, String> integerStringMap = RsaUtils.genKeyPair();
 		String uuid = UUID.randomUUID().toString();
-		redis.opsForValue().set(PropertyUtils.APP_USER_PRIVATE_KEY + uuid,integerStringMap.get(1),1, TimeUnit.MINUTES);
+		redis.opsForValue().set(PropertyUtils.APP_USER_PRIVATE_KEY + uuid,integerStringMap.get(1),5, TimeUnit.MINUTES);
 		Map<String, String> map = new HashMap<>(2);
 		map.put("publicKey",integerStringMap.get(0));
 		map.put("uuid",uuid);
@@ -81,7 +82,7 @@ public class AppLoginController {
 	@DecryptData
 	@ApiOperation("前台登录接口")
 	@PostMapping("/appLogin")
-	public ResponseEntity<HashMap<String, String>> login(@RequestBody AppBaseMsg appBaseMsg) {
+	public ResponseEntity<Map<String,String>> login(@RequestBody AppBaseMsg appBaseMsg) {
 
 		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
 		log.info("用户Id为{}请求登录",appBaseMsg.getUserId());
@@ -94,18 +95,21 @@ public class AppLoginController {
 			String password = jsonObject.getString("password");
 			Subject subject = SecurityUtils.getSubject();
 			UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(username, password,PropertyUtils.APP_USER_REALM);
-			String token;
 
 			//校验登录信息
 			subject.login(userLoginTokenUtils);
-			token = subject.getSession().getId().toString();
+			String token = subject.getSession().getId().toString();
 
 			//将登录的公钥私钥信息存进redis里面
 			Map<Integer, String> integerStringMap = RsaUtils.genKeyPair();
 			redis.opsForValue().set(PropertyUtils.APP_USER_PUBLIC_KEY + token,integerStringMap.get(0),30, TimeUnit.MINUTES);
 			redis.opsForValue().set(PropertyUtils.APP_USER_PRIVATE_KEY + token,integerStringMap.get(1),30, TimeUnit.MINUTES);
 
-			HashMap<String, String> map = new HashMap<>(2);
+			//将所有登录用户信息token放在redis中，之后修改密码时删除对应的token
+			DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+			redis.opsForHash().put(PropertyUtils.ALL_USER_TOKEN,deptUser.getUserSalt(),token);
+
+			Map<String, String> map = new HashMap<>(2);
 			map.put("publicKey",integerStringMap.get(0));
 			map.put("token",token);
 			return ResponseEntity.ok(map);
@@ -146,7 +150,7 @@ public class AppLoginController {
 		log.info("查询用户名为{}，手机号为{}的用户",object.getString("username"),object.getString("phone"));
 		DeptUser deptUser = deptUserService.findUserByUsernameAndPhone(object.getString("username"),object.getString("phone"));
 		if (deptUser == null){
-			return ResponseEntity.ok(null);
+			return ResponseEntity.ok().build();
 		}
 		return ResponseEntity.ok(deptUser);
 	}
@@ -184,7 +188,7 @@ public class AppLoginController {
 	@DecryptData
 	@ApiOperation("忘记密码，更新用户的密码")
 	@PostMapping("/app/user/updatePass")
-	public ResponseEntity updateUserPassword(@RequestBody AppBaseMsg appBaseMsg){
+	public ResponseEntity<String> updateUserPassword(@RequestBody AppBaseMsg appBaseMsg){
 		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
 		log.info("用户{}更新了密码",appBaseMsg.getUserId());
 
@@ -201,7 +205,7 @@ public class AppLoginController {
 		if (update){
 			return ResponseEntity.ok("用户密码更新成功");
 		}
-		return ResponseEntity.ok("用户密码更新失败");
+		return ResponseEntity.error("用户密码更新失败");
 	}
 
 	/**
@@ -214,9 +218,11 @@ public class AppLoginController {
 
 		//删除用户在redis 里面的token
 		String token = SecurityUtils.getSubject().getSession().getId().toString();
+		DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
 		redis.delete(PropertyUtils.USER_SESSION + token);
 		redis.delete(PropertyUtils.APP_USER_PRIVATE_KEY+token);
 		redis.delete(PropertyUtils.APP_USER_PUBLIC_KEY+token);
+		redis.opsForHash().delete(PropertyUtils.ALL_USER_TOKEN,deptUser.getUserSalt());
 		return ResponseEntity.ok().build();
 	}
 

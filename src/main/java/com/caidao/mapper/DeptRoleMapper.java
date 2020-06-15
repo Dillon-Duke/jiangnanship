@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.DeptRole;
+import com.caidao.pojo.DeptRole;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**

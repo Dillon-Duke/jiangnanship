@@ -2,10 +2,10 @@ package com.caidao.controller.back;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
-import com.caidao.entity.SysUser;
 import com.caidao.exception.MyException;
 import com.caidao.param.Menu;
 import com.caidao.param.UserParam;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
@@ -101,6 +101,10 @@ public class LoginController {
 		subject.login(userLoginTokenUtils);
 		token = subject.getSession().getId().toString();
 
+		//将所有登录用户信息token放在redis中，之后修改密码时删除对应的token
+		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+		redis.opsForHash().put(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt(),token);
+
 		return ResponseEntity.ok(token);
 	}
 	
@@ -147,12 +151,13 @@ public class LoginController {
 	@ApiOperation("退出账号")
 	public ResponseEntity<Void> logout(){
 
-		//删除用户在redis 里面的token
-		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-
 		//获取对应的登录用户session
 		String token = SecurityUtils.getSubject().getSession().getId().toString();
 		redis.delete(PropertyUtils.USER_SESSION + token);
+
+		//删除用户在redis 里面的token
+		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+		redis.opsForHash().delete(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt());
 		return ResponseEntity.ok().build();
 	}
 

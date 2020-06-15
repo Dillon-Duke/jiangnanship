@@ -46,8 +46,6 @@ public class JsonRequestWrapper extends HttpServletRequestWrapper {
             }
         }
         body = stringBuilder.toString();
-        //处理转义json字符串
-
     }
 
     @Override

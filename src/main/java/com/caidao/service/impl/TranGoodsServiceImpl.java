@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.entity.TranGoods;
+import com.caidao.pojo.TranGoods;
 import com.caidao.mapper.TranGoodsMapper;
 import com.caidao.service.TranGoodsService;
 import com.caidao.util.FastDfsClientUtils;

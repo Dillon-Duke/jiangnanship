@@ -22,12 +22,21 @@ public class JsonIllegalCharacterFilter implements Filter {
         ServletRequest requestWrapper = null;
         if(req instanceof HttpServletRequest) {
             HttpServletRequest request = (HttpServletRequest) req;
-            requestWrapper = new JsonRequestWrapper(request);
-        }
-        if(requestWrapper == null) {
-            chain.doFilter(req, resp);
-        } else {
-            chain.doFilter(requestWrapper, resp);
+            String method = request.getMethod();
+            if ("GET".equals(method)){
+
+            } if ("POST".equals(method)) {
+                requestWrapper = new JsonRequestWrapper(request);
+                if(requestWrapper == null) {
+                    chain.doFilter(req, resp);
+                } else {
+                    chain.doFilter(requestWrapper, resp);
+                }
+            } if ("UPDATE".equals(method)) {
+
+            } if ("DELETE".equals(method)) {
+
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.DeptConfig;
+import com.caidao.pojo.DeptConfig;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

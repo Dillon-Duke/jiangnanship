@@ -3,8 +3,8 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.DeptUserCar;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.DeptUserCar;
 
 import java.util.HashMap;
 import java.util.List;

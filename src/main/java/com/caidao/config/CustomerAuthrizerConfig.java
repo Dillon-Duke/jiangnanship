@@ -1,7 +1,7 @@
 package com.caidao.config;
 
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.SysUser;
 import org.apache.shiro.authz.Authorizer;
 import org.apache.shiro.authz.ModularRealmAuthorizer;
 import org.apache.shiro.realm.Realm;

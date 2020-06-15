@@ -4,7 +4,7 @@ package com.caidao.controller.back.car;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
-import com.caidao.entity.CarConfig;
+import com.caidao.pojo.CarConfig;
 import com.caidao.service.CarConfigService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

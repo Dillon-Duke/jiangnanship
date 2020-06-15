@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.entity.Car;
+import com.caidao.pojo.Car;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;
 

@@ -3,7 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.entity.Log;
+import com.caidao.pojo.sysLog;
 
 /**
  * <p>
@@ -13,7 +13,7 @@ import com.caidao.entity.Log;
  * @author jinpeng
  * @since 2020-03-25
  */
-public interface SysLogService extends IService<Log> {
+public interface SysLogService extends IService<sysLog> {
 
 	/**
 	 * 获取页表数据 当前页 页大小
@@ -21,6 +21,6 @@ public interface SysLogService extends IService<Log> {
 	 * @param logs
 	 * @return
 	 */
-	IPage<Log> findPage(Page<Log> page, Log logs);
+	IPage<sysLog> findPage(Page<sysLog> page, sysLog logs);
 
 }

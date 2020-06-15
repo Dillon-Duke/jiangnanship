@@ -1,8 +1,8 @@
 package com.caidao.controller.back.system;
 
 import com.caidao.anno.SysLogs;
-import com.caidao.entity.SysMenu;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.SysMenu;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.SysMenuService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

@@ -3,9 +3,9 @@ package com.caidao.controller.back.dept;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.DeptUserCar;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.DeptUserCar;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.DeptUserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

@@ -10,6 +10,7 @@
     </parent>
     <groupId>com.caidao</groupId>
     <artifactId>jiangnanship</artifactId>
+    <packaging>war</packaging>
     <version>0.0.1-SNAPSHOT</version>
     <name>jiangnanship</name>
     <description>Demo project for Spring Boot</description>
@@ -98,7 +99,6 @@
             <artifactId>swagger-models</artifactId>
             <version>${swagger.version}</version>
         </dependency>
-
         <!--swagger2 -->
         <dependency>
             <groupId>io.springfox</groupId>
@@ -111,7 +111,6 @@
             <artifactId>swagger-bootstrap-ui</artifactId>
             <version>${swagger.bootstrap.ui}</version>
         </dependency>
-
         <!-- Swagger End -->
 
         <!-- lombok -->
@@ -185,8 +184,7 @@
             <version>${fastdfs.version}</version>
         </dependency>
 
-        <!-- log4j Dependency start -->
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+        <!-- log4j Dependency BEGIN -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -194,14 +192,21 @@
         </dependency>
         <!-- log4j Dependency End -->
 
-        <!-- fastJSON START -->
-        <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+        <!-- fastJSON BEGIN -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.68</version>
         </dependency>
         <!-- fastJSON END -->
+
+        <!-- Enum solve can not get javax.annotation.meta.When BEGIN -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+        <!-- Enum solve can not get javax.annotation.meta.When END -->
 
         <!-- 单元测试 -->
         <dependency>

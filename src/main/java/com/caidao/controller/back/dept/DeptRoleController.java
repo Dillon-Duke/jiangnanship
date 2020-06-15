@@ -3,8 +3,8 @@ package com.caidao.controller.back.dept;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.DeptRole;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.DeptRole;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.DeptRoleService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

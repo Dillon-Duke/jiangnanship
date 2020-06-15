@@ -2,9 +2,9 @@ package com.caidao.aspect;
 
 import cn.hutool.json.JSONUtil;
 import com.caidao.anno.SysLogs;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.Log;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.sysLog;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.SysLogService;
 import com.caidao.util.SysLogIpUtils;
 import org.apache.shiro.SecurityUtils;
@@ -37,7 +37,7 @@ public class SysLogAspectj {
 	@Around("@annotation(com.caidao.anno.SysLogs)")
 	public Object sysLogAroundAspectj(ProceedingJoinPoint joinPoint) throws Throwable {
 		
-		Log log = new Log();
+		sysLog log = new sysLog();
 		
 		//设置创建日志的时间 为当前时间
 		log.setCreateDate(LocalDateTime.now());

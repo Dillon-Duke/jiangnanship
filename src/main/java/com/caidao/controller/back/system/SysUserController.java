@@ -2,7 +2,7 @@ package com.caidao.controller.back.system;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.SysUserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -129,7 +129,7 @@ public class SysUserController {
 	@PutMapping
 	@ApiOperation("修改用户")
 	@RequiresPermissions("sys:user:update")
-	public ResponseEntity<SysUser> updateUser(@RequestBody SysUser sysUser) throws IOException {
+	public ResponseEntity<SysUser> updateUser(@RequestBody SysUser sysUser) {
 
 		Assert.notNull(sysUser,"用户信息不能为空");
 		log.info("修改用户名为{}的用户",sysUser.getUsername());
@@ -138,7 +138,6 @@ public class SysUserController {
 		SysUser sysUser2 = (SysUser)SecurityUtils.getSubject().getPrincipal();
 		sysUser.setUpdateId(sysUser2.getUserId());
 		sysUserService.updateById(sysUser);
-
 		return ResponseEntity.ok().build();
 	}	
 

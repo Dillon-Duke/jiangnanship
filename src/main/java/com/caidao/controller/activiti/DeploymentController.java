@@ -1,7 +1,7 @@
 package com.caidao.controller.activiti;
 
 import com.caidao.anno.SysLogs;
-import com.caidao.param.ActivitiParam;
+import com.caidao.param.ActivityParam;
 import com.caidao.util.ActivitiObj2MapUtils;
 import com.caidao.util.PropertiesReaderUtils;
 import io.swagger.annotations.ApiOperation;
@@ -144,22 +144,22 @@ public class DeploymentController {
 
     /**
      * 通过Id删除平板车已发布的流程
-     * @param activitiParam
+     * @param activityParam
      * @return
      */
     @SysLogs("通过Id删除平板车已发布的流程")
     @ApiOperation("通过Id删除平板车已发布的流程")
     @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteFlatCarDeployment(@RequestBody ActivitiParam activitiParam){
+    public ResponseEntity<Void> deleteFlatCarDeployment(@RequestBody ActivityParam activityParam){
 
-        Assert.notNull(activitiParam,"参数不能为空");
+        Assert.notNull(activityParam,"参数不能为空");
 
         //判断是否强制删除
-        if (!activitiParam.isFoucede){
-            activitiParam.isFoucede = false;
+        if (!activityParam.isFoucede){
+            activityParam.isFoucede = false;
         }
         try {
-            repositoryService.deleteDeployment(activitiParam.getDeploymentId(),activitiParam.isFoucede);
+            repositoryService.deleteDeployment(activityParam.getDeploymentId(), activityParam.isFoucede);
         } catch (RuntimeException e) {
             throw new RuntimeException("有实例正在使用该流程，不能删除");
         }
@@ -172,17 +172,17 @@ public class DeploymentController {
      */
     @ApiOperation("查询正在运行的实例")
     @PostMapping("/getAllInstance")
-    public ResponseEntity<List<Map<String, Object>>> getAllInstance(@RequestBody ActivitiParam activitiParam){
+    public ResponseEntity<List<Map<String, Object>>> getAllInstance(@RequestBody ActivityParam activityParam){
 
         ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
         List<Map<String, Object>> listMap = new ArrayList<>();
         List<ProcessInstance> instances = null;
 
         //判断是否有查询条件
-        if (activitiParam.getProcessDefinitionName() == null || activitiParam.getProcessDefinitionName() == ""){
+        if (activityParam.getProcessDefinitionName() == null || activityParam.getProcessDefinitionName() == ""){
             instances = instanceQuery.orderByProcessInstanceId().desc().list();
         } else {
-            instances = instanceQuery.orderByProcessInstanceId().processDefinitionName(activitiParam.getProcessDefinitionName()).desc().list();
+            instances = instanceQuery.orderByProcessInstanceId().processDefinitionName(activityParam.getProcessDefinitionName()).desc().list();
         }
         String[] ps = { "id","businessKey","processInstanceId","startTime","deploymentId"};
         for (ProcessInstance task : instances) {

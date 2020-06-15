@@ -3,9 +3,10 @@ package com.caidao.controller.front.goods;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.SysUser;
-import com.caidao.entity.TranGoods;
+import com.caidao.common.ResponseEntity;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.SysUser;
+import com.caidao.pojo.TranGoods;
 import com.caidao.service.TranGoodsService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +14,14 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * @author tom
+ * @since 2020-06-11
+ */
 @RestController
 @RequestMapping("/appTrans/goods")
 @Slf4j
@@ -75,7 +79,7 @@ public class AppTransGoodsController {
         if (save){
             return ResponseEntity.ok("新增成功");
         }
-        return ResponseEntity.ok("新增失败");
+        return ResponseEntity.error("新增失败");
     }
 
     /**
@@ -86,7 +90,7 @@ public class AppTransGoodsController {
     @PutMapping
     @ApiOperation("更新运输分段信息")
     @RequiresPermissions("car:goods:update")
-    public ResponseEntity<String> updateGoods(@RequestBody TranGoods tranGoods){
+    public ResponseEntity updateGoods(@RequestBody TranGoods tranGoods){
 
         com.baomidou.mybatisplus.core.toolkit.Assert.notNull(tranGoods,"更新运输分段信息 不能为空");
         log.info("更新车辆id为{}的运输分段信息",tranGoods.getGoodsId());
@@ -98,7 +102,7 @@ public class AppTransGoodsController {
         if (updateCar){
             return ResponseEntity.ok().build();
         }
-        return ResponseEntity.ok("更新失败");
+        return ResponseEntity.error("更新失败");
     }
 
     /**
@@ -119,7 +123,7 @@ public class AppTransGoodsController {
         if (removeByIds){
             return ResponseEntity.ok().build();
         }
-        return ResponseEntity.ok("删除失败");
+        return ResponseEntity.error("删除失败");
     }
 
 

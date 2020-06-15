@@ -1,6 +1,6 @@
 package com.caidao.config;
 
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;

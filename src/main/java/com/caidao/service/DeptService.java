@@ -1,6 +1,6 @@
 package com.caidao.service;
 
-import com.caidao.entity.Dept;
+import com.caidao.pojo.Dept;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;

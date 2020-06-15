@@ -1,7 +1,7 @@
 package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.entity.DeptUser;
+import com.caidao.pojo.DeptUser;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.web.bind.annotation.PathVariable;

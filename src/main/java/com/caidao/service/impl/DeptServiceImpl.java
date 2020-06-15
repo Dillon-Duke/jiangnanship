@@ -2,10 +2,10 @@ package com.caidao.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.entity.Dept;
-import com.caidao.entity.DeptDeptRole;
-import com.caidao.entity.DeptRole;
-import com.caidao.entity.DeptUser;
+import com.caidao.pojo.Dept;
+import com.caidao.pojo.DeptDeptRole;
+import com.caidao.pojo.DeptRole;
+import com.caidao.pojo.DeptUser;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.*;
 import com.caidao.service.DeptService;

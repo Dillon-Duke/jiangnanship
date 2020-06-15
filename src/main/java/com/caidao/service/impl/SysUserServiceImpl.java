@@ -5,18 +5,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.SysUser;
-import com.caidao.entity.SysUserRole;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.SysUserMapper;
 import com.caidao.mapper.SysUserRoleMapper;
 import com.caidao.param.UserParam;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.SysUser;
+import com.caidao.pojo.SysUserRole;
 import com.caidao.service.SysUserService;
 import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -31,10 +30,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * <p>
- *  服务实现类
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */
@@ -113,8 +108,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		//判断是否需要创建部门角色
 		String userAdd = sysUser.getDeptUserAdd();
 		if ("true".equals(userAdd)){
+
+			//判断是否昵称已被注册
+			DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+					.eq(DeptUser::getUsername, sysUser.getUsername()));
+			if (selectOne != null){
+				throw new MyException("该名称已被注册，请更换其他名称");
+			}
 			DeptUser deptUser = new DeptUser();
 			deptUser.setUsername(sysUser.getUsername());
+			deptUser.setRealName(sysUser.getRealName());
 			deptUser.setPassword(sysUser.getPassword());
 			deptUser.setUserSalt(sysUser.getUserSalt());
 			deptUser.setAge(sysUser.getAge());
@@ -244,20 +247,24 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	public boolean updateById(SysUser sysUser) {
 
 		//查询数据库中是否有该用户名，如果有，则提示更换用户名
-		SysUser user = sysUserMapper.selectById(sysUser.getUserId());
+		DeptUser user = deptUserMapper.selectById(sysUser.getUserId());
 		if (!user.getUsername().equals(sysUser.getUsername())){
-			SysUser selectOne = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
-					.eq(SysUser::getUsername, sysUser.getUsername()));
+			DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+					.eq(DeptUser::getUsername, sysUser.getUsername()));
 			if (selectOne != null){
 				throw new MyException("该名称已被注册，请更换其他名称");
 			}
 		}
 
-		//判断用户密码是否有改动过，如果有，则重新赋值 反之，则直接存入数据库
-		SysUser user1 = sysUserMapper.selectById(sysUser.getUserId());
-		if (user1.getPassword() != sysUser.getPassword()){
-			//设置更新盐值
-			setSaltPass(sysUser,sysUser.getUserSalt());
+		//判断密码是否重新输入过，如果输入过，则改密码，若无，则直接存数据库里面
+		String password = sysUser.getPassword();
+		if (password != null && password != ""){
+			//设置加盐密码
+			ByteSource bytes = ByteSource.Util.bytes(sysUser .getUserSalt().getBytes());
+			String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+			sysUser.setPassword(saltPass);
+		} else {
+			sysUser.setPassword(user.getPassword());
 		}
 
 		//设置更新时间
@@ -280,7 +287,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			sysUserRoleMapper.insert(sysUserRole);
 		}
 
-		String token = SecurityUtils.getSubject().getSession().getId().toString();
+		//获取被删除用户的token
+		Object token = redisTemplate.opsForHash().get(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
 		//判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
 		if (token != null) {
 			redisTemplate.delete(PropertyUtils.USER_SESSION+token);

@@ -4,17 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.entity.DeptUser;
-import com.caidao.entity.DeptUserCar;
-import com.caidao.entity.DeptUserRole;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptUserCarMapper;
 import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.DeptUserRoleMapper;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.DeptUserCar;
+import com.caidao.pojo.DeptUserRole;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -170,8 +169,8 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     public boolean updateById(DeptUser deptUser) {
 
         //查询数据库中是否有该用户名，如果有，则提示更换用户名
-        DeptUser user1 = deptUserMapper.selectById(deptUser.getUserId());
-        if (!user1.getUsername().equals(deptUser.getUsername())){
+        DeptUser user = deptUserMapper.selectById(deptUser.getUserId());
+        if (!user.getUsername().equals(deptUser.getUsername())){
             DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
                     .eq(DeptUser::getUsername, deptUser.getUsername()));
             if (selectOne != null){
@@ -180,14 +179,14 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
 
         //判断密码是否重新输入过，如果输入过，则改密码，若无，则直接存数据库里面
-        String oldPassword = deptUser.getPassword();
-        DeptUser user = deptUserMapper.selectById(deptUser.getUserId());
-        if (user.getPassword() != oldPassword){
+        String password = deptUser.getPassword();
+        if (password != null && password != ""){
             //设置加盐密码
-            String password = deptUser.getPassword();
             ByteSource bytes = ByteSource.Util.bytes(deptUser.getUserSalt().getBytes());
             String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
             deptUser.setPassword(saltPass);
+        } else {
+            deptUser.setPassword(user.getPassword());
         }
 
         //设置更新日期
@@ -207,8 +206,8 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         //判断为空 则直接返回
         List<Integer> roleIdList = deptUser.getRoleIdList();
         if (roleIdList == null || roleIdList.isEmpty()){
-            deptUser.setUserRoleName("空");
-            deptUser.setUserDeptName("空");
+            deptUser.setUserRoleName("无");
+            deptUser.setUserDeptName("无");
             return super.updateById(deptUser);
         }
 
@@ -229,14 +228,13 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             deptUser.setUserDeptName(map.get("dept_name").toString());
         }
 
-        //获取对应的登录用户session
-        String token = SecurityUtils.getSubject().getSession().getId().toString();
+        //获取被删除用户的token
+        Object token = redisTemplate.opsForHash().get(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
 
         //判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
         if (token != null) {
             redisTemplate.delete(PropertyUtils.USER_SESSION+token);
         }
-
         return super.updateById(deptUser);
     }
 

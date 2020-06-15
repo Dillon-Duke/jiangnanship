@@ -1,7 +1,7 @@
 package com.caidao.controller.back.dept;
 
-import com.caidao.entity.Dept;
-import com.caidao.entity.SysUser;
+import com.caidao.pojo.Dept;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.DeptService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;

@@ -2,7 +2,7 @@ package com.caidao.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.entity.SysRole;
+import com.caidao.pojo.SysRole;
 
 /**
  * <p>

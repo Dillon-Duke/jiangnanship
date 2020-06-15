@@ -44,6 +44,11 @@ public class PropertyUtils {
 	public static final String USER_SESSION = "shiro:session:";
 
 	/**
+	 * 所有用户的登录token集合
+	 */
+	public static final String ALL_USER_TOKEN = "allUserToken:";
+
+	/**
 	 * 自定义token头部
 	 */
 	public static final String TOKEN_HEADER = "TOKEN";
@@ -67,5 +72,10 @@ public class PropertyUtils {
 	 *部门取消任务是否开始驳运
 	 */
 	public static final String IS_START_TRANS = "is_start_trans";
+
+	/**
+	 * 平板车计划任务申请工单号前缀
+	 */
+	public static final String FLAT_CAR_PLAN_ODD_NUMBER_PREFIX = "PBSQKS";
 
 }
