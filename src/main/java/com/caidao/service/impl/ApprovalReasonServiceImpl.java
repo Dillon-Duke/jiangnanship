@@ -5,13 +5,20 @@ import com.caidao.exception.MyException;
 import com.caidao.mapper.ApprovalReasonMapper;
 import com.caidao.mapper.PlatformMapper;
 import com.caidao.pojo.ApprovalReason;
+import com.caidao.pojo.DeptUser;
 import com.caidao.service.ApprovalReasonService;
+import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.HistoryService;
+import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricProcessInstanceQuery;
 import org.activiti.engine.impl.persistence.entity.TaskEntity;
+import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.TaskQuery;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.util.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,10 +33,14 @@ import java.util.List;
  * @since 2020-06-13
  */
 @Service
+@Slf4j
 public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper, ApprovalReason> implements ApprovalReasonService {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private RuntimeService runtimeService;
 
     @Autowired
     private HistoryService historyService;
@@ -38,13 +49,18 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
     private PlatformMapper platformMapper;
 
     /**
-     * 完成审批
+     * 完成审批 不在platform表中设置是否为驳运计划冗余字段
      * @param approvalReason
      * @return
      */
     @Override
-    @Transactional(rollbackFor = MyException.class)
+    @Transactional(rollbackFor = RuntimeException.class)
     public void completeApprovalWithOpinion(ApprovalReason approvalReason) {
+
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        Assert.notNull(approvalReason,"审批原因不能为空");
+        log.info("用户{}完成了任务的审批",deptUser.getUsername());
+        approvalReason.setCreateId(deptUser.getCreateId());
 
         //将审批意见存入数据库
         List<ApprovalReason> reasons = saveApprovalReasons(approvalReason);
@@ -53,31 +69,68 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
             throw new MyException("审批失败，请联系管理员");
         }
 
-        //流程的完成
+        //判断是否有带审批意见，如果没有，直接是任务完成，流程进入下一步
+        Integer opinions = approvalReason.getOpinion();
+        String opinion;
+        TaskQuery taskQuery = taskService.createTaskQuery();
+        ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
+        if (opinions == 0){
+            String[] requests = approvalReason.getRequestId().split(",");
+            for (String taskId : requests) {
+                String businessKey = toTaskIdGetBusinessKey(taskId);
+                String instanceId = taskQuery.taskId(taskId).singleResult().getProcessInstanceId();
+                taskService.complete(taskId);
+                ProcessInstance instance = instanceQuery.processInstanceId(instanceId).singleResult();
+                if (instance == null) {
+                    Integer integer = platformMapper.endFlatCarPlanTask(Integer.parseInt(businessKey));
+                    if (integer <= 0) {
+                        throw new MyException("审批失败，请联系管理员");
+                    }
+                }
+            }
+        }
+
+        //带有流程进入意见赋值
+         if (opinions == 1){
+            opinion = "同意";
+        } else {
+            opinion = "不同意";
+        }
+        //循环进行流程完成
         String[] requests = approvalReason.getRequestId().split(",");
         for (String taskId : requests) {
-            taskService.setVariableLocal(taskId,"ApprovalOpinion",approvalReason.getOpinion());
-            taskService.complete(taskId);
+            taskService.setVariable(taskId,"ApprovalOpinion",opinion);
 
-            //如果不同意，则需要更改平板车计划任务表中审核状态，为不同意状态
-            if (approvalReason.getOpinion() == 0) {
-                String businessKey = toTaskIdGetBusinessKey(taskId);
-                Integer integer = platformMapper.setApprovalOpinion(businessKey);
+            //获取业务主键
+            String businessKey = toTaskIdGetBusinessKey(taskId);
+            String instanceId = taskQuery.taskId(taskId).singleResult().getProcessInstanceId();
+            taskService.complete(taskId);
+            ProcessInstance instance = instanceQuery.processInstanceId(instanceId).singleResult();
+            //流程完成后判断是否流程完成，如果完成，则改审批状态为不通过，反之则跳过状态步骤
+            if (opinions == 2 && instance == null) {
+                Integer integer = platformMapper.setApprovalOpinion(Integer.parseInt(businessKey));
                 if (integer <= 0) {
                     throw new MyException("审批失败，请联系管理员");
                 }
             }
+
         }
 
     }
 
     /**
-     * 计划任务的完成
+     * 完成审批 在platform表中设置是否为驳运计划冗余字段
      * @param approvalReason
      * @return
      */
-    @Override
-    public void endFlatCarPlanTask(ApprovalReason approvalReason) {
+    @Transactional(rollbackFor = RuntimeException.class)
+    public void completeApprovalWithOpinions(ApprovalReason approvalReason) {
+
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        Assert.notNull(approvalReason,"审批原因不能为空");
+        log.info("用户{}完成了任务的审批",deptUser.getUsername());
+        approvalReason.setCreateId(deptUser.getCreateId());
+
         //将审批意见存入数据库
         List<ApprovalReason> reasons = saveApprovalReasons(approvalReason);
         boolean batch = this.saveOrUpdateBatch(reasons);
@@ -85,18 +138,56 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
             throw new MyException("审批失败，请联系管理员");
         }
 
-        //流程的完成
-        String[] requests = approvalReason.getRequestId().split(",");
-        for (String taskId : requests) {
-            taskService.complete(taskId);
-
-            //流程完成，状态改为审批完成
-            String businessKey = toTaskIdGetBusinessKey(taskId);
-            Integer integer = platformMapper.endFlatCarPlanTask(businessKey);
-            if (integer <= 0) {
-                throw new MyException("审批失败，请联系管理员");
+        //判断是否有带审批意见，如果没有，直接是任务完成，流程进入下一步
+        Integer opinions = approvalReason.getOpinion();
+        String opinion;
+        TaskQuery taskQuery = taskService.createTaskQuery();
+        ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
+        if (opinions == 0){
+            String[] requests = approvalReason.getRequestId().split(",");
+            for (String taskId : requests) {
+                String businessKey = toTaskIdGetBusinessKey(taskId);
+                String instanceId = taskQuery.taskId(taskId).singleResult().getProcessInstanceId();
+                taskService.complete(taskId);
+                ProcessInstance instance = instanceQuery.processInstanceId(instanceId).singleResult();
+                if (instance != null) {
+                    String name = taskQuery.processInstanceId(instance.getProcessInstanceId()).singleResult().getName();
+                    if (name.equals("编制驳动计划")){
+                        platformMapper.remarkOrganization(Integer.parseInt(businessKey));
+                    }
+                } else {
+                    platformMapper.endFlatCarPlanTask(Integer.parseInt(businessKey));
+                }
             }
         }
+
+        //带有流程进入意见赋值
+        if (opinions == 1){
+            opinion = "同意";
+        } else {
+            opinion = "不同意";
+        }
+        //循环进行流程完成
+        String[] requests = approvalReason.getRequestId().split(",");
+        for (String taskId : requests) {
+            taskService.setVariable(taskId,"ApprovalOpinion",opinion);
+
+            //获取业务主键
+            String businessKey = toTaskIdGetBusinessKey(taskId);
+            String instanceId = taskQuery.taskId(taskId).singleResult().getProcessInstanceId();
+            taskService.complete(taskId);
+            ProcessInstance instance = instanceQuery.processInstanceId(instanceId).singleResult();
+            //流程完成后判断是否流程完成，如果完成，则改审批状态为不通过，反之则跳过状态步骤
+            if (opinions == 2 && instance == null) {
+                platformMapper.setApprovalOpinion(Integer.parseInt(businessKey));
+            } else {
+                String name = taskQuery.processInstanceId(instance.getProcessInstanceId()).singleResult().getName();
+                if (name.equals("编制驳动计划")){
+                    platformMapper.remarkOrganization(Integer.parseInt(businessKey));
+                }
+            }
+        }
+
     }
 
     /**
@@ -105,6 +196,7 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
      * @return
      */
     private String toTaskIdGetBusinessKey(String taskId) {
+
         String businessKey;
         TaskQuery taskQuery = taskService.createTaskQuery();
         TaskEntity taskEntity = (TaskEntity) taskQuery.taskId(taskId).singleResult();

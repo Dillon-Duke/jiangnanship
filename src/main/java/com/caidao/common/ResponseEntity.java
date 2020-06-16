@@ -11,10 +11,7 @@ import reactor.util.annotation.Nullable;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -181,7 +178,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @return the created builder
      * @since 4.1
      */
-    public static BodyBuilder ok() {
+    public static ResponseEntity.BodyBuilder ok() {
         return status(HttpStatus.OK);
     }
 

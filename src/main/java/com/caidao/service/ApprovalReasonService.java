@@ -15,11 +15,4 @@ public interface ApprovalReasonService extends IService<ApprovalReason> {
      * @return
      */
     void completeApprovalWithOpinion(ApprovalReason approvalReason);
-
-    /**
-     * 计划任务的完成
-     * @param approvalReason
-     * @return
-     */
-    void endFlatCarPlanTask(ApprovalReason approvalReason);
 }

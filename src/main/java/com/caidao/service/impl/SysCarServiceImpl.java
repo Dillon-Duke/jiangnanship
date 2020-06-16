@@ -180,4 +180,16 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements
         return super.updateById(car);
     }
 
+    /**
+     * 获得空闲的车辆
+     * @return
+     */
+    @Override
+    public List<Car> getFreeCarList() {
+        List<Car> carList = sysCarMapper.selectList(new LambdaQueryWrapper<Car>()
+                .in(Car::getCarId, 1)
+                .orderByDesc(Car::getCarId));
+        return carList;
+    }
+
 }

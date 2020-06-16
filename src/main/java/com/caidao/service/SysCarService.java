@@ -40,4 +40,9 @@ public interface SysCarService extends IService<Car> {
      */
     List<Car> selectConditionCar(Car car);
 
+    /**
+     * 获得空闲的车辆
+     * @return
+     */
+    List<Car> getFreeCarList();
 }

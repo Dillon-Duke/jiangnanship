@@ -15,6 +15,7 @@ import com.caidao.util.ActivitiObj2MapUtils;
 import com.caidao.util.DateUtils;
 import com.caidao.util.PropertiesReaderUtils;
 import com.caidao.util.PropertyUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
@@ -27,6 +28,8 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +43,7 @@ import java.util.*;
  * @since 2020-06-11
  */
 @Service
+@Slf4j
 public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> implements PlatformService {
 
     @Autowired
@@ -68,7 +72,16 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public Map<String, Object> saveFlatCarPlan(Platform platform) {
+
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        if (deptUser == null){
+            throw new MyException("用户未登录，请登录");
+        }
+        log.info("用户{}申请了一个未提交任务",deptUser.getUsername());
+
+        platform.setCreateId(deptUser.getUserId());
         platform.setCreateDate(LocalDateTime.now());
+        platform.setApplyName(deptUser.getUsername());
         platform.setApplyState(0);
         platform.setState(1);
 
@@ -130,7 +143,14 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
                     throw new MyException("平板车计划任务插入失败");
                 }
                 break;
+            case 2:
+                break;
+            case 3: int a = 0;
+                break;
+            case 4: long b = 0L;
+                break;
             default :
+                throw new MyException("申请类型不正确");
         }
 
         //返回值放到map中
@@ -148,8 +168,12 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
      * @return 流程实例Id
      */
     @Override
-    @Transactional(rollbackFor = MyException.class)
+    @Transactional(rollbackFor = RuntimeException.class)
     public Boolean removePlanById(String id,String reason) {
+
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        log.info("用户{}删除未申请的任务",deptUser.getUsername());
+
         Platform selectById = platformMapper.selectById(id);
         //获取任务的申请状态，已提交状态的任务不能被删除
         Integer state = selectById.getApplyState();
@@ -189,19 +213,22 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
     @Transactional(rollbackFor = RuntimeException.class)
     public Map<String, Object> startPlanTasks(Platform platform) {
 
-        //判断提交的是不是之前保存过的申请
-        Integer prsId = platform.getPrsId();
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        log.info("用户{}申请了一个未提交任务",deptUser.getUsername());
 
-        //为空说明之前没有保存过 ，没有自动生成了对应的主键
+        //判断提交的是不是之前保存过的申请 未保存，应该先保存，
+        Integer prsId = platform.getPrsId();
         Map<String, Object> saveFlatCarPlanMap = null;
         if (prsId == null || prsId == 0){
             saveFlatCarPlanMap = this.saveFlatCarPlan(platform);
         }
 
         //更改审批状态，未审批变为审批中
+        platform.setUpdateId(deptUser.getUserId());
         platform.setUpdateDate(LocalDateTime.now());
+        platform.setApplyName("");
         platform.setApplyState(1);
-
+        platformMapper.updateById(platform);
         //获取任务ID
         Object businessKey = saveFlatCarPlanMap.get("BusinessKey");
         TaskQuery taskQuery = taskService.createTaskQuery();
@@ -227,11 +254,24 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
 
     /**
      * 获取用户的任务列表
-     * @param username
      * @return
      */
     @Override
-    public List<Map<String, Object>> getDeptUserTaskList(ActivityQueryParam param, String username) {
+    public List<Map<String, Object>> getDeptUserTaskList(ActivityQueryParam param) {
+
+        //默认查询的当前用户的需要审批的列表
+        Assert.notNull(param,"参数不能为空");
+
+        //判断是查询自己的正在审批的任务还是别人正在审批的任务
+        String username;
+        if (param.getUserName() == null || param.getUserName() == ""){
+            DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+            username = deptUser.getUsername();
+        } else {
+            username = param.getUserName();
+        }
+        log.info("查询用户名为{}的任务列表",username);
+
         //activity中获取需要审批的任务列表
         TaskQuery taskQuery = taskService.createTaskQuery();
 
@@ -252,11 +292,23 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
     /**
      * 获取用户的历史任务
      * @param param
-     * @param username
      * @return
      */
     @Override
-    public List<HistoricTaskInstance> getUserHistoryTaskList(ActivityQueryParam param, String username) {
+    public List<HistoricTaskInstance> getUserHistoryTaskList(ActivityQueryParam param) {
+
+        Assert.notNull(param,"参数不能为空");
+        log.info("查询用户名为{}的历史列表",param.getUserName());
+        //默认查询当前用户的所有历史任务
+        String username;
+        if (param.getUserName() != null && param.getUserName() !=""){
+            username = param.getUserName();
+        } else {
+            DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+            username = deptUser.getUsername();
+        }
+        log.info("用户{}查询历史记录",username);
+
         //获取所有的个人历史任务
         HistoricTaskInstanceQuery instanceQuery = historyService.createHistoricTaskInstanceQuery();
         List<HistoricTaskInstance> list = instanceQuery.taskAssignee(username)
@@ -281,7 +333,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
         if (startDate == null){
             for (HistoricTaskInstance historicTaskInstance : list) {
                 Date endTime1 = historicTaskInstance.getEndTime();
-                if (endTime.after(endTime1)){
+                if (endTime1 != null && endTime.after(endTime1)){
                     list1.add(historicTaskInstance);
                 }
             }
@@ -290,7 +342,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
             for (HistoricTaskInstance historicTaskInstance : list) {
                 Date endTime1 = historicTaskInstance.getEndTime();
                 Date startTime1 = historicTaskInstance.getStartTime();
-                if (endTime.after(endTime1) && startTime.before(startTime1)){
+                if (endTime1 != null && endTime.after(endTime1) && startTime.before(startTime1)){
                     list1.add(historicTaskInstance);
                 }
             }
@@ -299,29 +351,21 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
     }
 
     /**
-     * 查询个人用户的组任务列表
-     * @return
-     */
-    @Override
-    public List<Task> listPlanOwnerGroupTask(ActivityQueryParam param) {
-
-        List<Task> list = taskService.createTaskQuery()
-                .processDefinitionKey(StringUtils.hasText(param.getTaskName()) ? param.getTaskName() : null)
-                .taskCandidateUser(param.getUserName())
-                .list();
-        return list;
-    }
-
-    /**
      * 用户拾取组任务
      * @param taskId
      * @return
      */
     @Override
-    @Transactional(rollbackFor = MyException.class)
-    public void getPlanOwnerGroupTask(String taskId, String username) {
+    @Transactional(rollbackFor = RuntimeException.class)
+    public void getPlanOwnerGroupTask(String taskId) {
+
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        String username = deptUser.getUsername();
+        Integer updateId = deptUser.getUserId();
+        log.info("拾取用户名为{}的组任务列表", username);
+
         try {
-            taskService.claim(taskId,username);
+            taskService.claim(taskId, username);
             //获取流程的业务主键
             String businuessKey;
             TaskQuery taskQuery = taskService.createTaskQuery();
@@ -336,7 +380,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
             }
 
             //增加数据库中审批人
-            Integer update = platformMapper.updateApplyName(businuessKey,username);
+            Integer update = platformMapper.updateApplyName(Integer.parseInt(businuessKey), username,updateId);
             if (update <= 0){
                 throw new MyException("任务拾取失败，请重试");
             }
@@ -352,24 +396,31 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
      * taskService.addCandidateUser(taskId,"新用户ID");
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public void flatCarPlan2OtherUser(String taskId, String username) {
+
+        Assert.notNull(taskId,"任务ID不能为空");
+        Assert.notNull(username,"用户名称不能为空");
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        log.info("任务id为{}交给{}",taskId,username);
         try {
-            taskService.setOwner(taskId, username);
+            taskService.setOwner(taskId, deptUser.getUsername());
+            taskService.setAssignee(taskId,username);
             //获取流程的业务主键
-            String businuessKey;
+            String businessKey;
             TaskQuery taskQuery = taskService.createTaskQuery();
             TaskEntity taskEntity = (TaskEntity) taskQuery.taskId(taskId).singleResult();
             HistoricProcessInstanceQuery instanceQuery = historyService.createHistoricProcessInstanceQuery();
             HistoricProcessInstance processInstance = instanceQuery.processInstanceId(taskEntity.getProcessInstanceId()).singleResult();
             if (processInstance.getSuperProcessInstanceId() != null && processInstance.getBusinessKey() == null){
                 processInstance = instanceQuery.processInstanceId(processInstance.getSuperProcessInstanceId()).singleResult();
-                businuessKey = processInstance.getBusinessKey();
+                businessKey = processInstance.getBusinessKey();
             } else {
-                businuessKey = processInstance.getBusinessKey();
+                businessKey = processInstance.getBusinessKey();
             }
 
             //增加数据库中审批人
-            Integer update = platformMapper.updateApplyName(businuessKey,username);
+            Integer update = platformMapper.updateApplyName(Integer.parseInt(businessKey),username,deptUser.getUserId());
             if (update <= 0){
                 throw new MyException("任务指派失败，请重试");
             }
@@ -384,24 +435,31 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public void backPlanOwner2GroupTask(String taskId) {
+
+        Assert.notNull(taskId,"任务ID不能为空");
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        Integer updateId = deptUser.getUserId();
+        log.info("拾取用户名为{}的组任务列表",deptUser.getUsername());
+
         try {
             taskService.setAssignee(taskId,null);
             //获取流程的业务主键
-            String businuessKey;
+            String businessKey;
             TaskQuery taskQuery = taskService.createTaskQuery();
             TaskEntity taskEntity = (TaskEntity) taskQuery.taskId(taskId).singleResult();
             HistoricProcessInstanceQuery instanceQuery = historyService.createHistoricProcessInstanceQuery();
             HistoricProcessInstance processInstance = instanceQuery.processInstanceId(taskEntity.getProcessInstanceId()).singleResult();
             if (processInstance.getSuperProcessInstanceId() != null && processInstance.getBusinessKey() == null){
                 processInstance = instanceQuery.processInstanceId(processInstance.getSuperProcessInstanceId()).singleResult();
-                businuessKey = processInstance.getBusinessKey();
+                businessKey = processInstance.getBusinessKey();
             } else {
-                businuessKey = processInstance.getBusinessKey();
+                businessKey = processInstance.getBusinessKey();
             }
 
             //增加数据库中审批人
-            Integer update = platformMapper.updateApplyName(businuessKey,null);
+            Integer update = platformMapper.updateApplyName(Integer.parseInt(businessKey),null,updateId);
             if (update <= 0){
                 throw new MyException("任务指派失败，请重试");
             }
@@ -413,11 +471,23 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
     /**
      * 获取用户的所有任务列表
      * @param param
-     * @param  username
      * @return
      */
     @Override
-    public List<Map<String, Object>> getApprovalList(ActivityQueryParam param, String username) {
+    public List<Map<String, Object>> getApprovalList(ActivityQueryParam param) {
+
+        //默认查询的当前用户的所有审批的列表
+        Assert.notNull(param,"参数不能为空");
+
+        //判断是查询自己的正在审批的任务还是别人正在审批的任务
+        String username;
+        if (param.getUserName() == null || param.getUserName() == ""){
+            DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+            username = deptUser.getUsername();
+        } else {
+            username = param.getUserName();
+        }
+        log.info("查询用户名为{}的任务列表",username);
 
         //获取所有满足条件的任务列表
         List<Platform> submitList = platformMapper.selectList(new LambdaQueryWrapper<Platform>()
@@ -456,6 +526,52 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
             list.add(resultMap);
         }
         return list;
+    }
+
+    /**
+     * 获得可以编制的任务
+     * @return
+     */
+    @Override
+    public List<Platform> getPlatformOrganizationTasks() {
+
+        TaskQuery query = taskService.createTaskQuery();
+        //获取编制驳动计划的所有任务列表
+        List<Task> list = query.taskName("编制驳动计划").orderByTaskCreateTime().desc().list();
+       if (list.size() == 0){
+            return null;
+       }
+        List<Integer> businessKeyList = new ArrayList<>();
+        for (Task task : list) {
+            String businessKey = toTaskIdGetBusinessKey(task.getId());
+            businessKeyList.add(Integer.parseInt(businessKey));
+        }
+        List<Platform> platformList = platformMapper.selectList(new LambdaQueryWrapper<Platform>()
+                .in(Platform::getPrsId, businessKeyList)
+                .orderByDesc(Platform::getPrsId));
+        return platformList;
+
+    }
+
+    /**
+     * 通过任务Id获取业务Id
+     * @param taskId
+     * @return
+     */
+    private String toTaskIdGetBusinessKey(String taskId) {
+
+        String businessKey;
+        TaskQuery taskQuery = taskService.createTaskQuery();
+        TaskEntity taskEntity = (TaskEntity) taskQuery.taskId(taskId).singleResult();
+        HistoricProcessInstanceQuery instanceQuery = historyService.createHistoricProcessInstanceQuery();
+        HistoricProcessInstance processInstance = instanceQuery.processInstanceId(taskEntity.getProcessInstanceId()).singleResult();
+        if (processInstance.getSuperProcessInstanceId() != null && processInstance.getBusinessKey() == null) {
+            processInstance = instanceQuery.processInstanceId(processInstance.getSuperProcessInstanceId()).singleResult();
+            businessKey = processInstance.getBusinessKey();
+        } else {
+            businessKey = processInstance.getBusinessKey();
+        }
+        return businessKey;
     }
 
 }

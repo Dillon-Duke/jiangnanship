@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.ActivityQueryParam;
 import com.caidao.pojo.Platform;
 import org.activiti.engine.history.HistoricTaskInstance;
-import org.activiti.engine.task.Task;
 
 import java.util.List;
 import java.util.Map;
@@ -32,10 +31,9 @@ public interface PlatformService extends IService<Platform> {
     /**
      * 获取用户的所有任务列表
      * @param param
-     * @param username
      * @return
      */
-    List<Map<String, Object>> getApprovalList(ActivityQueryParam param,String username);
+    List<Map<String, Object>> getApprovalList(ActivityQueryParam param);
 
     /**
      * 删除保存的平板车计划任务流程
@@ -48,32 +46,23 @@ public interface PlatformService extends IService<Platform> {
     /**
      * 获取用户的任务列表
      * @param param
-     * @param username
      * @return
      */
-    List<Map<String, Object>> getDeptUserTaskList(ActivityQueryParam param, String username);
+    List<Map<String, Object>> getDeptUserTaskList(ActivityQueryParam param);
 
     /**
      * 获取用户的历史任务
      * @param param
-     * @param username
      * @return
      */
-    List<HistoricTaskInstance> getUserHistoryTaskList(ActivityQueryParam param, String username);
-
-    /**
-     * 查询个人用户的组任务列表
-     * @return
-     */
-    List<Task> listPlanOwnerGroupTask(ActivityQueryParam param);
+    List<HistoricTaskInstance> getUserHistoryTaskList(ActivityQueryParam param);
 
     /**
      * 用户拾取组任务
      * @param taskId
-     * @param username
      * @return
      */
-    void getPlanOwnerGroupTask(String taskId, String username);
+    void getPlanOwnerGroupTask(String taskId);
 
     /**
      * 流程任务的转办，直接给别人，别人做好之后直接推到下一个需要办理的人手里
@@ -89,4 +78,9 @@ public interface PlatformService extends IService<Platform> {
      */
     void backPlanOwner2GroupTask(String taskId);
 
+    /**
+     * 获得可以编制的任务
+     * @return
+     */
+    List<Platform> getPlatformOrganizationTasks();
 }

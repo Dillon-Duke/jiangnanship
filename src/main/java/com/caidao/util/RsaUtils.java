@@ -92,8 +92,8 @@ public class RsaUtils {
     }
     public static void main(String[] args) throws Exception {
 
-        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCSnhDx5Og17lGzp7RX/wDOgZSF391iT2jSfYKZe8qtZokMgAQKCX9khIFUS+/x4bw/rFIO0MNEK5YFS71D/ey2FqSoL24av0S/yn64n5TH5PleMdY6g7p8q3TOnXZoWn0Rt2cf6iqBbL+JLfBUJlJWEWQTOmjT8fpoYV68H9VghQIDAQAB";
-        String pri = "MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAIFFzhsp/8AD6W6ZNWXcubJV72Bit0+h3cyb0N0jdqW41QevkYZ6XnAS0wBW3hwkR30AgpG2MOvgAf3S5Q5t8/eKOlwoUQO40NJr0TyWiMgOo4vKo05LVNZPxzrH9fMQFjwMt+jgYkjH32uN1PkSdQ2W1EnuZtSaZA7Ph5TTq7I1AgMBAAECgYBnxSEtrQkfmgRIQ7QZkJWAEnuVY6jCw6zIEkwXN+CGJ1jaUpT+3jvwuyulmhWxgW3hagdl8FpU/fybRC+a5ahwaKO6xZoJQgGFxJqT5SIByyxVYnmfyYYgneiZhTedEuGE7ZfgcC2h+93rRr0HmDWMpnIr6GdUyHCcDQu4XtEgAQJBAL6g53CtzhMbIsBuuy3a1bpiXrZVRkDgSOUAuHRzrQ7MgN3FIR0WpB+OOPWRSKnmZ3BFEavf/Fr74OojTPmygTECQQCtmoeDhsvvJ/H5tYohaO4Pg6o0T0Qh8Jwwzba8YRgsReDLJhlR3U5/1L6P+JA6Ks9vcOvUL1hTn7+ox5osxOBFAkBTtn1scicJJOWB9B6m6G7rRr+o+pG7c8MPLd3S5emdkhkVSrhb+dFhOiexT3fFhLTwDKTSAa7klbAToiTvkoBBAkEAqK01sED/0z5vqR2PuciXTjGy5aKC46tCR1UJkV2RvCqlMR2yik1KIYBXK9HqaOoBpRkFuqPJ4W6dLWPLVGZyNQJANR939SjmpuDP3j0PRB2S1V9IjZZjqa3MbLZgVaT2sH4Z9VPGce2waCM9xOxQHlqe8OYOg4MSPW2bWFTbFhSi9w==";
+        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCKQhsCPKaWP4zMCXXp3FWXHC3JEYVxoAkpZA9Rk6vzUK1k3O0IZeDCut64hkPlZcANSL9nqdQLIzdvXGt9aa6iAzPc+9WLJslJqHZAJOiP9X3OEknFaBdhClOPabnArN8jxTifIPd864JWqD3E69OQDq5Lc0uMbS713M8xT1jkOwIDAQAB";
+        String pri = "";
         String message = "{'username':'zhangsan','password':'123'}";
         System.out.println("原文:" + message);
         String messageEn = encrypt(message, pub);
