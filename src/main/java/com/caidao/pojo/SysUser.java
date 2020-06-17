@@ -61,21 +61,6 @@ public class SysUser implements Serializable {
     @ApiModelProperty(value = "是否禁用")
     private Integer status;
 
-    @ApiModelProperty(value = "预留2")
-    private String reserve2;
-
-    @ApiModelProperty(value = "预留3")
-    private String reserve3;
-
-    @ApiModelProperty(value = "预留4")
-    private String reserve4;
-
-    @ApiModelProperty(value = "预留5")
-    private String reserve5;
-
-    @ApiModelProperty(value = "预留6")
-    private String reserve6;
-
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
     private LocalDateTime createDate;

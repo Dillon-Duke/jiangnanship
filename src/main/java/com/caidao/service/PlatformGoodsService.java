@@ -3,7 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.pojo.TranGoods;
+import com.caidao.pojo.PlatformGoods;
 
 import java.util.List;
 
@@ -15,20 +15,20 @@ import java.util.List;
  * @author Dillon
  * @since 2020-06-01
  */
-public interface TranGoodsService extends IService<TranGoods> {
+public interface PlatformGoodsService extends IService<PlatformGoods> {
 
     /**
      * 获取运输分段的当前页，页大小
      * @param page
-     * @param tranGoods
+     * @param platformGoods
      * @return
      */
-    IPage<TranGoods> findSysGoodsPage(Page<TranGoods> page, TranGoods tranGoods);
+    IPage<PlatformGoods> findSysGoodsPage(Page<PlatformGoods> page, PlatformGoods platformGoods);
 
     /**
      * 删除运输分段信息
-     * @param tranGoods
+     * @param platformGoods
      * @return
      */
-    boolean removeByGoods(List<TranGoods> tranGoods);
+    boolean removeByGoods(List<PlatformGoods> platformGoods);
 }

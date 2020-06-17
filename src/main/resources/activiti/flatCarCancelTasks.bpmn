@@ -12,29 +12,29 @@
              name=""
              targetNamespace="http://www.activiti.org/test"
              typeLanguage="http://www.w3.org/2001/XMLSchema">
-   <process xmlns="" id="flatCarCancelTasks" isClosed="false" isExecutable="true"
+   <process id="flatCarCancelTasks" isClosed="false" isExecutable="true"
             processType="None">
       <startEvent id="_2" name="StartEvent"/>
       <endEvent id="_3" name="EndEvent"/>
       <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_4"
                 name="平板车取消任务申请"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_5"
+      <userTask activiti:assignee="${flatcarCancelGroupTask1}" activiti:exclusive="true" id="_5"
                 name="申请部门取消"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_6"
+      <userTask activiti:assignee="${flatcarCancelGroupTask2}" activiti:exclusive="true" id="_6"
                 name="部门取消完成"/>
-      <userTask activiti:assignee="${applyName" activiti:exclusive="true" id="_7" name="驳运部门取消"/>
-      <userTask activiti:assignee="${applyName" activiti:exclusive="true" id="_8" name="司机接单"/>
-      <userTask activiti:assignee="${applyName" activiti:exclusive="true" id="_9" name="司机执行"/>
-      <userTask activiti:assignee="${applyName" activiti:exclusive="true" id="_10" name="执行完成"/>
+      <userTask activiti:assignee="${flatcarCancelGroupTask3" activiti:exclusive="true" id="_7" name="驳运部门取消"/>
+      <userTask activiti:assignee="${flatcarCancelGroupTask4" activiti:exclusive="true" id="_8" name="司机接单"/>
+      <userTask activiti:assignee="${flatcarCancelGroupTask5" activiti:exclusive="true" id="_9" name="司机执行"/>
+      <userTask activiti:assignee="${flatcarCancelGroupTask6" activiti:exclusive="true" id="_10" name="执行完成"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_11" name="ExclusiveGateway"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_12" name="ExclusiveGateway"/>
       <sequenceFlow id="_13" sourceRef="_2" targetRef="_4"/>
       <sequenceFlow id="_14" sourceRef="_4" targetRef="_11"/>
       <sequenceFlow id="_15" name="驳运任务是否开始" sourceRef="_11" targetRef="_5">
-         <conditionExpression xsi:type="tFormalExpression">${tranTaskStart =='未开始'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion =='不同意'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_16" name="驳运任务是否开始" sourceRef="_11" targetRef="_7">
-         <conditionExpression xsi:type="tFormalExpression">${tranTaskStart =='开始'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion =='同意'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_17" sourceRef="_5" targetRef="_6"/>
       <sequenceFlow id="_18" sourceRef="_6" targetRef="_12"/>

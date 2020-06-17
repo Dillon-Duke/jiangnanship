@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="TranGoods对象", description="")
-public class TranGoods implements Serializable {
+public class PlatformGoods implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -37,8 +37,8 @@ public class TranGoods implements Serializable {
     @ApiModelProperty(value = "物品类别")
     private String goodsType;
 
-    @ApiModelProperty(value = "物品编码")
-    private Integer goodsCode;
+    @ApiModelProperty(value = "物品编码 (物品的编码)")
+    private String goodsCode;
 
     @ApiModelProperty(value = "物品重量")
     private Double goodsWeight;
@@ -64,20 +64,8 @@ public class TranGoods implements Serializable {
     @ApiModelProperty(value = "是否超宽高  1：是 0 否")
     private Integer isOverSize;
 
-    @ApiModelProperty(value = "预留1")
-    private String reserve1;
-
-    @ApiModelProperty(value = "预留2")
-    private String reserve2;
-
-    @ApiModelProperty(value = "预留3")
-    private String reserve3;
-
-    @ApiModelProperty(value = "预留4")
-    private String reserve4;
-
-    @ApiModelProperty(value = "预留5")
-    private String reserve5;
+    @ApiModelProperty(value = "是否绑定 1：绑定 0：未绑定")
+    private Integer isBinder;
 
     @ApiModelProperty(value = "创建日期")
     private LocalDateTime createDate;

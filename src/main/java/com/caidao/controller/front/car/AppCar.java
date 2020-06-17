@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.common.ResponseEntity;
 import com.caidao.pojo.Car;
-import com.caidao.service.SysCarService;
+import com.caidao.service.CarService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ public class AppCar {
     public static final Logger logger =  LoggerFactory.getLogger(AppCar.class);
 
     @Autowired
-    private SysCarService sysCarService;
+    private CarService carService;
 
 
     /**
@@ -36,7 +36,7 @@ public class AppCar {
     @ApiOperation("获取分页车辆信息")
     public ResponseEntity getRoleList(Page<Car> page , Car car){
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
-        IPage<Car> sysRoles = sysCarService.findSysCarPage(page, car);
+        IPage<Car> sysRoles = carService.findSysCarPage(page, car);
         return ResponseEntity.ok(sysRoles);
     }
 
@@ -49,7 +49,7 @@ public class AppCar {
     public ResponseEntity getCarCount(){
 
         log.info("查询数据库可用车辆");
-        Integer count = sysCarService.getCarCount();
+        Integer count = carService.getCarCount();
         return ResponseEntity.ok(count);
     }
 
@@ -64,7 +64,7 @@ public class AppCar {
         Assert.notNull(car,"筛选条件不能为空");
         log.info("根据条件查询可用车辆信息");
 
-        List<Car> carList = sysCarService.selectConditionCar(car);
+        List<Car> carList = carService.selectConditionCar(car);
         return ResponseEntity.ok(carList);
     }
 
@@ -79,7 +79,7 @@ public class AppCar {
         Assert.notNull(id,"id 不能为空");
         log.info("查询车辆id为{}的车辆信息",id);
 
-        Car car = sysCarService.getById(id);
+        Car car = carService.getById(id);
         return ResponseEntity.ok(car);
     }
 

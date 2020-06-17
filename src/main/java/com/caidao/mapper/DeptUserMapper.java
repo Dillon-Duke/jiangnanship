@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.DeptUser;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.Map;
  * @author Dillon
  * @since 2020-05-28
  */
+@Repository
 public interface DeptUserMapper extends BaseMapper<DeptUser> {
 
     /**

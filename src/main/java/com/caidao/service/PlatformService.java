@@ -2,7 +2,7 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.ActivityQueryParam;
-import com.caidao.pojo.Platform;
+import com.caidao.pojo.PlatformApply;
 import org.activiti.engine.history.HistoricTaskInstance;
 
 import java.util.List;
@@ -12,21 +12,21 @@ import java.util.Map;
  * @author Dillon
  * @since 2020-06-11
  */
-public interface PlatformService extends IService<Platform> {
+public interface PlatformService extends IService<PlatformApply> {
 
     /**
      * 保存一个平板车计划任务流程
-     * @param platform
+     * @param platformApply
      * @return 流程实例Id
      */
-    Map<String, Object> saveFlatCarPlan(Platform platform);
+    Map<String, Object> saveFlatCarPlan(PlatformApply platformApply);
 
     /**
      * 开始一个平板车计划任务流程
-     * @param platform
+     * @param platformApply
      * @return 流程实例Id
      */
-    Map<String, Object> startPlanTasks(Platform platform);
+    Map<String, Object> startPlanTasks(PlatformApply platformApply);
 
     /**
      * 获取用户的所有任务列表
@@ -82,5 +82,6 @@ public interface PlatformService extends IService<Platform> {
      * 获得可以编制的任务
      * @return
      */
-    List<Platform> getPlatformOrganizationTasks();
+    List<PlatformApply> getPlatformOrganizationTasks();
+
 }

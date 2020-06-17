@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.caidao.exception.MyException;
+import com.caidao.mapper.CarMapper;
 import com.caidao.pojo.Car;
-import com.caidao.mapper.SysCarMapper;
-import com.caidao.service.SysCarService;
+import com.caidao.service.CarService;
 import com.caidao.util.FastDfsClientUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,10 +27,11 @@ import java.util.List;
  * @since 2020-05-18
  */
 @Service
-public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements SysCarService {
+@Slf4j
+public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarService {
 
     @Autowired
-    private SysCarMapper sysCarMapper;
+    private CarMapper carMapper;
 
     @Autowired
     private FastDfsClientUtils fastDfsClientUtils;
@@ -43,7 +47,7 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements
      */
     @Override
     public IPage<Car> findSysCarPage(Page<Car> page, Car car) {
-        IPage<Car> carPage = sysCarMapper.selectPage(page, new LambdaQueryWrapper<Car>()
+        IPage<Car> carPage = carMapper.selectPage(page, new LambdaQueryWrapper<Car>()
                 .eq(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName()));
 
         //处理展示第一张图片
@@ -96,7 +100,7 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements
      */
     @Override
     public Integer getCarCount() {
-        Integer count = sysCarMapper.getCarCount();
+        Integer count = carMapper.getCarCount();
         return count;
     }
 
@@ -120,7 +124,7 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements
             carHeight = car.getCarHeight().toString();
         }
 
-        List<Car> carList = sysCarMapper.selectList(new LambdaQueryWrapper<Car>()
+        List<Car> carList = carMapper.selectList(new LambdaQueryWrapper<Car>()
                 //模糊查询车的名字
                 .like(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName())
                 //查询车辆载重大于等于多少吨的车
@@ -165,6 +169,7 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean updateById(Car car) {
         car.setUpdateDate(LocalDateTime.now());
 
@@ -186,10 +191,34 @@ public class SysCarServiceImpl extends ServiceImpl<SysCarMapper, Car> implements
      */
     @Override
     public List<Car> getFreeCarList() {
-        List<Car> carList = sysCarMapper.selectList(new LambdaQueryWrapper<Car>()
+        List<Car> carList = carMapper.selectList(new LambdaQueryWrapper<Car>()
                 .in(Car::getCarId, 1)
                 .orderByDesc(Car::getCarId));
         return carList;
+    }
+
+    /**
+     * 车辆与任务做绑定 多太车与一个任务作为绑定
+     * @param carId
+     * @param taskId
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public void saveOrBindTaskWithCar(List<String> carId, String taskId) {
+        Assert.notNull(carId,"车辆Id不能未空");
+        Assert.notNull(taskId,"任务ID不能为空");
+
+        log.info("车辆id为{}的车辆们绑定任务id为{}的任务",carId,taskId);
+
+        //处理一下数据格式
+        String string = carId.toString();
+        String substring = string.substring(1, string.length() - 1);
+
+        Integer integer = carMapper.saveOrBindTaskWithCar(substring, taskId);
+        if (integer <= 0) {
+            throw new MyException("绑定失败，请重试");
+        }
     }
 
 }

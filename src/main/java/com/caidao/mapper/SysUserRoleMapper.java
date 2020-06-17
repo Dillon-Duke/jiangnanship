@@ -3,15 +3,13 @@ package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.SysUserRole;
+import org.springframework.stereotype.Repository;
 
 /**
- * <p>
- *  Mapper 接口
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */
+@Repository
 public interface SysUserRoleMapper extends BaseMapper<SysUserRole> {
 
 }

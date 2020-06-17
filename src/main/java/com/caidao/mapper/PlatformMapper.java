@@ -1,15 +1,17 @@
 package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.pojo.Platform;
+import com.caidao.pojo.PlatformApply;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author tom
  * @since 2020-06-11
  */
-public interface PlatformMapper extends BaseMapper<Platform> {
+@Repository
+public interface PlatformMapper extends BaseMapper<PlatformApply> {
 
     /**
      *

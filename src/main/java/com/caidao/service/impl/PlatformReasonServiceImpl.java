@@ -2,11 +2,11 @@ package com.caidao.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.exception.MyException;
-import com.caidao.mapper.ApprovalReasonMapper;
+import com.caidao.mapper.PlatformReasonMapper;
 import com.caidao.mapper.PlatformMapper;
-import com.caidao.pojo.ApprovalReason;
+import com.caidao.pojo.PlatformReason;
 import com.caidao.pojo.DeptUser;
-import com.caidao.service.ApprovalReasonService;
+import com.caidao.service.PlatformReasonService;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.HistoryService;
 import org.activiti.engine.RuntimeService;
@@ -34,7 +34,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper, ApprovalReason> implements ApprovalReasonService {
+public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper, PlatformReason> implements PlatformReasonService {
 
     @Autowired
     private TaskService taskService;
@@ -50,32 +50,32 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
 
     /**
      * 完成审批 不在platform表中设置是否为驳运计划冗余字段
-     * @param approvalReason
+     * @param platformReason
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public void completeApprovalWithOpinion(ApprovalReason approvalReason) {
+    public void completeApprovalWithOpinion(PlatformReason platformReason) {
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-        Assert.notNull(approvalReason,"审批原因不能为空");
+        Assert.notNull(platformReason,"审批原因不能为空");
         log.info("用户{}完成了任务的审批",deptUser.getUsername());
-        approvalReason.setCreateId(deptUser.getCreateId());
+        platformReason.setCreateId(deptUser.getCreateId());
 
         //将审批意见存入数据库
-        List<ApprovalReason> reasons = saveApprovalReasons(approvalReason);
+        List<PlatformReason> reasons = saveApprovalReasons(platformReason);
         boolean batch = this.saveOrUpdateBatch(reasons);
         if (!batch) {
             throw new MyException("审批失败，请联系管理员");
         }
 
         //判断是否有带审批意见，如果没有，直接是任务完成，流程进入下一步
-        Integer opinions = approvalReason.getOpinion();
+        Integer opinions = platformReason.getOpinion();
         String opinion;
         TaskQuery taskQuery = taskService.createTaskQuery();
         ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
         if (opinions == 0){
-            String[] requests = approvalReason.getRequestId().split(",");
+            String[] requests = platformReason.getRequestId().split(",");
             for (String taskId : requests) {
                 String businessKey = toTaskIdGetBusinessKey(taskId);
                 String instanceId = taskQuery.taskId(taskId).singleResult().getProcessInstanceId();
@@ -97,7 +97,7 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
             opinion = "不同意";
         }
         //循环进行流程完成
-        String[] requests = approvalReason.getRequestId().split(",");
+        String[] requests = platformReason.getRequestId().split(",");
         for (String taskId : requests) {
             taskService.setVariable(taskId,"ApprovalOpinion",opinion);
 
@@ -120,31 +120,31 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
 
     /**
      * 完成审批 在platform表中设置是否为驳运计划冗余字段
-     * @param approvalReason
+     * @param platformReason
      * @return
      */
     @Transactional(rollbackFor = RuntimeException.class)
-    public void completeApprovalWithOpinions(ApprovalReason approvalReason) {
+    public void completeApprovalWithOpinions(PlatformReason platformReason) {
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-        Assert.notNull(approvalReason,"审批原因不能为空");
+        Assert.notNull(platformReason,"审批原因不能为空");
         log.info("用户{}完成了任务的审批",deptUser.getUsername());
-        approvalReason.setCreateId(deptUser.getCreateId());
+        platformReason.setCreateId(deptUser.getCreateId());
 
         //将审批意见存入数据库
-        List<ApprovalReason> reasons = saveApprovalReasons(approvalReason);
+        List<PlatformReason> reasons = saveApprovalReasons(platformReason);
         boolean batch = this.saveOrUpdateBatch(reasons);
         if (!batch) {
             throw new MyException("审批失败，请联系管理员");
         }
 
         //判断是否有带审批意见，如果没有，直接是任务完成，流程进入下一步
-        Integer opinions = approvalReason.getOpinion();
+        Integer opinions = platformReason.getOpinion();
         String opinion;
         TaskQuery taskQuery = taskService.createTaskQuery();
         ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
         if (opinions == 0){
-            String[] requests = approvalReason.getRequestId().split(",");
+            String[] requests = platformReason.getRequestId().split(",");
             for (String taskId : requests) {
                 String businessKey = toTaskIdGetBusinessKey(taskId);
                 String instanceId = taskQuery.taskId(taskId).singleResult().getProcessInstanceId();
@@ -168,7 +168,7 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
             opinion = "不同意";
         }
         //循环进行流程完成
-        String[] requests = approvalReason.getRequestId().split(",");
+        String[] requests = platformReason.getRequestId().split(",");
         for (String taskId : requests) {
             taskService.setVariable(taskId,"ApprovalOpinion",opinion);
 
@@ -215,22 +215,17 @@ public class ApprovalReasonServiceImpl extends ServiceImpl<ApprovalReasonMapper,
      * 将一条记录中多个任务id分成多个记录
      */
     @NotNull
-    private List<ApprovalReason> saveApprovalReasons(ApprovalReason approvalReason) {
-        String[] requestIds = approvalReason.getRequestId().split(",");
-        List<ApprovalReason> reasons = new ArrayList<>(requestIds.length);
+    private List<PlatformReason> saveApprovalReasons(PlatformReason platformReason) {
+        String[] requestIds = platformReason.getRequestId().split(",");
+        List<PlatformReason> reasons = new ArrayList<>(requestIds.length);
         for (String requestId : requestIds) {
-            ApprovalReason reason = new ApprovalReason();
+            PlatformReason reason = new PlatformReason();
             reason.setRequestId(requestId);
-            reason.setOpinion(approvalReason.getOpinion());
-            reason.setReason(approvalReason.getReason());
-            reason.setReasionDescription(approvalReason.getReasionDescription());
-            reason.setReserve1(approvalReason.getReserve1());
-            reason.setReserve2(approvalReason.getReserve2());
-            reason.setReserve3(approvalReason.getReserve3());
-            reason.setReserve4(approvalReason.getReserve4());
-            reason.setReserve5(approvalReason.getReserve5());
+            reason.setOpinion(platformReason.getOpinion());
+            reason.setReason(platformReason.getReason());
+            reason.setReasonDescription(platformReason.getReasonDescription());
             reason.setCreateDate(LocalDateTime.now());
-            reason.setCreateId(approvalReason.getCreateId());
+            reason.setCreateId(platformReason.getCreateId());
             reason.setState(1);
             reasons.add(reason);
         }

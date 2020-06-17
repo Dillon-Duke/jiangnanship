@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
 import com.caidao.pojo.SysUser;
-import com.caidao.pojo.TranGoods;
-import com.caidao.service.TranGoodsService;
+import com.caidao.pojo.PlatformGoods;
+import com.caidao.service.PlatformGoodsService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -27,26 +27,26 @@ import java.util.List;
 @RestController
 @RequestMapping("/car/goods")
 @Slf4j
-public class TranGoodsController {
+public class PlatformGoodsController {
 
-    public static final Logger logger = LoggerFactory.getLogger(TranGoodsController.class);
+    public static final Logger logger = LoggerFactory.getLogger(PlatformGoodsController.class);
 
     @Autowired
-    private TranGoodsService tranGoodsService;
+    private PlatformGoodsService platformGoodsService;
 
 
     /**
      * 获取分页运输分段信息
      * @param page
-     * @param tranGoods
+     * @param platformGoods
      * @return
      */
     @GetMapping("/page")
     @ApiOperation("获取分页运输分段信息")
     @RequiresPermissions("car:goods:page")
-    public ResponseEntity<IPage<TranGoods>> getDoodsList(Page<TranGoods> page , TranGoods tranGoods){
+    public ResponseEntity<IPage<PlatformGoods>> getDoodsList(Page<PlatformGoods> page , PlatformGoods platformGoods){
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
-        IPage<TranGoods> tranGoodsPage = tranGoodsService.findSysGoodsPage(page, tranGoods);
+        IPage<PlatformGoods> tranGoodsPage = platformGoodsService.findSysGoodsPage(page, platformGoods);
         return ResponseEntity.ok(tranGoodsPage);
     }
 
@@ -57,30 +57,30 @@ public class TranGoodsController {
     @GetMapping("info/{id}")
     @ApiOperation("通过id查询运输分段信息")
     @RequiresPermissions("car:goods:info")
-    public ResponseEntity<TranGoods> getGoodsInfoById(@PathVariable("id") Integer id){
+    public ResponseEntity<PlatformGoods> getGoodsInfoById(@PathVariable("id") Integer id){
         Assert.notNull(id,"id 不能为空");
         log.info("查询车辆id为{}的车辆信息",id);
-        TranGoods tranGoods = tranGoodsService.getById(id);
-        return ResponseEntity.ok(tranGoods);
+        PlatformGoods platformGoods = platformGoodsService.getById(id);
+        return ResponseEntity.ok(platformGoods);
     }
 
     /**
      * 更新车辆信息
-     * @param tranGoods
+     * @param platformGoods
      * @return
      */
     @PutMapping
     @ApiOperation("更新运输分段信息")
     @RequiresPermissions("car:goods:update")
-    public ResponseEntity<String> updateGoods(@RequestBody TranGoods tranGoods){
+    public ResponseEntity<String> updateGoods(@RequestBody PlatformGoods platformGoods){
 
-        Assert.notNull(tranGoods,"更新运输分段信息 不能为空");
-        log.info("更新车辆id为{}的运输分段信息",tranGoods.getGoodsId());
+        Assert.notNull(platformGoods,"更新运输分段信息 不能为空");
+        log.info("更新车辆id为{}的运输分段信息", platformGoods.getGoodsId());
 
         SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
-        tranGoods.setUpdateId(principal.getUserId());
+        platformGoods.setUpdateId(principal.getUserId());
 
-        boolean updateCar = tranGoodsService.updateById(tranGoods);
+        boolean updateCar = platformGoodsService.updateById(platformGoods);
         if (updateCar){
             return ResponseEntity.ok().build();
         }
@@ -89,19 +89,19 @@ public class TranGoodsController {
 
     /**
      * 删除运输分段信息
-     * @param tranGoods
+     * @param platformGoods
      * @return
      */
     @SysLogs("删除运输分段信息")
     @DeleteMapping
     @ApiOperation("删除运输分段信息")
     @RequiresPermissions("car:goods:delete")
-    public ResponseEntity<String> deleteByIds(@RequestBody List<TranGoods> tranGoods){
+    public ResponseEntity<String> deleteByIds(@RequestBody List<PlatformGoods> platformGoods){
 
-        Assert.notNull(tranGoods,"删除的分段信息不能为空");
-        log.info("删除分段为{}的分段",tranGoods);
+        Assert.notNull(platformGoods,"删除的分段信息不能为空");
+        log.info("删除分段为{}的分段", platformGoods);
 
-        boolean removeByIds = tranGoodsService.removeByGoods(tranGoods);
+        boolean removeByIds = platformGoodsService.removeByGoods(platformGoods);
         if (removeByIds){
             return ResponseEntity.ok().build();
         }

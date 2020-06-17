@@ -4,12 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptUserMapper;
+import com.caidao.mapper.PlatformGoodsMapper;
 import com.caidao.mapper.PlatformMapper;
-import com.caidao.mapper.TranGoodsMapper;
 import com.caidao.param.ActivityQueryParam;
 import com.caidao.pojo.DeptUser;
-import com.caidao.pojo.Platform;
-import com.caidao.pojo.TranGoods;
+import com.caidao.pojo.PlatformApply;
+import com.caidao.pojo.PlatformGoods;
 import com.caidao.service.PlatformService;
 import com.caidao.util.ActivitiObj2MapUtils;
 import com.caidao.util.DateUtils;
@@ -17,6 +17,7 @@ import com.caidao.util.PropertiesReaderUtils;
 import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.HistoryService;
+import org.activiti.engine.ManagementService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.history.HistoricProcessInstance;
@@ -24,8 +25,11 @@ import org.activiti.engine.history.HistoricProcessInstanceQuery;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.history.HistoricTaskInstanceQuery;
 import org.activiti.engine.impl.persistence.entity.TaskEntity;
+import org.activiti.engine.runtime.Execution;
+import org.activiti.engine.runtime.NativeProcessInstanceQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
+import org.activiti.engine.task.NativeTaskQuery;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.apache.shiro.SecurityUtils;
@@ -44,10 +48,13 @@ import java.util.*;
  */
 @Service
 @Slf4j
-public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> implements PlatformService {
+public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApply> implements PlatformService {
 
     @Autowired
     private RuntimeService runtimeService;
+
+    @Autowired
+    private ManagementService managementService;
 
     @Autowired
     private TaskService taskService;
@@ -56,7 +63,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
     private HistoryService historyService;
 
     @Autowired
-    private TranGoodsMapper tranGoodsMapper;
+    private PlatformGoodsMapper platformGoodsMapper;
 
     @Autowired
     private PlatformMapper platformMapper;
@@ -66,12 +73,12 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
 
     /**
      * 保存一个平板车计划任务流程
-     * @param platform
+     * @param platformApply
      * @return 流程实例Id
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Map<String, Object> saveFlatCarPlan(Platform platform) {
+    public Map<String, Object> saveFlatCarPlan(PlatformApply platformApply) {
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         if (deptUser == null){
@@ -79,86 +86,73 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
         }
         log.info("用户{}申请了一个未提交任务",deptUser.getUsername());
 
-        platform.setCreateId(deptUser.getUserId());
-        platform.setCreateDate(LocalDateTime.now());
-        platform.setApplyName(deptUser.getUsername());
-        platform.setApplyState(0);
-        platform.setState(1);
+        platformApply.setCreateId(deptUser.getUserId());
+        platformApply.setCreateDate(LocalDateTime.now());
+        platformApply.setApplyName(deptUser.getUsername());
+        platformApply.setApplyState(0);
+        platformApply.setState(1);
 
         //将申请任务保存
-        int insert = platformMapper.insert(platform);
+        int insert = platformMapper.insert(platformApply);
         if (insert != 1) {
             throw new MyException("平板车计划任务插入失败");
         }
+
         //获取插入数据的ID
-        Integer id = platform.getPrsId();
+        Integer id = platformApply.getPrsId();
 
         //生产申请工单号
-        String BusinessKey = String.valueOf(id);
+        String businessKey = String.valueOf(id);
         String sort = null;
-        if (6 - BusinessKey.length() >0){
+        if (6 - businessKey.length() >0){
             sort = String.format("%06d",id);
         }else {
-            sort = BusinessKey.substring(BusinessKey.length()-6);
+            sort = businessKey.substring(businessKey.length()-6);
         }
         String requestOddNumber = PropertyUtils.FLAT_CAR_PLAN_ODD_NUMBER_PREFIX + DateUtils.getYyyyMm() + sort;
 
-        String goodsName = null;
-        switch (platform.getRequestType()) {
+        //保存一个驳运流程并且获取驳运对象的对象名字
+        String goodsName;
+        switch (platformApply.getRequestType()) {
             case 1:
-                //插入一条平板车任务的申请
-                Map<String, Object> variables = new HashMap<>(1);
-                variables.put("startName", platform.getApplyName());
-                variables.put("dept", platform.getRequestDepartment() + "申请");
-                //动态的向流程中添加审批角色属性
-                String count = PropertiesReaderUtils.getMap().get("flatcarPlanDeploymentGroupCount");
-                for (int i = 1 ; i <= Integer.parseInt(count) ; i++ ) {
-                    String roleId = PropertiesReaderUtils.getMap().get("flatcarPlanGroupTask" + i);
-                    //获取角色用的ids
-                    List<DeptUser> users = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
-                            .eq(DeptUser::getUserRoleId, roleId));
-                    //获取角色用户的名字
-                    StringBuilder builder = new StringBuilder();
-                    for (DeptUser user : users) {
-                        builder.append(user.getUsername()).append(",");
-                    }
-                    String substring = builder.substring(0, builder.length() - 1);
-                    variables.put("flatcarPlanGroupTask" + i, substring);
-                }
-
-                ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PropertiesReaderUtils.getMap().get("flatcarPlanDeploymentId"),BusinessKey,variables);
-                String processInstanceId = processInstance.getProcessInstanceId();
-                if (processInstanceId == null || processInstanceId == "" || processInstanceId.isEmpty()){
-                    throw new MyException("平板车计划任务插入失败");
-                }
-
-                //TODO 获取驳运物件的名称 ，目前是获取了驳运部门的类型 表不对，
-                TranGoods goods = tranGoodsMapper.selectById(platform.getObjectId());
-                goodsName = goods.getGoodsType();
-
-                //TODO 需要在驳运物件表里面设置一个字段，表示该物件是否被绑定驳运
-                goods.setGoodsType("1");
-                int update = tranGoodsMapper.updateById(goods);
-                if (update <=0){
-                    throw new MyException("平板车计划任务插入失败");
-                }
+                //插入一条平板车计划任务的申请
+                String flatcarPlanPrefix = "flatcarPlan";
+                String  flatcarPlanName = "计划";
+                goodsName = getProcessInstance(flatcarPlanName, flatcarPlanPrefix, platformApply, businessKey);
                 break;
             case 2:
+                //插入一条平板车临时任务的申请 ，获取插入的实例
+                String flatcarTempPrefix = "flatcarTemp";
+                String flatcarTempName = "临时";
+                goodsName = getProcessInstance(flatcarTempName,flatcarTempPrefix,platformApply, businessKey);
                 break;
-            case 3: int a = 0;
+            case 3:
+                //插入一条平板车取消任务的申请 ，获取插入的实例
+                String flatcarCancelPrefix = "flatcarCancel";
+                String  flatcarCancelName = "取消";
+                goodsName = getProcessInstance(flatcarCancelName,flatcarCancelPrefix,platformApply, businessKey);
                 break;
-            case 4: long b = 0L;
+            case 4:
+                //插入一条平板车衍生任务的申请 ，获取插入的实例
+                String flatcarOtherTempPrefix = "flatcarOtherTemp";
+                String  flatcarOtherTempName = "衍生";
+                goodsName = getProcessInstance(flatcarOtherTempName,flatcarOtherTempPrefix,platformApply, businessKey);
                 break;
             default :
                 throw new MyException("申请类型不正确");
         }
-
+        String requestName = goodsName + " " + platformApply.getJobContent() + "(" + platformApply.getRequestType() + ")";
+        platformApply.setRequestName(requestName);
+        Integer update = platformMapper.updateById(platformApply);
+        if (update != 1) {
+            throw new MyException("保存平板车计划任务失败");
+        }
         //返回值放到map中
         Map<String, Object> map = new HashMap<>(4);
-        map.put("requestName",goodsName + " " + platform.getJobContent() + "(" + platform.getRequestType() + ")");
+        map.put("requestName",requestName);
         map.put("returnMessage","申请平板车任务保存成功");
         map.put("applicationNum",requestOddNumber);
-        map.put("BusinessKey",BusinessKey);
+        map.put("BusinessKey",businessKey);
         return map;
     }
 
@@ -174,9 +168,9 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("用户{}删除未申请的任务",deptUser.getUsername());
 
-        Platform selectById = platformMapper.selectById(id);
+        PlatformApply platformApply = platformMapper.selectById(id);
         //获取任务的申请状态，已提交状态的任务不能被删除
-        Integer state = selectById.getApplyState();
+        Integer state = platformApply.getApplyState();
         if(state != 0) {
             throw new MyException("任务申请已提交，不能删除");
         }
@@ -188,7 +182,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
         }
 
         //更改分段绑定信息状态
-        int update = tranGoodsMapper.updateGoodsBindState(selectById.getObjectId());
+        int update = platformGoodsMapper.updateGoodsBindState(platformApply.getObjectId());
         if(update <= 0) {
             throw new MyException("删除操作失败，请重试");
         }
@@ -206,29 +200,32 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
 
     /**
      * 开始一个平板车计划任务流程
-     * @param platform
+     * @param platformApply
      * @return 流程实例Id
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Map<String, Object> startPlanTasks(Platform platform) {
+    public Map<String, Object> startPlanTasks(PlatformApply platformApply) {
 
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        if (deptUser == null ){
+            throw new MyException("登录已超时，请重新登录");
+        }
         log.info("用户{}申请了一个未提交任务",deptUser.getUsername());
 
         //判断提交的是不是之前保存过的申请 未保存，应该先保存，
-        Integer prsId = platform.getPrsId();
+        Integer prsId = platformApply.getPrsId();
         Map<String, Object> saveFlatCarPlanMap = null;
         if (prsId == null || prsId == 0){
-            saveFlatCarPlanMap = this.saveFlatCarPlan(platform);
+            saveFlatCarPlanMap = this.saveFlatCarPlan(platformApply);
         }
 
         //更改审批状态，未审批变为审批中
-        platform.setUpdateId(deptUser.getUserId());
-        platform.setUpdateDate(LocalDateTime.now());
-        platform.setApplyName("");
-        platform.setApplyState(1);
-        platformMapper.updateById(platform);
+        platformApply.setUpdateId(deptUser.getUserId());
+        platformApply.setUpdateDate(LocalDateTime.now());
+        platformApply.setApplyName("");
+        platformApply.setApplyState(1);
+        platformMapper.updateById(platformApply);
         //获取任务ID
         Object businessKey = saveFlatCarPlanMap.get("BusinessKey");
         TaskQuery taskQuery = taskService.createTaskQuery();
@@ -490,11 +487,11 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
         log.info("查询用户名为{}的任务列表",username);
 
         //获取所有满足条件的任务列表
-        List<Platform> submitList = platformMapper.selectList(new LambdaQueryWrapper<Platform>()
-                .eq(StringUtils.hasText(param.getTaskName()), Platform::getRequestType, param.getTaskName())
-                .eq(StringUtils.hasText(param.taskState), Platform::getApplyState, param.getTaskState())
-                .eq(Platform::getApplyName, username)
-                .orderByAsc(Platform::getObjectId));
+        List<PlatformApply> submitList = platformMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
+                .eq(StringUtils.hasText(param.getTaskName()), PlatformApply::getRequestType, param.getTaskName())
+                .eq(StringUtils.hasText(param.taskState), PlatformApply::getApplyState, param.getTaskState())
+                .eq(PlatformApply::getApplyName, username)
+                .orderByAsc(PlatformApply::getObjectId));
 
         //判断如果没有任何任务，直接返回空值
         if(submitList.size() == 0){
@@ -503,26 +500,26 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
 
         //获取所有的TranGoods的id 放到新的list中
         List<Integer> tranGoodsIds = new ArrayList<>();
-        for (Platform requestSubmit : submitList) {
+        for (PlatformApply requestSubmit : submitList) {
             tranGoodsIds.add(requestSubmit.getObjectId());
         }
 
         //获取所有的物件信息
-        List<TranGoods> tranGoods = tranGoodsMapper.selectList(new LambdaQueryWrapper<TranGoods>()
-                .in(TranGoods::getGoodsId, tranGoodsIds)
-                .orderByAsc(TranGoods::getGoodsId));
+        List<PlatformGoods> platformGoods = platformGoodsMapper.selectList(new LambdaQueryWrapper<PlatformGoods>()
+                .in(PlatformGoods::getGoodsId, tranGoodsIds)
+                .orderByAsc(PlatformGoods::getGoodsId));
 
         //封装返回的内容
         List<Map<String, Object>> list = new ArrayList<>();
         for (int i = 0; i < submitList.size(); i++) {
             Map<String, Object> resultMap = new HashMap<>(6);
-            Platform requestSubmit = submitList.get(i);
+            PlatformApply requestSubmit = submitList.get(i);
             resultMap.put("requestID", requestSubmit.getPrsId());
-            resultMap.put("requestName",tranGoods.get(i).getGoodsType() + " " + requestSubmit.getJobContent() + "(" + requestSubmit.getRequestType() + ")");
+            resultMap.put("requestName", platformGoods.get(i).getGoodsType() + " " + requestSubmit.getJobContent() + "(" + requestSubmit.getRequestType() + ")");
             resultMap.put("status",requestSubmit.getApplyState());
             resultMap.put("startTime",requestSubmit.getStartTime());
             resultMap.put("endTime",requestSubmit.getEndTime());
-            resultMap.put("object",tranGoods.get(i).getGoodsType());
+            resultMap.put("object", platformGoods.get(i).getGoodsType());
             list.add(resultMap);
         }
         return list;
@@ -533,45 +530,83 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, Platform> i
      * @return
      */
     @Override
-    public List<Platform> getPlatformOrganizationTasks() {
+    public List<PlatformApply> getPlatformOrganizationTasks() {
 
         TaskQuery query = taskService.createTaskQuery();
         //获取编制驳动计划的所有任务列表
-        List<Task> list = query.taskName("编制驳动计划").orderByTaskCreateTime().desc().list();
-       if (list.size() == 0){
+        List<Task> tasks = query.taskName("编制驳动计划").orderByTaskCreateTime().desc().list();
+       if (tasks.size() == 0){
             return null;
        }
-        List<Integer> businessKeyList = new ArrayList<>();
-        for (Task task : list) {
-            String businessKey = toTaskIdGetBusinessKey(task.getId());
-            businessKeyList.add(Integer.parseInt(businessKey));
-        }
-        List<Platform> platformList = platformMapper.selectList(new LambdaQueryWrapper<Platform>()
-                .in(Platform::getPrsId, businessKeyList)
-                .orderByDesc(Platform::getPrsId));
-        return platformList;
 
+       //获取实例ID列表
+        List<String> arrayList = new ArrayList<>(tasks.size());
+        for (Task task : tasks) {
+            arrayList.add(task.getProcessInstanceId());
+        }
+        String string = arrayList.toString();
+        String substring = string.substring(1, string.length() - 1);
+        //自定义查询对应BusinessKeys
+        NativeTaskQuery taskQuery = taskService.createNativeTaskQuery();
+        NativeProcessInstanceQuery instanceQuery = runtimeService.createNativeProcessInstanceQuery();
+        List<ProcessInstance> instanceList = instanceQuery.sql("SELECT * FROM " + managementService.getTableName(Execution.class) + " T " + "WHERE T.BUSINESS_KEY_ IS NOT NULL AND T.PROC_INST_ID_ IN (#{substring})").parameter("substring", substring).list();
+
+        //查询对应的业务信息
+        List<Integer> integers = new ArrayList<>(instanceList.size());
+        for (ProcessInstance instance : instanceList) {
+            integers.add(Integer.parseInt(instance.getBusinessKey()));
+        }
+        //获取对应的列表
+        List<PlatformApply> platformApplyList = platformMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
+                .in(PlatformApply::getPrsId, integers)
+                .orderByDesc(PlatformApply::getPrsId));
+        return platformApplyList;
     }
 
     /**
-     * 通过任务Id获取业务Id
-     * @param taskId
+     * //插入一条平板车任务的申请 ，获取插入的实例
+     * @param flatcarPlanName
+     * @param flatcarPlanPrefix
+     * @param platformApply
+     * @param businessKey
      * @return
      */
-    private String toTaskIdGetBusinessKey(String taskId) {
-
-        String businessKey;
-        TaskQuery taskQuery = taskService.createTaskQuery();
-        TaskEntity taskEntity = (TaskEntity) taskQuery.taskId(taskId).singleResult();
-        HistoricProcessInstanceQuery instanceQuery = historyService.createHistoricProcessInstanceQuery();
-        HistoricProcessInstance processInstance = instanceQuery.processInstanceId(taskEntity.getProcessInstanceId()).singleResult();
-        if (processInstance.getSuperProcessInstanceId() != null && processInstance.getBusinessKey() == null) {
-            processInstance = instanceQuery.processInstanceId(processInstance.getSuperProcessInstanceId()).singleResult();
-            businessKey = processInstance.getBusinessKey();
-        } else {
-            businessKey = processInstance.getBusinessKey();
+    private String getProcessInstance(String flatcarPlanName, String flatcarPlanPrefix, PlatformApply platformApply, String businessKey) {
+        //插入一条平板车任务的申请
+        Map<String, Object> variables = new HashMap<>(1);
+        variables.put("startName", platformApply.getApplyName());
+        variables.put("dept", platformApply.getRequestDepartment() + "申请");
+        //动态的向流程中添加审批角色属性
+        String count = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "DeploymentGroupCount");
+        for (int i = 1 ; i <= Integer.parseInt(count) ; i++ ) {
+            String roleId = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "GroupTask" + i);
+            //获取角色用的ids
+            List<DeptUser> users = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                    .eq(DeptUser::getUserRoleId, roleId));
+            //获取角色用户的名字
+            StringBuilder builder = new StringBuilder();
+            for (DeptUser user : users) {
+                builder.append(user.getUsername()).append(",");
+            }
+            String substring = builder.substring(0, builder.length() - 1);
+            variables.put(flatcarPlanPrefix + "GroupTask" + i, substring);
         }
-        return businessKey;
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "DeploymentId"), businessKey, variables);
+        String processInstanceId = processInstance.getProcessInstanceId();
+        if (processInstanceId == null || processInstanceId == "" || processInstanceId.isEmpty()){
+            throw new MyException("平板车" + flatcarPlanName + "任务插入失败");
+        }
+
+        //获取运输分段的名字
+        PlatformGoods platform = platformGoodsMapper.selectById(platformApply.getObjectId());
+        String goodsName = platform.getGoodsCode();
+
+        platform.setIsBinder(1);
+        Integer update = platformGoodsMapper.updateById(platform);
+        if (update <=0){
+            throw new MyException("平板车" + flatcarPlanName + "任务插入失败");
+        }
+        return goodsName;
     }
 
 }

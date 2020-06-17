@@ -92,7 +92,7 @@ public class RsaUtils {
     }
     public static void main(String[] args) throws Exception {
 
-        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCKQhsCPKaWP4zMCXXp3FWXHC3JEYVxoAkpZA9Rk6vzUK1k3O0IZeDCut64hkPlZcANSL9nqdQLIzdvXGt9aa6iAzPc+9WLJslJqHZAJOiP9X3OEknFaBdhClOPabnArN8jxTifIPd864JWqD3E69OQDq5Lc0uMbS713M8xT1jkOwIDAQAB";
+        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCO+jkRfJr3cnY63okw5XGm6nfjdwhghcxN4BxB9sEIT7N3V6BpgauFArLE1LMHwzVXI8nLiGaYBiJ4DYML/3asReS8GjxaED6H5ng/BF6syrbFwBSJRIsRs7WwbSRNRa20bITE1a/BZLQOQO1fLW28HuTIIJ0fTDJBDL9682gy5wIDAQAB";
         String pri = "";
         String message = "{'username':'zhangsan','password':'123'}";
         System.out.println("原文:" + message);

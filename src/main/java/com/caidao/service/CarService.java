@@ -11,7 +11,7 @@ import java.util.List;
  * @author Dillon
  * @since 2020-05-18
  */
-public interface SysCarService extends IService<Car> {
+public interface CarService extends IService<Car> {
 
     /**
      * 查询车辆分页数据
@@ -45,4 +45,12 @@ public interface SysCarService extends IService<Car> {
      * @return
      */
     List<Car> getFreeCarList();
+
+    /**
+     * 车辆与任务做绑定 多太车与一个任务作为绑定
+     * @param carId
+     * @param taskId
+     * @return
+     */
+    void saveOrBindTaskWithCar(List<String> carId, String taskId);
 }

@@ -1,18 +1,16 @@
 package com.caidao.mapper;
 
-import com.caidao.pojo.TranGoods;
+import com.caidao.pojo.PlatformGoods;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Repository;
 
 /**
- * <p>
- *  Mapper 接口
- * </p>
- *
  * @author Dillon
  * @since 2020-06-01
  */
-public interface TranGoodsMapper extends BaseMapper<TranGoods> {
+@Repository
+public interface PlatformGoodsMapper extends BaseMapper<PlatformGoods> {
 
     /**
      * //更改分段绑定信息状态

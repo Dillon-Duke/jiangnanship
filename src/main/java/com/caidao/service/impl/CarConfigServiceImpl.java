@@ -20,7 +20,7 @@ import org.springframework.util.StringUtils;
  * @since 2020-03-25
  */
 @Service
-public class CarCarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig> implements CarConfigService {
+public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig> implements CarConfigService {
 
 	@Autowired
 	private CarConfigMapper carConfigMapper;

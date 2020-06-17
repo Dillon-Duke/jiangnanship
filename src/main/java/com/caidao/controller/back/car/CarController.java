@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
 import com.caidao.pojo.Car;
 import com.caidao.pojo.SysUser;
-import com.caidao.service.SysCarService;
+import com.caidao.service.CarService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -36,7 +36,7 @@ public class CarController {
     public static final Logger logger = LoggerFactory.getLogger(CarController.class);
 
     @Autowired
-    private SysCarService sysCarService;
+    private CarService carService;
 
 
     /**
@@ -50,7 +50,7 @@ public class CarController {
     @RequiresPermissions("car:car:page")
     public ResponseEntity<IPage<Car>> getRoleList(Page<Car> page , Car car){
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
-        IPage<Car> sysRoles = sysCarService.findSysCarPage(page, car);
+        IPage<Car> sysRoles = carService.findSysCarPage(page, car);
         return ResponseEntity.ok(sysRoles);
     }
 
@@ -68,7 +68,7 @@ public class CarController {
         SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
         car.setCreateId(principal.getUserId());
         Assert.notNull(car.getCarName(),"车辆名称不能为空");
-        boolean save = sysCarService.save(car);
+        boolean save = carService.save(car);
         if (save){
             return ResponseEntity.ok().build();
         }
@@ -86,7 +86,7 @@ public class CarController {
     public ResponseEntity<Car> getCarInfoById(@PathVariable("id") Integer id){
         Assert.notNull(id,"id 不能为空");
         log.info("查询车辆id为{}的车辆信息",id);
-        Car car = sysCarService.getById(id);
+        Car car = carService.getById(id);
         return ResponseEntity.ok(car);
     }
 
@@ -106,7 +106,7 @@ public class CarController {
         SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
         car.setUpdateId(principal.getUserId());
 
-        boolean updateCar = sysCarService.updateById(car);
+        boolean updateCar = carService.updateById(car);
         if (updateCar){
             return ResponseEntity.ok().build();
         }
@@ -123,7 +123,7 @@ public class CarController {
     @ApiOperation("删除车辆信息")
     @RequiresPermissions("car:car:delete")
     public ResponseEntity<String> deleteByIds(@RequestBody List<Car> cars){
-        boolean removeByIds = sysCarService.batchRemoveByIds(cars);
+        boolean removeByIds = carService.batchRemoveByIds(cars);
         if (removeByIds){
             return ResponseEntity.ok().build();
         }

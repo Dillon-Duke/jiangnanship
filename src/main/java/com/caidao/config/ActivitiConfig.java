@@ -1,10 +1,11 @@
 package com.caidao.config;
 
 import org.activiti.engine.*;
-import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
+import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
@@ -20,18 +21,22 @@ public class ActivitiConfig {
     @Autowired
     private DataSource dataSource;
 
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
+
     /**
      * 初始化配置，将创建28张表
      * @return
      */
     @Bean
-    public StandaloneProcessEngineConfiguration standaloneProcessEngineConfiguration(){
-        StandaloneProcessEngineConfiguration engineConfiguration = new StandaloneProcessEngineConfiguration();
-        engineConfiguration.setDataSource(dataSource);
+    public SpringProcessEngineConfiguration springProcessEngineConfiguration(){
+        SpringProcessEngineConfiguration configuration = new SpringProcessEngineConfiguration();
+        configuration.setDataSource(dataSource);
+        configuration.setAsyncExecutorActivate(false);
+        configuration.setTransactionManager(platformTransactionManager);
         //数据库没有表的时候自动创建表
-        engineConfiguration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
-        engineConfiguration.setAsyncExecutorActivate(false);
-        return engineConfiguration;
+        configuration.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+        return configuration;
     }
 
     /**
@@ -40,7 +45,7 @@ public class ActivitiConfig {
      */
     @Bean
     public ProcessEngine processEngine(){
-        return standaloneProcessEngineConfiguration().buildProcessEngine();
+        return springProcessEngineConfiguration().buildProcessEngine();
     }
 
     /**
@@ -77,5 +82,10 @@ public class ActivitiConfig {
     @Bean
     public HistoryService historyService(){
         return processEngine().getHistoryService();
+    }
+
+    @Bean
+    public ManagementService managementService () {
+        return processEngine().getManagementService();
     }
 }

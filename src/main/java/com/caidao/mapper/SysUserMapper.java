@@ -3,17 +3,15 @@ package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.SysUser;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 /**
- * <p>
- *  Mapper 接口
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */
+@Repository
 public interface SysUserMapper extends BaseMapper<SysUser> {
 
     /**

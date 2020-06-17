@@ -2,13 +2,14 @@ package com.caidao.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -60,23 +61,11 @@ public class Car implements Serializable {
     @ApiModelProperty(value = "荷载重量")
     private Double fullWeight;
 
+    @ApiModelProperty(value = "绑定的任务id 默认为未绑定 默认值0")
+    private Double bindTaskId;
+
     @ApiModelProperty(value = "1：正常，2：占用，3：维修，4：报废")
     private Integer carState;
-
-    @ApiModelProperty(value = "预留1")
-    private String reserve1;
-
-    @ApiModelProperty(value = "预留2")
-    private String reserve2;
-
-    @ApiModelProperty(value = "预留3")
-    private String reserve3;
-
-    @ApiModelProperty(value = "预留4")
-    private String reserve4;
-
-    @ApiModelProperty(value = "预留5")
-    private String reserve5;
 
     @ApiModelProperty(value = "创建日期")
     private LocalDateTime createDate;
@@ -92,6 +81,5 @@ public class Car implements Serializable {
 
     @ApiModelProperty(value = "是否可用1：可用  0：禁用")
     private Integer state;
-
 
 }

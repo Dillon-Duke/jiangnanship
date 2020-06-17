@@ -4,6 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author tom
@@ -24,7 +25,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 //    }
 //}
 
-@MapperScan("com.caidao.mapper")
+@MapperScan(value = "com.caidao.mapper",annotationClass = Repository.class)
 @SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 public class JiangnanshipApplication {
 

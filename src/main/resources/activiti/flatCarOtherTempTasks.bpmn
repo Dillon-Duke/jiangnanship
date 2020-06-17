@@ -12,19 +12,19 @@
              name=""
              targetNamespace="http://www.activiti.org/test"
              typeLanguage="http://www.w3.org/2001/XMLSchema">
-   <process xmlns="" id="flatCarOtherTempTasks" isClosed="false" isExecutable="true"
+   <process id="flatCarOtherTempTasks" isClosed="false" isExecutable="true"
             name="平板车衍生任务流程"
             processType="None">
       <startEvent id="_2" name="StartEvent"/>
       <endEvent id="_3" name="EndEvent"/>
       <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_4"
                 name="平板车衍生任务申请"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_5" name="司机接单"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_6" name="司机完成"/>
+      <userTask activiti:assignee="${flatcarOtherTempGroupTask1}" activiti:exclusive="true" id="_5" name="司机接单"/>
+      <userTask activiti:assignee="${flatcarOtherTempGroupTask2}" activiti:exclusive="true" id="_6" name="司机完成"/>
       <sequenceFlow id="_7" sourceRef="_2" targetRef="_4"/>
       <sequenceFlow id="_8" sourceRef="_4" targetRef="_5"/>
       <sequenceFlow id="_10" sourceRef="_6" targetRef="_3"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_11" name="司机执行"/>
+      <userTask activiti:assignee="${flatcarOtherTempGroupTask2}" activiti:exclusive="true" id="_11" name="司机执行"/>
       <sequenceFlow id="_12" sourceRef="_5" targetRef="_11"/>
       <sequenceFlow id="_13" sourceRef="_11" targetRef="_6"/>
    </process>

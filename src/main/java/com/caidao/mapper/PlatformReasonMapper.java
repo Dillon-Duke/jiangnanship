@@ -1,14 +1,14 @@
 package com.caidao.mapper;
 
-import com.caidao.pojo.DeptDeptRole;
+import com.caidao.pojo.PlatformReason;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Repository;
 
 /**
  * @author Dillon
- * @since 2020-05-27
+ * @since 2020-06-13
  */
 @Repository
-public interface DeptDeptRoleMapper extends BaseMapper<DeptDeptRole> {
+public interface PlatformReasonMapper extends BaseMapper<PlatformReason> {
 
 }

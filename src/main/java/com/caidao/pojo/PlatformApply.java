@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="PlatformRequestSubmit对象", description="")
-public class Platform implements Serializable {
+public class PlatformApply implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -85,20 +85,8 @@ public class Platform implements Serializable {
     @ApiModelProperty(value = "审批状态 0：未提交 1：审批中 2：审批完成 3;审批未通过")
     private Integer applyState;
 
-    @ApiModelProperty(value = "预留1")
-    private String reserve1;
-
-    @ApiModelProperty(value = "预留2")
-    private String reserve2;
-
-    @ApiModelProperty(value = "预留3")
-    private String reserve3;
-
-    @ApiModelProperty(value = "预留4")
-    private String reserve4;
-
-    @ApiModelProperty(value = "预留5")
-    private String reserve5;
+    @ApiModelProperty(value = "返回的请求名称")
+    private String requestName;
 
     @ApiModelProperty(value = "申请人姓名")
     private String applyName;
@@ -117,6 +105,5 @@ public class Platform implements Serializable {
 
     @ApiModelProperty(value = "状态 1：可用 0 禁用")
     private Integer state;
-
 
 }

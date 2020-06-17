@@ -2,15 +2,15 @@ package com.caidao.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.time.LocalDateTime;
-import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -43,18 +43,6 @@ public class Dept implements Serializable {
 
     @ApiModelProperty(value = "备注")
     private String remark;
-
-    @ApiModelProperty(value = "预留2")
-    private String reserve2;
-
-    @ApiModelProperty(value = "预留3")
-    private String reserve3;
-
-    @ApiModelProperty(value = "预留4")
-    private String reserve4;
-
-    @ApiModelProperty(value = "预留5")
-    private String reserve5;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")

@@ -2,12 +2,12 @@ package com.caidao.controller.front.flatcar;
 
 import com.caidao.common.ResponseEntity;
 import com.caidao.param.ActivityQueryParam;
-import com.caidao.pojo.ApprovalReason;
+import com.caidao.pojo.PlatformReason;
 import com.caidao.pojo.Car;
-import com.caidao.pojo.Platform;
-import com.caidao.service.ApprovalReasonService;
+import com.caidao.pojo.PlatformApply;
+import com.caidao.service.PlatformReasonService;
 import com.caidao.service.PlatformService;
-import com.caidao.service.SysCarService;
+import com.caidao.service.CarService;
 import io.swagger.annotations.ApiOperation;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.slf4j.Logger;
@@ -28,26 +28,26 @@ import java.util.Map;
 public class PlatformController {
 
     @Autowired
-    private ApprovalReasonService approvalReasonService;
+    private PlatformReasonService platformReasonService;
 
     @Autowired
     private PlatformService platformService;
 
     @Autowired
-    private SysCarService sysCarService;
+    private CarService carService;
 
     public static final Logger logger =  LoggerFactory.getLogger(PlatformController.class);
 
     /**
      * 保存一个平板车计划任务流程
-     * @param platform
+     * @param platformApply
      * @return 流程实例Id
      */
     @ApiOperation("保存一个平板车计划流程")
     @PostMapping("/savePlatformTasks")
-    public ResponseEntity<Map<String, Object>> savePlatformTasks(@RequestBody Platform platform){
+    public ResponseEntity<Map<String, Object>> savePlatformTasks(@RequestBody PlatformApply platformApply){
 
-        Map<String, Object> flatCarPlan = platformService.saveFlatCarPlan(platform);
+        Map<String, Object> flatCarPlan = platformService.saveFlatCarPlan(platformApply);
         return ResponseEntity.ok(flatCarPlan);
     }
 
@@ -69,14 +69,14 @@ public class PlatformController {
 
     /**
      * 开始一个平板车任务流程
-     * @param platform
+     * @param platformApply
      * @return 流程实例Id
      */
     @ApiOperation("开始一个平板车流程")
     @PostMapping("/startPlatformTask")
-    public ResponseEntity<Map<String, Object>> startPlatformTask(@RequestBody Platform platform){
+    public ResponseEntity<Map<String, Object>> startPlatformTask(@RequestBody PlatformApply platformApply){
 
-        Map<String, Object> flatCarPlan = platformService.startPlanTasks(platform);
+        Map<String, Object> flatCarPlan = platformService.startPlanTasks(platformApply);
         return ResponseEntity.ok(flatCarPlan);
     }
 
@@ -95,14 +95,14 @@ public class PlatformController {
 
     /**
      * 完成审批
-     * @param approvalReason
+     * @param platformReason
      * @return
      */
     @ApiOperation("完成审批")
     @PostMapping("/completeApprovalWithOpinion")
-    public ResponseEntity<Void> completeApprovalWithOpinion(@RequestBody ApprovalReason approvalReason){
+    public ResponseEntity<Void> completeApprovalWithOpinion(@RequestBody PlatformReason platformReason){
 
-        approvalReasonService.completeApprovalWithOpinion(approvalReason);
+        platformReasonService.completeApprovalWithOpinion(platformReason);
         return ResponseEntity.ok().build();
     }
 
@@ -180,12 +180,25 @@ public class PlatformController {
     public ResponseEntity<Map<String,Object>> getOrganizationTasks(){
         Map<String, Object> map = new HashMap<>(2);
         //获得空闲的车辆
-        List<Car> carList = sysCarService.getFreeCarList();
+        List<Car> carList = carService.getFreeCarList();
         //获得审批到可以编制的任务
-        List<Platform> organizationList = platformService.getPlatformOrganizationTasks();
+        List<PlatformApply> organizationList = platformService.getPlatformOrganizationTasks();
         map.put("freeCars",carList);
         map.put("organizationTasks",organizationList);
         return ResponseEntity.ok(map);
+    }
+
+    /**
+     * 车辆与任务做绑定 多太车与一个任务作为绑定
+     * @param carId
+     * @param taskId
+     * @return
+     */
+    @ApiOperation("车辆与任务做一个绑定")
+    @GetMapping("/saveOrBindTaskWithCar")
+    public ResponseEntity<Void> saveOrBindTaskWithCar(List<String> carId, String taskId){
+        carService.saveOrBindTaskWithCar(carId,taskId);
+        return ResponseEntity.ok().build();
     }
 
 }
