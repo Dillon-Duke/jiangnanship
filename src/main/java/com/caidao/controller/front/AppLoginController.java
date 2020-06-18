@@ -1,13 +1,10 @@
 package com.caidao.controller.front;
 
 
-import com.alibaba.fastjson.JSONObject;
-import com.caidao.anno.AppBaseMsgs;
-import com.caidao.anno.DecryptData;
 import com.caidao.common.ResponseEntity;
-import com.caidao.pojo.AppBaseMsg;
-import com.caidao.pojo.DeptUser;
 import com.caidao.exception.MyException;
+import com.caidao.param.UserParam;
+import com.caidao.pojo.DeptUser;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
@@ -23,7 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
  */
 
 @RestController
-@RequestMapping("/app")
 @Slf4j
 public class AppLoginController {
 
@@ -75,26 +74,20 @@ public class AppLoginController {
 
 	/**
 	 * app用户登录
-	 * @param appBaseMsg
+	 * @param userParam
 	 * @return
 	 */
-	@AppBaseMsgs
-	@DecryptData
 	@ApiOperation("前台登录接口")
 	@PostMapping("/appLogin")
-	public ResponseEntity<Map<String,String>> login(@RequestBody AppBaseMsg appBaseMsg) {
+	public ResponseEntity<Map<String,String>> login(@RequestBody UserParam userParam) {
 
-		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
-		log.info("用户Id为{}请求登录",appBaseMsg.getUserId());
+		Assert.notNull(userParam,"用户名不能为空");
+		log.info("用户名为{}请求登录",userParam.getPrincipal());
 
 		try {
-            //将主体数据还原成json对象
-			String encryption = appBaseMsg.getEncryption();
-			JSONObject jsonObject = JSONObject.parseObject(encryption);
-			String username = jsonObject.getString("username");
-			String password = jsonObject.getString("password");
+
 			Subject subject = SecurityUtils.getSubject();
-			UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(username, password,PropertyUtils.APP_USER_REALM);
+			UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.APP_USER_REALM);
 
 			//校验登录信息
 			subject.login(userLoginTokenUtils);
@@ -119,36 +112,33 @@ public class AppLoginController {
     }
 
 	/**
-	 *
+	 * 通过用户ID获取用户的权限
 	 * @return
 	 */
-	@AppBaseMsgs
 	@ApiOperation("获得用户的权限")
 	@GetMapping("/Authorities")
-	public ResponseEntity<List<String>> getUserAuthorities(@RequestBody AppBaseMsg appBaseMsg){
+	public ResponseEntity<List<String>> getUserAuthorities(String userId){
 
-		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
-		log.info("用户id为{}的用户查询权限",appBaseMsg.getUserId());
+		Assert.notNull(userId,"用户ID不能为空");
+		log.info("用户id为{}的用户查询权限",userId);
 
-		List<String> deptUserAuthorities = deptConfigService.getPowerByUserId(Integer.parseInt(appBaseMsg.getUserId()));
+		List<String> deptUserAuthorities = deptConfigService.getPowerByUserId(Integer.parseInt(userId));
 		return ResponseEntity.ok(deptUserAuthorities);
 	}
 
 	/**
 	 * 根据用户名和手机判断是否有这个人
-	 * @param appBaseMsg
+	 * @param username
 	 * @return
 	 */
-	@AppBaseMsgs
 	@GetMapping("/app/user/checkNameAndPhone")
 	@ApiOperation("检查用户名和手机是否正确")
-	public ResponseEntity<DeptUser> beforeForgetPass(@RequestBody AppBaseMsg appBaseMsg)  {
+	public ResponseEntity<DeptUser> beforeForgetPass(String username, String phone)  {
 
-		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
-		String encryption = appBaseMsg.getEncryption();
-		JSONObject object = JSONObject.parseObject(encryption);
-		log.info("查询用户名为{}，手机号为{}的用户",object.getString("username"),object.getString("phone"));
-		DeptUser deptUser = deptUserService.findUserByUsernameAndPhone(object.getString("username"),object.getString("phone"));
+		Assert.notNull(username,"用户名不能为空");
+		Assert.notNull(phone,"手机号不能为空");
+		log.info("查询用户名为{}，手机号为{}的用户",username,phone);
+		DeptUser deptUser = deptUserService.findUserByUsernameAndPhone(username,phone);
 		if (deptUser == null){
 			return ResponseEntity.ok().build();
 		}
@@ -157,51 +147,41 @@ public class AppLoginController {
 
 	/**
 	 * 发送短信验证码
-	 * @param appBaseMsg
+	 * @param phone
 	 * @return
 	 */
-	@AppBaseMsgs
 	@GetMapping("/app/user/message")
 	@ApiOperation("调用三方接口想用户发送验证码")
-	public ResponseEntity<Void> getMessage(@RequestBody AppBaseMsg appBaseMsg){
+	public ResponseEntity<Void> getMessage(String phone){
 
-		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
+		Assert.notNull(phone,"手机号不能为空");
 
 		//TODO 是否要使用短信业务 使用哪个短信业务系统 ，或者是只能是后台工作人员改密码
 
 		//生成随机6位数字
 		int code = (int)((Math.random()*9+1)*100000);
-		String encryption = appBaseMsg.getEncryption();
-		JSONObject object = JSONObject.parseObject(encryption);
 		//向redis 里面存6位的随机数组 redis储存时间为60S
-		redis.opsForValue().set(PropertyUtils.MASSAGE_CODE + object.getString("phone"), code + "", 1,TimeUnit.MINUTES);
+		redis.opsForValue().set(PropertyUtils.MASSAGE_CODE + phone, code + "", 1,TimeUnit.MINUTES);
 
 		return ResponseEntity.ok().build();
 	}
 
 	/**
 	 * 更新用户的密码
-	 * @param appBaseMsg
+	 * @param userParam
 	 * @return
 	 */
-	@AppBaseMsgs
-	@DecryptData
 	@ApiOperation("忘记密码，更新用户的密码")
 	@PostMapping("/app/user/updatePass")
-	public ResponseEntity<String> updateUserPassword(@RequestBody AppBaseMsg appBaseMsg){
-		Assert.notNull(appBaseMsg,"前端基本信息传值不正确");
-		log.info("用户{}更新了密码",appBaseMsg.getUserId());
+	public ResponseEntity<String> updateUserPassword(@RequestBody UserParam userParam){
+		Assert.notNull(userParam,"参数不能为空");
+		log.info("用户手机号为{}的用户更新了密码",userParam.getPhone());
 
-		//将对象从主体里面取出来
-		String encryption = appBaseMsg.getEncryption();
-		List<Object> objects = JSONObject.parseArray(encryption, Object.class);
-		DeptUser deptUser = (DeptUser) objects.get(0);
-		String code = String.valueOf(objects.get(1));
 		//校验验证码是否正确
-		checkCode(PropertyUtils.MASSAGE_CODE+deptUser.getPhone(),code);
+		checkCode(PropertyUtils.MASSAGE_CODE+userParam.getPhone(), userParam.getImageCode());
 
-		//更新用户验证码
-		boolean update = deptUserService.updatePassById(deptUser);
+		//更新用户密码
+		boolean update = deptUserService.updatePassByPhone(userParam);
 		if (update){
 			return ResponseEntity.ok("用户密码更新成功");
 		}
@@ -214,7 +194,7 @@ public class AppLoginController {
 	 */
 	@PostMapping("/AppLogout")
 	@ApiOperation("app退出账号")
-	public ResponseEntity<Void> logout(@RequestBody AppBaseMsg appBaseMsg){
+	public ResponseEntity<Void> logout(){
 
 		//删除用户在redis 里面的token
 		String token = SecurityUtils.getSubject().getSession().getId().toString();

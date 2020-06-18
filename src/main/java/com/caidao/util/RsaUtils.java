@@ -92,9 +92,9 @@ public class RsaUtils {
     }
     public static void main(String[] args) throws Exception {
 
-        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCO+jkRfJr3cnY63okw5XGm6nfjdwhghcxN4BxB9sEIT7N3V6BpgauFArLE1LMHwzVXI8nLiGaYBiJ4DYML/3asReS8GjxaED6H5ng/BF6syrbFwBSJRIsRs7WwbSRNRa20bITE1a/BZLQOQO1fLW28HuTIIJ0fTDJBDL9682gy5wIDAQAB";
+        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDvX3L8G15p91Lk++YePa0r/AmFkSCS1yc+/clMPeVEvxIdQM577eA2zHgfEuRkSal9lezvzwBRs5zPW9y8W1+hyCzhSaEuMVaVHiyU8/JrYw19aqNz3pOpoJ6Afcy2JHgd66Uc2rMUuMbVc5ChD///7zKbnyDePaKzfjTkWq/eowIDAQAB";
         String pri = "";
-        String message = "{'username':'zhangsan','password':'123'}";
+        String message = "{'principal':'zhangsan','credentials':'123'}";
         System.out.println("原文:" + message);
         String messageEn = encrypt(message, pub);
         System.out.println("加密：" + messageEn);

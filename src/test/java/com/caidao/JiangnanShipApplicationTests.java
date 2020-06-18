@@ -5,6 +5,7 @@ import org.activiti.engine.task.Task;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 
 @SpringBootTest
@@ -12,6 +13,9 @@ class JiangnanShipApplicationTests {
 
    @Autowired
    private TaskService taskService;
+
+   @Autowired
+   private StringRedisTemplate stringRedisTemplate;
 
 
     @Test
@@ -28,4 +32,8 @@ class JiangnanShipApplicationTests {
         System.out.println(task);
     }
 
+    @Test
+    void test1 () {
+        System.out.println(stringRedisTemplate.opsForValue().get("appUserPrivateKey:225a37ed-baa7-4c00-a33d-655d43faf1ec"));
+    }
 }

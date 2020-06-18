@@ -3,6 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
 
@@ -40,10 +41,10 @@ public interface DeptUserService extends IService<DeptUser> {
 
     /**
      * 忘记密码，更新用户的密码
-     * @param deptUser
+     * @param userParam
      * @return
      */
-    boolean updatePassById(DeptUser deptUser);
+    boolean updatePassByPhone(UserParam userParam);
 
     /**
      * 获取有空余时间的司机

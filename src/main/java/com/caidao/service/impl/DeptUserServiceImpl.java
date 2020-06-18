@@ -8,6 +8,7 @@ import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptUserCarMapper;
 import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.DeptUserRoleMapper;
+import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
 import com.caidao.pojo.DeptUserRole;
@@ -284,15 +285,18 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
     /**
      * 忘记密码，更新用户的密码
-     * @param deptUser
+     * @param userParam
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class, propagation= Propagation.REQUIRES_NEW)
-    public boolean updatePassById(DeptUser deptUser) {
+    public boolean updatePassByPhone(UserParam userParam) {
+
+        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getPhone, userParam.getPhone()));
 
         //设置更新盐值
-        String password = deptUser.getPassword();
+        String password = userParam.getNewCredentials();
         ByteSource bytes = ByteSource.Util.bytes(deptUser.getUserSalt().getBytes());
         String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
         deptUser.setPassword(saltPass);

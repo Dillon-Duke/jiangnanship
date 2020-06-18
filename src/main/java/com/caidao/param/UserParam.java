@@ -22,6 +22,9 @@ public class UserParam {
 	
 	@ApiModelProperty("验证码")
 	private String imageCode;
+
+	@ApiModelProperty("手机号")
+	private String phone;
 	
 	@ApiModelProperty("uuid对比")
 	private String sessionUUID;
