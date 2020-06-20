@@ -1,8 +1,9 @@
 package com.caidao.filter;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.caidao.exception.MyException;
-import com.caidao.filter.wrapper.SaveAppBaseMsgJsonRequestWrapper;
+import com.caidao.filter.wrapper.SaveAppBaseMsgRequestWrapper;
 import com.caidao.pojo.AppBaseMsg;
 import com.caidao.service.AppBaseMsgService;
 import com.caidao.util.PropertyUtils;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.servlet.*;
-import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,10 +23,12 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * 前端联调的时候将这两个注解放开就行
  * @author tom
+ * @Configuration
+ * @WebFilter(filterName = "SaveAppBaseMsgFilter",urlPatterns  = {"/*"})
  */
 @Slf4j
-@WebFilter
 public class SaveAppBaseMsgFilter implements Filter {
 
     /** 需要过滤的地址 */
@@ -72,7 +74,7 @@ public class SaveAppBaseMsgFilter implements Filter {
         String url = (servletRequest).getRequestURI().substring((servletRequest).getContextPath().length());
         if (isPast(url)) {
             //处理json报文请求
-            SaveAppBaseMsgJsonRequestWrapper requestWrapper = new SaveAppBaseMsgJsonRequestWrapper(servletRequest);
+            SaveAppBaseMsgRequestWrapper requestWrapper = new SaveAppBaseMsgRequestWrapper(servletRequest);
             // 读取请求内容
             BufferedReader br;
             br = requestWrapper.getReader();
@@ -85,7 +87,6 @@ public class SaveAppBaseMsgFilter implements Filter {
             JSONObject jsonObject = JSONObject.parseObject(sb.toString());
 
             //将字段设置到基础表字段中
-            //TODO 还没有写存储基础表数据的方法
             AppBaseMsg appBaseMsg = new AppBaseMsg();
             appBaseMsg.setInterfaceVersion(jsonObject.getString("interfaceVersion"));
             appBaseMsg.setAppVersion(jsonObject.getString("appVersion"));
@@ -96,14 +97,14 @@ public class SaveAppBaseMsgFilter implements Filter {
             appBaseMsg.setClientScreenSize(jsonObject.getDouble("clientScreenSize"));
             appBaseMsg.setData(jsonObject.getString("data"));
             String userId = jsonObject.getString("userId");
-            appBaseMsg.setUserId(userId);
+            appBaseMsg.setUserId(Integer.parseInt(userId));
             appBaseMsg.setSubmitTime(jsonObject.getLong("submitTime"));
 
             //解密一下加密内容
             String encryption = jsonObject.getString("encryption");
             String decrypt ;
             String json ;
-            if ("".equals(userId) ||userId == null){
+            if ("".equals(userId) || "0".equals(userId)){
 
                 //获得用户登录的uuid
                 String uuid = jsonObject.getString("uuid");
@@ -129,16 +130,27 @@ public class SaveAppBaseMsgFilter implements Filter {
 
                 //获得用户token
                 String token = SecurityUtils.getSubject().getSession().getId().toString();
-                //替换解密内容
-                try {
-                    decrypt = RsaUtils.decrypt(appBaseMsg.getEncryption(), stringRedisTemplate.opsForValue().get(PropertyUtils.APP_USER_PRIVATE_KEY + token));
-                } catch (Exception e) {
-                    throw new MyException("信息解密错误，请联系管理员");
+
+                if (isJson(encryption)) {
+                    //将未加密的字符串放在基础表中
+                    appBaseMsg.setEncryption(encryption);
+                    //将字符串传到后端
+                    JSONObject parseObject = JSONObject.parseObject(encryption);
+                    json = parseObject.toJSONString();
+                } else {
+
+                    //解析字符串转为json对象
+                    try {
+                        decrypt = RsaUtils.decrypt(encryption, stringRedisTemplate.opsForValue().get(PropertyUtils.APP_USER_PRIVATE_KEY + token));
+                    } catch (Exception e) {
+                        throw new MyException("信息解密错误，请联系管理员");
+                    }
+                    //将未加密的字符串放在基础表中
+                    appBaseMsg.setEncryption(decrypt);
+                    //将字符串传到后端
+                    JSONObject parseObject = JSONObject.parseObject(decrypt);
+                    json = parseObject.toJSONString();
                 }
-                appBaseMsg.setEncryption(decrypt);
-                //将未解密的内容放在里面，如果需要解密，则使用注解解密
-                JSONObject parseObject = JSONObject.parseObject(encryption);
-                json = parseObject.toJSONString();
             }
 
             //将信息保存再基本表中
@@ -150,6 +162,20 @@ public class SaveAppBaseMsgFilter implements Filter {
             chain.doFilter(requestWrapper, resp);
         } else {
             chain.doFilter(req, resp);
+        }
+    }
+
+    /**
+     * 判断是否为json字符串
+     * @param content
+     * @return
+     */
+    private static boolean isJson(String content) {
+        try {
+            JSON.parse(content);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

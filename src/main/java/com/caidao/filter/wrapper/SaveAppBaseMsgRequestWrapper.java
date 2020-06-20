@@ -16,12 +16,12 @@ import java.io.InputStreamReader;
  * 处理json报文请求
  * @author tom
  */
-public class SaveAppBaseMsgJsonRequestWrapper extends HttpServletRequestWrapper {
+public class SaveAppBaseMsgRequestWrapper extends HttpServletRequestWrapper {
 
     /** 用于保存读取body中数据 */
     private  byte[] body;
 
-    public SaveAppBaseMsgJsonRequestWrapper(HttpServletRequest request) throws IOException {
+    public SaveAppBaseMsgRequestWrapper(HttpServletRequest request) throws IOException {
         super(request);
         //读取请求的数据保存到本类当中
         body = StreamUtil.readBytes(request.getReader(), "UTF-8");

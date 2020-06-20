@@ -13,8 +13,16 @@ import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
 import com.caidao.pojo.DeptUserRole;
 import com.caidao.service.DeptUserService;
+import com.caidao.util.DateUtils;
 import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
+import lombok.extern.slf4j.Slf4j;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+import org.apache.shiro.util.Assert;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -32,6 +40,7 @@ import java.util.*;
  * @since 2020-05-28
  */
 @Service
+@Slf4j
 public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> implements DeptUserService {
 
     @Autowired
@@ -87,8 +96,6 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             throw new MyException("该名称已被注册，请更换其他名称");
         }
 
-        deptUser.setCreateDate(LocalDateTime.now());
-
         String salt = UUID.randomUUID().toString().replaceAll("-","");
         //生成盐值
         deptUser.setUserSalt(salt);
@@ -99,6 +106,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
         String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
         deptUser.setPassword(saltPass);
+        deptUser.setCreateDate(LocalDateTime.now());
 
         List<Integer> roleIdList = deptUser.getRoleIdList();
 
@@ -117,6 +125,12 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             deptUser.setUserDeptId(Integer.parseInt(map.get("dept_id").toString()));
             deptUser.setUserDeptName(map.get("dept_name").toString());
         }
+
+        //设置工号
+        String userDeptName = deptUser.getUserDeptName();
+        String firstUpperCase = getFirstUpperCase(userDeptName);
+        Math.random();
+        deptUser.setJobNum(firstUpperCase + DateUtils.getYyyyMm() + (int)((Math.random()+1)*1000));
 
         //获得插入的数据id
         deptUserMapper.insert(deptUser);
@@ -142,6 +156,9 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      */
     @Override
     public DeptUser getById(Serializable id) {
+
+        Assert.notNull(id,"部门用户id不能为空");
+        log.info("查询用户id为{}的用户",id);
 
         //获取用户角色中间表信息
         List<DeptUserRole> roleList = deptUserRoleMapper.selectList(new LambdaQueryWrapper<DeptUserRole>()
@@ -318,19 +335,18 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
         //查询用户车辆表当天所有有任务的人
         List<DeptUserCar> deptUserCarList = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
-                                        .orderByAsc(DeptUserCar::getUsereId));
+                                        .orderByAsc(DeptUserCar::getUserId));
 
         //获取该部门所有的空闲人员
         List<DeptUser> deptUserList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
                                                     .eq(DeptUser::getUserDeptId, deptUser.getUserDeptId())
                                                     .eq(DeptUser::getUserRoleId, deptUser.getUserRoleId()));
 
-        HashMap<String, Object> map = new HashMap<>();
+        HashMap<String, Object> map = new HashMap<>(2);
         map.put("freeDriver",deptUserList);
         map.put("taskDriver",deptUserCarList);
 
         return map;
-
     }
 
     /**
@@ -342,10 +358,9 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     public List<DeptUserCar> getFreeDriverById(Integer id) {
 
         List<DeptUserCar> deptUserCars = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
-                .eq(DeptUserCar::getUsereId, id));
+                .eq(DeptUserCar::getUserId, id));
 
         return deptUserCars;
-
     }
 
     /**
@@ -367,6 +382,95 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             throw new MyException("绑定用户失败");
         }
         return true;
+    }
 
+    /**
+     * 将汉语字符转成拼音
+     * @param chineseName
+     * @return
+     */
+    private String getFirstUpperCase(String chineseName)  {
+        char[] charArray = chineseName.toCharArray();
+        StringBuilder pinyin = new StringBuilder();
+        HanyuPinyinOutputFormat outputFormat = new HanyuPinyinOutputFormat();
+        //设置大小写格式
+        outputFormat.setCaseType(HanyuPinyinCaseType.UPPERCASE);
+        //设置声调格式：
+        outputFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        for (int i = 0; i < charArray.length ; i++) {
+            //匹配中文,非中文转换会转换成null
+            if (Character.toString(charArray[i]).matches("[\\u4E00-\\u9FA5]+")) {
+                try {
+                    String[] hanyuPinyinStringArray = PinyinHelper.toHanyuPinyinStringArray(charArray[i],outputFormat);
+                    String string =hanyuPinyinStringArray[0];
+                    pinyin.append(string.substring(0,1));
+                } catch (BadHanyuPinyinOutputFormatCombination e) {
+                    throw new MyException("中文转拼音出错，请联系管理员");
+                }
+            } else {
+                pinyin.append(charArray[i]);
+            }
+        }
+        return pinyin.toString();
+    }
+
+    /**
+     * 获得用户app首页信息
+     * @param userId
+     * @return
+     */
+    @Override
+    public Integer getAppMassageCount(Integer userId) {
+
+        //TODO 获取用户的未读消息数量 具体这个未读规则之后了解了再做
+        Integer noReadMassage = 2;
+
+        return noReadMassage;
+    }
+
+    /**
+     * 获得用户的app首页个人信息
+     * @param deptUser
+     * @return
+     */
+    @Override
+    public Map<String, String> getDeptUserMassage(DeptUser deptUser) {
+        HashMap<String, String> map = new HashMap<>(3);
+        map.put("realName",deptUser.getRealName());
+        map.put("jobNum",deptUser.getJobNum());
+        map.put("sourceImage",deptUser.getSourceImage());
+        return map;
+    }
+
+    /**
+     * 根据用户名和部门模糊查找
+     * @param deptUser
+     * @return
+     */
+    @Override
+    public List<DeptUser> getUsersByNameLikeAndDeptLike(DeptUser deptUser) {
+        Assert.notNull(deptUser,"部门用户不能为空");
+        log.info("手机端模糊插叙部门用户");
+
+        List<DeptUser> userList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .like(StringUtils.hasText(deptUser.getUsername()), DeptUser::getUsername, deptUser.getUsername())
+                .like(StringUtils.hasText(deptUser.getUserDeptName()), DeptUser::getUserDeptName, deptUser.getUserDeptName()));
+        return userList;
+    }
+
+    /**
+     * 根据部门和角色查询用户
+     * @param deptUser
+     * @return
+     */
+    @Override
+    public List<DeptUser> getUsersByRoleAndDept(DeptUser deptUser) {
+        Assert.notNull(deptUser,"部门用户不能为空");
+        log.info("手机端根据部门和角色查询用户插叙部门用户");
+
+        List<DeptUser> userList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getUserDeptName,deptUser.getUserDeptName())
+                .eq(DeptUser::getUserRoleName,deptUser.getUserRoleName()));
+        return userList;
     }
 }

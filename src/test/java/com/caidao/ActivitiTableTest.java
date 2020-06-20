@@ -1,6 +1,5 @@
 package com.caidao;
 
-import com.caidao.mapper.DeptUserMapper;
 import com.caidao.util.PropertiesReaderUtils;
 import org.activiti.engine.TaskService;
 import org.junit.jupiter.api.Test;
@@ -10,9 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 public class ActivitiTableTest {
-
-    @Autowired
-    private DeptUserMapper deptUserMapper;
 
     @Autowired
     private TaskService taskService;

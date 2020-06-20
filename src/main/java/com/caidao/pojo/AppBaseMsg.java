@@ -62,16 +62,16 @@ public class AppBaseMsg implements Serializable {
     @ApiModelProperty(value = "发送的消息内容")
     private String data;
 
+    @ApiModelProperty("消息体加密内容")
+    private String encryption;
+
     @ApiModelProperty(value = "操作的⽤户ID")
     @TableField("userId")
-    private String userId;
+    private Integer userId;
 
     @ApiModelProperty(value = "发送的时间(时间戳格式)")
     @TableField("submitTime")
     private Long submitTime;
-
-    @ApiModelProperty("消息体加密内容")
-    private String encryption;
 
     @ApiModelProperty("UUID")
     @TableField(exist = false)

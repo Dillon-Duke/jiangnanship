@@ -9,6 +9,7 @@ import com.caidao.pojo.DeptUserCar;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dillon
@@ -48,6 +49,7 @@ public interface DeptUserService extends IService<DeptUser> {
 
     /**
      * 获取有空余时间的司机
+     * @param deptUser
      * @return
      */
     HashMap<String, Object> getFreeDriver(DeptUser deptUser);
@@ -65,4 +67,32 @@ public interface DeptUserService extends IService<DeptUser> {
      * @return
      */
     boolean userBindCar(List<DeptUserCar> deptUserCars);
+
+    /**
+     * 获得用户app首页信息
+     * @param userId
+     * @return
+     */
+    Integer getAppMassageCount(Integer userId);
+
+    /**
+     * 获得用户的app首页个人信息
+     * @param deptUser
+     * @return
+     */
+    Map<String, String> getDeptUserMassage(DeptUser deptUser);
+
+    /**
+     * 根据用户名和部门模糊查找
+     * @param deptUser
+     * @return
+     */
+    List<DeptUser> getUsersByNameLikeAndDeptLike(DeptUser deptUser);
+
+    /**
+     * 根据部门和角色查询用户
+     * @param deptUser
+     * @return
+     */
+    List<DeptUser> getUsersByRoleAndDept(DeptUser deptUser);
 }

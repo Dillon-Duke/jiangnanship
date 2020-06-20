@@ -36,6 +36,7 @@ public interface CarService extends IService<Car> {
 
     /**
      * 根据条件查询可用车辆信息
+     * @param car
      * @return
      */
     List<Car> selectConditionCar(Car car);

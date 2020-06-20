@@ -1,5 +1,6 @@
 package com.caidao.controller.back.dept;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.caidao.pojo.Dept;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.DeptService;
@@ -36,15 +37,16 @@ public class DeptController {
 
     /**
      * 获取所有的部门信息
+     * @param iPage
+     * @param dept
      * @return
      */
     @GetMapping("/page")
     @ApiOperation("查询所有的部门信息")
     @RequiresPermissions("dept:dept:page")
-    public ResponseEntity<List<Dept>> getTable(){
-        log.info("查询所有部门信息");
-        List<Dept> dept = deptService.findSysDept();
-        return ResponseEntity.ok(dept);
+    public ResponseEntity<IPage<Dept>> selectPage(IPage<Dept> iPage, Dept dept){
+        IPage<Dept> page = deptService.selectPage(iPage, dept);
+        return ResponseEntity.ok(page);
     }
 
     /**

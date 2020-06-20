@@ -54,7 +54,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		}
 
 		List<SysMenu> menuList = findMenuListByUserId(user.getUserId());
-
 		if (menuList == null || menuList.isEmpty()) {
 			return null;
 		}

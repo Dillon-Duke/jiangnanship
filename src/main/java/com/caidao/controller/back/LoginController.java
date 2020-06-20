@@ -89,14 +89,14 @@ public class LoginController {
 	 */
 	@ApiOperation("后台登录接口")
 	@PostMapping("/login")
-	public ResponseEntity<String> backlogin(@RequestBody UserParam userParam) {
+	public ResponseEntity<String> backLogin(@RequestBody UserParam userParam) {
 		
 		Subject subject = SecurityUtils.getSubject();
 		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.BACK_USER_REALM);
 		String token = null;
 
 		//校验验证码
-		checkCode(userParam.getSessionUUID(),userParam.getImageCode());
+		checkCode(userParam.getSessionUuid(),userParam.getImageCode());
 		//校验登录信息
 		subject.login(userLoginTokenUtils);
 		token = subject.getSession().getId().toString();
@@ -104,7 +104,6 @@ public class LoginController {
 		//将所有登录用户信息token放在redis中，之后修改密码时删除对应的token
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
 		redis.opsForHash().put(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt(),token);
-
 		return ResponseEntity.ok(token);
 	}
 	
@@ -121,10 +120,11 @@ public class LoginController {
 		log.info("{}用户登录之后查询菜单",user.getUsername());
 
 		Map<String, Object> result = new HashMap<String,Object>(2);
-		List<Menu> menuList = sysMenuService.getMenuListByUserId(user);
 
 		//用户的菜单列表
+		List<Menu> menuList = sysMenuService.getMenuListByUserId(user);
 		result.put("menuList", menuList);
+
 		//用户的菜单权限
 		List<String> authorities = sysMenuService.getAuth2ByUslerId(user.getUserId());
 		result.put("authorities", authorities);

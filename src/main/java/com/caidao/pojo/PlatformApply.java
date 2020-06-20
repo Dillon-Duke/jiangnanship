@@ -68,13 +68,13 @@ public class PlatformApply implements Serializable {
     private String jobContent;
 
     @ApiModelProperty(value = "联系人ID")
-    private Long contactsId;
-
-    @ApiModelProperty(value = "重要程度 1:重要 0 ： 不重要")
-    private Integer importance;
+    private Integer contactsId;
 
     @ApiModelProperty(value = "备注")
     private String memo;
+
+    @ApiModelProperty(value = "重要程度 1:重要 0 ： 不重要")
+    private Integer importance;
 
     @ApiModelProperty(value = "申请单类型")
     private Integer requestType;
@@ -105,5 +105,4 @@ public class PlatformApply implements Serializable {
 
     @ApiModelProperty(value = "状态 1：可用 0 禁用")
     private Integer state;
-
 }

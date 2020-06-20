@@ -41,22 +41,22 @@ public class PlatformGoods implements Serializable {
     private String goodsCode;
 
     @ApiModelProperty(value = "物品重量")
-    private Double goodsWeight;
+    private Integer goodsWeight;
 
     @ApiModelProperty(value = "物品长")
-    private Double goodsLength;
+    private Integer goodsLength;
 
     @ApiModelProperty(value = "物品宽")
-    private Double goodsWidth;
+    private Integer goodsWidth;
 
     @ApiModelProperty(value = "物品高")
-    private Double goodsHigh;
+    private Integer goodsHigh;
 
     @ApiModelProperty(value = "物品图片名称")
-    private String goodsImg;
+    private String fileImage;
 
     @ApiModelProperty(value = "物品图片真实路径")
-    private String goodsSource;
+    private String sourceImage;
 
     @ApiModelProperty(value = "是否为大型分段设备1：是 0 否")
     private Integer isBigGoods;

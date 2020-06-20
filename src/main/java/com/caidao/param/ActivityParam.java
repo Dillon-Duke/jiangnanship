@@ -11,10 +11,10 @@ import lombok.Data;
 public class ActivityParam {
 
     @ApiModelProperty("已发布的工作流Id")
-    public String DeploymentId;
+    public String deploymentId;
 
     @ApiModelProperty("是否强制执行该操作")
-    public boolean isFoucede;
+    public boolean isForced;
 
     @ApiModelProperty("流程定义名称")
     public String processDefinitionName;

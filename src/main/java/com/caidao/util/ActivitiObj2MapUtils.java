@@ -15,9 +15,10 @@ import java.util.Map;
 public class ActivitiObj2MapUtils {
 
     public static Map<String, Object> obj2map(Object source, String[] ps) {
-        Map<String, Object> map = new HashMap<>();
-        if (source == null)
+        Map<String, Object> map = new HashMap<>(ps.length);
+        if (source == null) {
             return null;
+        }
         if (ps == null || ps.length < 1) {
             return null;
         }

@@ -1,7 +1,9 @@
 package com.caidao.util;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.caidao.exception.MyException;
+import com.caidao.param.UserParam;
 
 import javax.crypto.Cipher;
 import java.security.*;
@@ -49,6 +51,43 @@ public class RsaUtils {
         keyMap.put(1, privateKeyString);
         return keyMap;
     }
+
+    /**
+     * 获得rsa公钥
+     * @return
+     */
+    public static String getPublicKey(){
+        return keyMap.get(0);
+    }
+
+    /**
+     * 获得rsa私钥
+     * @return
+     */
+    public static String getPrivateKey(){
+        return keyMap.get(1);
+    }
+
+    /**
+     * 将base64编码后的公钥字符串转成PublicKey实例
+     */
+    public static PublicKey getPublicKey(String publicKey) throws Exception{
+        byte[ ] keyBytes= Base64.getDecoder().decode(publicKey.getBytes());
+        X509EncodedKeySpec keySpec=new X509EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory=KeyFactory.getInstance("RSA");
+        return keyFactory.generatePublic(keySpec);
+    }
+
+    /**
+     * 将base64编码后的私钥字符串转成PrivateKey实例
+     */
+    public static PrivateKey getPrivateKey(String privateKey) throws Exception{
+        byte[] keyBytes= Base64.getDecoder().decode(privateKey.getBytes());
+        PKCS8EncodedKeySpec keySpec=new PKCS8EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory=KeyFactory.getInstance("RSA");
+        return keyFactory.generatePrivate(keySpec);
+    }
+
     /**
      * RSA公钥加密
      *
@@ -90,11 +129,16 @@ public class RsaUtils {
         String outStr = new String(cipher.doFinal(inputByte));
         return outStr;
     }
+
     public static void main(String[] args) throws Exception {
 
-        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDvX3L8G15p91Lk++YePa0r/AmFkSCS1yc+/clMPeVEvxIdQM577eA2zHgfEuRkSal9lezvzwBRs5zPW9y8W1+hyCzhSaEuMVaVHiyU8/JrYw19aqNz3pOpoJ6Afcy2JHgd66Uc2rMUuMbVc5ChD///7zKbnyDePaKzfjTkWq/eowIDAQAB";
-        String pri = "";
-        String message = "{'principal':'zhangsan','credentials':'123'}";
+        Map<Integer, String> map = genKeyPair();
+        String pub = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCeAewxjYz2e9Lw+qEL/Wa0CLr/laj5QB3vUmDe6DlhVpCDiejVAxBAhY4CMm5MqwG02ji6NNMR05eog2J+WrTuwf1KRe8YrjsFL4kslYbdSTphR3Soo2nOt4ex9A6IJavbPlaZEomGB34hAM4AtsKzGq73UzEAZTDGgARFyI9MMwIDAQAB";
+        String pri = "MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMIi02hZeA9fYhmuokXVGDopuxfRGhcDNzxoo3bzKR+7rydoh7kuQQSUOFE1Z5ueaOniQ9P8Fzb/jBg8qm1ZxUyC5vb7iKbNFYMJvJsEvU//Ntq0wRPZ3AZw+UI2/yXMAWWA+pQizOk77EbMFSn6q/au/YX6gzc4OgocZL7BjINhAgMBAAECgYAyrAhmSkQOLyVZ8r0kYRSrycyt0MRwkURPnjhcieeIAuMa9CvI6AvMeCui9r+OXPCha4+suzYMAvO8N8l8NVxLwT7NkyDHnciQ2Ee56LBcjc72mu79EGC0uAhtcG7ALHeDOvgoWnfoZ5xysOb4N0DiT8iYOQ2HsDFIUOVBKLmiAQJBAPaUuvd4i7iBqFl0xIWaTD6DxUyoEbDLe6LL7fLkuKzj1rRDVL6Gptfw4yXymymQ9YzES86K7/dawPni77pgdrECQQDJjT8Cj6F2VFx08uQMljNXK4UUr58Re3/PRHGdkG9oc36KN98QdrRgBLF6tc0/5Majc74F7mPXeHcL2w/rNGOxAkEA52FvBDMYoP0BtVet5VSBgRPzOthnKUf37y5/TTI03P87BJI93j7KJs3CyGQcF2gQEpRMMjcLsEd318SMgY5tMQJAAxssJ2vzPxGZwyujHBaMgAFpsaHrP6e5loYlghohvWhaQOMPiv9pVDl+SrfWi++IqCg2e3zrCP0QSJx9qFBMYQJBAOUC+nIX5loPnmpWf/Lp371OFIaWikOD1SyYQKUZ4P2R+ZeBvRrSO3xXKiKNPxCo5t3vYDQ5qK4wEvkrL/9mC4A=";
+        UserParam param = new UserParam();
+        param.setPrincipal("zhangsan");
+        param.setCredentials("123");
+        String message = JSONObject.toJSONString(param);
         System.out.println("原文:" + message);
         String messageEn = encrypt(message, pub);
         System.out.println("加密：" + messageEn);

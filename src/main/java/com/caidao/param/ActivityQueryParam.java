@@ -10,7 +10,7 @@ import lombok.Data;
 public class ActivityQueryParam {
 
     @ApiModelProperty("已发布的工作流Id")
-    private String DeploymentId;
+    private String deploymentId;
 
     @ApiModelProperty("工作流任务人员姓名")
     private String userName;

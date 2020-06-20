@@ -2,12 +2,17 @@ package com.caidao.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.caidao.exception.MyException;
 import com.caidao.mapper.PlatformGoodsMapper;
 import com.caidao.pojo.PlatformGoods;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.PlatformGoodsService;
 import com.caidao.util.FastDfsClientUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +30,7 @@ import java.util.List;
  * @since 2020-06-01
  */
 @Service
+@Slf4j
 public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, PlatformGoods> implements PlatformGoodsService {
 
     @Autowired
@@ -41,8 +48,18 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean save(PlatformGoods platformGoods) {
+
+        Assert.notNull(platformGoods,"新增分段信息不能为空");
+        log.info("新增分段号为{}的分段", platformGoods.getGoodsCode());
+
+        SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+        platformGoods.setCreateId(sysUser.getUserId());
+        if (sysUser == null ) {
+            throw new MyException("用户登录超时，请重新登录");
+        }
+        platformGoods.setCreateId(sysUser.getUserId());
         platformGoods.setCreateDate(LocalDateTime.now());
         platformGoods.setState(1);
         return super.save(platformGoods);
@@ -56,6 +73,7 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
      */
     @Override
     public IPage<PlatformGoods> findSysGoodsPage(Page<PlatformGoods> page, PlatformGoods platformGoods) {
+        log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<PlatformGoods> platformGoodsPage = platformGoodsMapper.selectPage(page, new LambdaQueryWrapper<PlatformGoods>()
                 .like(StringUtils.hasText(platformGoods.getProCode()), PlatformGoods::getProCode, platformGoods.getProCode()));
         return platformGoodsPage;
@@ -71,9 +89,11 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     @Transactional(rollbackFor = Exception.class)
     public boolean removeByGoods(List<PlatformGoods> platformGoods) {
 
+        Assert.notNull(platformGoods,"删除的分段信息不能为空");
+        log.info("删除分段为{}的分段", platformGoods);
         //删除图片
         for (PlatformGoods tranGood : platformGoods) {
-            for (String string : tranGood.getGoodsSource().split(";")) {
+            for (String string : tranGood.getSourceImage().split(";")) {
                 if (string.contains(imgUploadPrifax + File.separator + "group")){
                     fastDfsClientUtils.deleteFile(string);
                 }
@@ -100,18 +120,33 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateById(PlatformGoods platformGoods) {
+
+        Assert.notNull(platformGoods,"更新运输分段信息 不能为空");
+        log.info("更新车辆id为{}的运输分段信息", platformGoods.getGoodsId());
+        SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
+        platformGoods.setUpdateId(principal.getUserId());
         platformGoods.setUpdateDate(LocalDateTime.now());
 
         //判断给那些新增的没有前缀的条目加上前缀
-        String[] strings = platformGoods.getGoodsSource().split(";");
+        String[] strings = platformGoods.getSourceImage().split(";");
         List<Object> list = new ArrayList<>();
         for (String string : strings) {
             if (!string.contains(imgUploadPrifax + "group")){
                 list.add(imgUploadPrifax + string);
             }
         }
-        platformGoods.setGoodsSource(list.toString());
+        platformGoods.setSourceImage(list.toString());
         return super.updateById(platformGoods);
     }
 
+    /**
+     * 根据id查询对应的条目
+     * 修改前查询
+     */
+    @Override
+    public PlatformGoods getById(Serializable id) {
+        Assert.notNull(id,"id 不能为空");
+        log.info("查询车辆id为{}的车辆信息",id);
+        return super.getById(id);
+    }
 }

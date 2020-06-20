@@ -109,7 +109,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         }else {
             sort = businessKey.substring(businessKey.length()-6);
         }
-        String requestOddNumber = PropertyUtils.FLAT_CAR_PLAN_ODD_NUMBER_PREFIX + DateUtils.getYyyyMm() + sort;
+        String requestOddNumber;
 
         //保存一个驳运流程并且获取驳运对象的对象名字
         String goodsName;
@@ -118,24 +118,28 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
                 //插入一条平板车计划任务的申请
                 String flatcarPlanPrefix = "flatcarPlan";
                 String  flatcarPlanName = "计划";
+                requestOddNumber = PropertyUtils.FLAT_CAR_PLAN_ODD_NUMBER_PREFIX + DateUtils.getYyyyMm() + sort;
                 goodsName = getProcessInstance(flatcarPlanName, flatcarPlanPrefix, platformApply, businessKey);
                 break;
             case 2:
                 //插入一条平板车临时任务的申请 ，获取插入的实例
                 String flatcarTempPrefix = "flatcarTemp";
                 String flatcarTempName = "临时";
+                requestOddNumber = PropertyUtils.FLAT_CAR_TEMP_ODD_NUMBER_PREFIX + DateUtils.getYyyyMm() + sort;
                 goodsName = getProcessInstance(flatcarTempName,flatcarTempPrefix,platformApply, businessKey);
                 break;
             case 3:
                 //插入一条平板车取消任务的申请 ，获取插入的实例
                 String flatcarCancelPrefix = "flatcarCancel";
                 String  flatcarCancelName = "取消";
+                requestOddNumber = PropertyUtils.FLAT_CAR_CANCEL_ODD_NUMBER_PREFIX + DateUtils.getYyyyMm() + sort;
                 goodsName = getProcessInstance(flatcarCancelName,flatcarCancelPrefix,platformApply, businessKey);
                 break;
             case 4:
                 //插入一条平板车衍生任务的申请 ，获取插入的实例
                 String flatcarOtherTempPrefix = "flatcarOtherTemp";
                 String  flatcarOtherTempName = "衍生";
+                requestOddNumber = PropertyUtils.FLAT_CAR_OTHER_TEMP_ODD_NUMBER_PREFIX + DateUtils.getYyyyMm() + sort;
                 goodsName = getProcessInstance(flatcarOtherTempName,flatcarOtherTempPrefix,platformApply, businessKey);
                 break;
             default :
@@ -145,12 +149,12 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         platformApply.setRequestName(requestName);
         Integer update = platformMapper.updateById(platformApply);
         if (update != 1) {
-            throw new MyException("保存平板车计划任务失败");
+            throw new MyException("保存平板车任务失败");
         }
         //返回值放到map中
         Map<String, Object> map = new HashMap<>(4);
         map.put("requestName",requestName);
-        map.put("returnMessage","申请平板车任务保存成功");
+        map.put("returnMessage","平板车任务保存成功");
         map.put("applicationNum",requestOddNumber);
         map.put("BusinessKey",businessKey);
         return map;
@@ -240,7 +244,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
             taskService.complete(taskId);
             Map<String, Object> map = new HashMap<>(4);
             map.put("requestName",saveFlatCarPlanMap.get("requestName"));
-            map.put("returnMessage","申请平板车计划任务申请成功");
+            map.put("returnMessage","平板车任务申请成功");
             map.put("applicationNum",saveFlatCarPlanMap.get("applicationNum"));
             map.put("BusinessKey",saveFlatCarPlanMap.get("BusinessKey"));
             return map;

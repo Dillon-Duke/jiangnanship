@@ -66,7 +66,7 @@
             <version>${mybatis.plus.boot.starter}</version>
         </dependency>
 
-        <!-- shiro-redis Begin -->
+        <!-- shiro-redis shiro 以及shiro和redis 整合的包，用来做权限控制 BEGIN -->
         <!--shiro -->
         <dependency>
             <groupId>org.apache.shiro</groupId>
@@ -85,9 +85,9 @@
             <artifactId>shiro-redis</artifactId>
             <version>${shiro.redis}</version>
         </dependency>
-        <!-- shiro-redis End -->
+        <!-- shiro-redis END -->
 
-        <!-- Swagger Begin -->
+        <!-- Swagger 项目发布的时候可以去掉，另外还需要去掉对应控制层的注解 BEGIN -->
         <!-- 前面两个maven是为了解决swagger里面@ApiModelProperty 中example 找不到值报错添加的，进行谁优先加载使用谁里面方法的办法解决这个问题 -->
         <dependency>
             <groupId>io.swagger</groupId>
@@ -111,15 +111,17 @@
             <artifactId>swagger-bootstrap-ui</artifactId>
             <version>${swagger.bootstrap.ui}</version>
         </dependency>
-        <!-- Swagger End -->
+        <!-- Swagger END -->
 
-        <!-- lombok -->
+        <!-- lombok 自动生成set get 方法，实体类中使用 BEGIN -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- lombok END -->
 
+        <!-- aspectj aop的切面依赖 BEGIN -->
         <!-- 开启切面 -->
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -130,15 +132,17 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
+        <!-- aspectj END -->
 
-        <!--hutool 使用里面capchaUtil工具类，到时候抽出来 -->
+        <!-- hutool 使用里面captchaUtil工具类 BEGIN-->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
             <version>${hutool.all}</version>
         </dependency>
+        <!-- hutool END-->
 
-        <!--Activiti Dependency Begin -->
+        <!--Activiti 工作流依赖，是工作人员申请各种流程的依赖 BEGIN -->
         <!-- activiti 引擎 -->
         <dependency>
             <groupId>org.activiti</groupId>
@@ -175,16 +179,17 @@
             <artifactId>activiti-bpmn-layout</artifactId>
             <version>${activiti.version}</version>
         </dependency>
-        <!--Activiti Dependency End -->
+        <!--Activiti Dependency END -->
 
-        <!-- fastdfs -->
+        <!-- fastdfs 文件储存服务器，用来储存用户上传的各种文件 BEGIN -->
         <dependency>
             <groupId>com.github.tobato</groupId>
             <artifactId>fastdfs-client</artifactId>
             <version>${fastdfs.version}</version>
         </dependency>
+        <!-- fastdfs END -->
 
-        <!-- log4j Dependency BEGIN -->
+        <!-- log4j 用来输出控制台打印或者是日志打印 BEGIN -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -192,7 +197,7 @@
         </dependency>
         <!-- log4j Dependency End -->
 
-        <!-- fastJSON BEGIN -->
+        <!-- fastJSON 用来处理前端传过来的json数据 BEGIN -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -200,28 +205,29 @@
         </dependency>
         <!-- fastJSON END -->
 
-        <!-- Enum solve can not get javax.annotation.meta.When BEGIN -->
+        <!-- Enum 用来解决项目启动时找不到enum包显示的警告 BEGIN -->
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
             <version>3.0.1</version>
         </dependency>
-        <!-- Enum solve can not get javax.annotation.meta.When END -->
+        <!-- Enum END -->
 
-        <!-- https://mvnrepository.com/artifact/org.jodd/jodd-core -->
+        <!-- jodd 用来将流读为对应的byte文件 BEGIN -->
         <dependency>
             <groupId>org.jodd</groupId>
             <artifactId>jodd-core</artifactId>
             <version>5.1.4</version>
         </dependency>
+        <!-- jodd END -->
 
-        <!-- https://mvnrepository.com/artifact/javax.interceptor/javax.interceptor-api -->
+        <!-- pinyin4j 用来将中文文字转换为拼音 BEGIN -->
         <dependency>
-            <groupId>javax.interceptor</groupId>
-            <artifactId>javax.interceptor-api</artifactId>
-            <version>1.2</version>
+            <groupId>com.belerweb</groupId>
+            <artifactId>pinyin4j</artifactId>
+            <version>2.5.0</version>
         </dependency>
-
+        <!-- pinyin4j END -->
 
         <!-- 单元测试 -->
         <dependency>

@@ -38,18 +38,18 @@ public class ShiroConfig {
 	
 	/**
 	 * securitymanager 安全配置
-	 * @param AuthConfig
+	 * @param authConfig
 	 * @param sessionManager
 	 * @return
 	 */
 	@Bean
-	public DefaultWebSecurityManager defaultWebSecurityManager(CustomerAuthrizerConfig AuthConfig, BackUserRealmConfig backRealm, AppUserRealmConfig appRealm, Authenticator authenticator, CredentialsMatcher credMatcher, TokenSessionManageConfig sessionManager, @Qualifier("SessionDAO") SessionDAO redisSessionDAO) {
+	public DefaultWebSecurityManager defaultWebSecurityManager(CustomerAuthrizerConfig authConfig, BackUserRealmConfig backRealm, AppUserRealmConfig appRealm, Authenticator authenticator, CredentialsMatcher credMatcher, TokenSessionManageConfig sessionManager, @Qualifier("SessionDAO") SessionDAO redisSessionDAO) {
 		DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
 
 		securityManager.setAuthenticator(authenticator);
 
 		//不同的角色对应不同的认证方法  这个方法一定要放在前面，很狗血的问题，放到后面就会报异常 No realms have been configured!  One or more realms must be present to execute an authorization oper
-		securityManager.setAuthorizer(AuthConfig);
+		securityManager.setAuthorizer(authConfig);
 		List<Realm> list = new ArrayList<>();
 		list.add(backRealm);
 		list.add(appRealm);

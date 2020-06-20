@@ -14,12 +14,12 @@ public class PropertyUtils {
 	public static final int KEY_SIZE = 1024;
 
 	/**
-	 * app用户
+	 * 前台用户授权前缀
 	 */
 	public static final String APP_USER_REALM = "appUserRealm";
 
 	/**
-	 * 后台用户
+	 * 后台用户授权前缀
 	 */
 	public static final String BACK_USER_REALM = "backUserRealm";
 
@@ -29,12 +29,12 @@ public class PropertyUtils {
 	public static final String VALCODE_PRIFAX = "prifaxuuid:";
 
 	/**
-	 * 前台公钥
+	 * 前台公钥前缀
 	 */
 	public static final String APP_USER_PUBLIC_KEY = "appUserPublicKey:";
 
 	/**
-	 * 前台私钥
+	 * 前台私钥前缀
 	 */
 	public static final String APP_USER_PRIVATE_KEY = "appUserPrivateKey:";
 
@@ -59,7 +59,7 @@ public class PropertyUtils {
 	public static final String X_FORDARDED_FOR = "X-Forwarded-For";
 
 	/**
-	 * 取到单台nngix的真实ID
+	 * 取到单台nginx的真实ID
 	 */
 	public static final String X_REAL_IP = "X-real-ip";
 
@@ -76,6 +76,21 @@ public class PropertyUtils {
 	/**
 	 * 平板车计划任务申请工单号前缀
 	 */
-	public static final String FLAT_CAR_PLAN_ODD_NUMBER_PREFIX = "PBSQKS";
+	public static final String FLAT_CAR_PLAN_ODD_NUMBER_PREFIX = "PBSQJH";
+
+	/**
+	 * 平板车临时任务申请工单号前缀
+	 */
+	public static final String FLAT_CAR_TEMP_ODD_NUMBER_PREFIX = "PBSQLS";
+
+	/**
+	 * 平板车取消任务申请工单号前缀
+	 */
+	public static final String FLAT_CAR_CANCEL_ODD_NUMBER_PREFIX = "PBSQQS";
+
+	/**
+	 * 平板车衍生任务申请工单号前缀
+	 */
+	public static final String FLAT_CAR_OTHER_TEMP_ODD_NUMBER_PREFIX = "PBSQKS";
 
 }

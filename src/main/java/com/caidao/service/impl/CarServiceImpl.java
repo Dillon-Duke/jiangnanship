@@ -54,10 +54,10 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         List<Car> cars = carPage.getRecords();
         List<Car> arrayList = new ArrayList<>(cars.size());
         for (Car car1 : cars) {
-            String sourcePhoto = car1.getSourcePhoto();
+            String sourcePhoto = car1.getSourceImage();
             if (sourcePhoto != "" && sourcePhoto != null){
                 String[] strings = sourcePhoto.split(";");
-                car1.setSourcePhoto(strings[0]);
+                car1.setSourceImage(strings[0]);
                 arrayList.add(car1);
             }
         }
@@ -75,7 +75,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
         //删除图片
         for (Car car : cars) {
-            for (String string : car.getSourcePhoto().split(";")) {
+            for (String string : car.getSourceImage().split(";")) {
                 if (string.contains(imgUploadPrifax + File.separator + "group")){
                     fastDfsClientUtils.deleteFile(string);
                 }
@@ -150,7 +150,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         car.setState(1);
 
         //将多个图片真实资源路径隔开
-        String sourcePhoto = car.getSourcePhoto();
+        String sourcePhoto = car.getSourceImage();
         if (sourcePhoto != "" && sourcePhoto != null){
             String[] strings = sourcePhoto.split(";");
             ArrayList<String> arrayList = new ArrayList<>(strings.length);
@@ -158,7 +158,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
                 arrayList.add(imgUploadPrifax + string);
             }
             String replaceAll = arrayList.toString().replaceAll(",", ";");
-            car.setSourcePhoto(replaceAll.substring(1,replaceAll.length()-1));
+            car.setSourceImage(replaceAll.substring(1,replaceAll.length()-1));
         }
         return super.save(car);
     }
@@ -174,14 +174,14 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         car.setUpdateDate(LocalDateTime.now());
 
         //判断给那些新增的没有前缀的条目加上前缀
-        String[] sourcePhoto = car.getSourcePhoto().split(";");
+        String[] sourcePhoto = car.getSourceImage().split(";");
         List<Object> arrayList = new ArrayList<>();
         for (String string : sourcePhoto) {
             if (!string.contains(imgUploadPrifax + "group")){
                 arrayList.add(imgUploadPrifax + string);
             }
         }
-        car.setSourcePhoto(arrayList.toString());
+        car.setSourceImage(arrayList.toString());
         return super.updateById(car);
     }
 

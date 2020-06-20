@@ -3,7 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.pojo.DeptConfig;
+import com.caidao.pojo.DeptAuthorition;
 
 import java.util.List;
 
@@ -15,21 +15,21 @@ import java.util.List;
  * @author Dillon
  * @since 2020-05-27
  */
-public interface DeptConfigService extends IService<DeptConfig> {
+public interface DeptConfigService extends IService<DeptAuthorition> {
 
     /**
      * 获取页面的分页数据
      * @param page
-     * @param deptConfig
+     * @param deptAuthorition
      * @return
      */
-    IPage<DeptConfig> findPage(Page<DeptConfig> page, DeptConfig deptConfig);
+    IPage<DeptAuthorition> findPage(Page<DeptAuthorition> page, DeptAuthorition deptAuthorition);
 
     /**
      * 查询所有的部门列表
      * @return
      */
-    List<DeptConfig> getListDept();
+    List<DeptAuthorition> getListDept();
 
     /**
      * 获取用户的所有权限
@@ -37,4 +37,5 @@ public interface DeptConfigService extends IService<DeptConfig> {
      * @return
      */
     List<String> getPowerByUserId(Integer userId);
+
 }

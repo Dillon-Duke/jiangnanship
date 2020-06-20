@@ -116,14 +116,23 @@ public class AppLoginController {
 	 * @return
 	 */
 	@ApiOperation("获得用户的权限")
-	@GetMapping("/Authorities")
-	public ResponseEntity<List<String>> getUserAuthorities(String userId){
+	@GetMapping("/getHomePage")
+	public ResponseEntity<Map<String, Object>> getHomePage(){
 
-		Assert.notNull(userId,"用户ID不能为空");
-		log.info("用户id为{}的用户查询权限",userId);
+		DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+		Map<String, Object> map = new HashMap<>(3);
+		//获取用户的权限列表
+		List<String> deptUserAuthorities = deptConfigService.getPowerByUserId(deptUser.getUserId());
+		map.put("userAuthorities", deptUserAuthorities);
 
-		List<String> deptUserAuthorities = deptConfigService.getPowerByUserId(Integer.parseInt(userId));
-		return ResponseEntity.ok(deptUserAuthorities);
+		//获得用户首页个人信息列表
+		Map<String,String> userMassage = deptUserService.getDeptUserMassage(deptUser);
+		map.put("userMassage",userMassage);
+
+		//获取用户的首页信息列表
+		Integer userMassageCount = deptUserService.getAppMassageCount(deptUser.getUserId());
+		map.put("appHomePage", userMassageCount);
+		return ResponseEntity.ok(map);
 	}
 
 	/**
@@ -192,7 +201,7 @@ public class AppLoginController {
 	 * app用户退出登录
 	 * @return
 	 */
-	@PostMapping("/AppLogout")
+	@PostMapping("/appLogout")
 	@ApiOperation("app退出账号")
 	public ResponseEntity<Void> logout(){
 

@@ -14,16 +14,17 @@ import org.springframework.stereotype.Repository;
 public interface PlatformMapper extends BaseMapper<PlatformApply> {
 
     /**
-     *
      * 用户拾取组任务
      * @param username
+     * @param businessKey
+     * @param updateId
      * @return
      */
     @Update("UPDATE platform_plan SET apply_name = #{username} , update_id = #{updateId} WHERE prs_id = #{businessKey}")
     Integer updateApplyName(@Param("businessKey") Integer businessKey, @Param("username") String username, @Param("updateId") Integer updateId);
 
     /**
-     *
+     * 设置审批不同意，设置状态为不同意
      * @param businessKey
      * @return
      */
@@ -31,7 +32,6 @@ public interface PlatformMapper extends BaseMapper<PlatformApply> {
     Integer setApprovalOpinion(Integer businessKey);
 
     /**
-     *
      * 计划任务的完成
      * @param businessKey
      * @return

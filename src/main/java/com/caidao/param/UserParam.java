@@ -27,6 +27,6 @@ public class UserParam {
 	private String phone;
 	
 	@ApiModelProperty("uuid对比")
-	private String sessionUUID;
+	private String sessionUuid;
 
 }

@@ -54,7 +54,7 @@ public class DeptUser implements Serializable {
     private String phone;
 
     @ApiModelProperty(value = "讨论工号长度、生成规则")
-    private Integer jobNum;
+    private String jobNum;
 
     @ApiModelProperty(value = "个人头像文件名称")
     private String fileImage;

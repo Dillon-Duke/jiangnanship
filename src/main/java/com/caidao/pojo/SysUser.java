@@ -55,9 +55,6 @@ public class SysUser implements Serializable {
     @ApiModelProperty(value = "电话")
     private String phone;
 
-    @ApiModelProperty(value = "讨论工号长度、生成规则")
-    private Integer jobNum;
-
     @ApiModelProperty(value = "是否禁用")
     private Integer status;
 

@@ -395,6 +395,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
          * if not already present in the response "Vary" header.
          * @param requestHeaders request header names
          * @since 4.3
+         * @return
          */
         B varyBy(String... requestHeaders);
 

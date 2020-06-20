@@ -3,7 +3,7 @@ package com.caidao.controller.back.system;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.pojo.sysLog;
+import com.caidao.pojo.SysLog;
 import com.caidao.service.SysLogService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -40,12 +40,12 @@ public class SysLogController {
 	@GetMapping("/page")
 	@ApiOperation("获取当前页日志信息")
 	@RequiresPermissions("sys:log:page")
-	public ResponseEntity<IPage<sysLog>> getPage(Page<sysLog> page, sysLog logs){
+	public ResponseEntity<IPage<SysLog>> getPage(Page<SysLog> page, SysLog logs){
 
 		Assert.notNull(page,"日志页面属性不能为空");
 		log.info("日志获取当前页{}，页大小{}",page.getCurrent(),page.getSize());
 
-		IPage<sysLog> findPage = sysLogService.findPage(page,logs);
+		IPage<SysLog> findPage = sysLogService.findPage(page,logs);
 		return ResponseEntity.ok(findPage);
 	}
 

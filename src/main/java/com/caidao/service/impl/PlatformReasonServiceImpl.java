@@ -152,7 +152,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
                 ProcessInstance instance = instanceQuery.processInstanceId(instanceId).singleResult();
                 if (instance != null) {
                     String name = taskQuery.processInstanceId(instance.getProcessInstanceId()).singleResult().getName();
-                    if (name.equals("编制驳动计划")){
+                    if ("编制驳动计划".equals(name)){
                         platformMapper.remarkOrganization(Integer.parseInt(businessKey));
                     }
                 } else {
@@ -182,7 +182,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
                 platformMapper.setApprovalOpinion(Integer.parseInt(businessKey));
             } else {
                 String name = taskQuery.processInstanceId(instance.getProcessInstanceId()).singleResult().getName();
-                if (name.equals("编制驳动计划")){
+                if ("编制驳动计划".equals(name)){
                     platformMapper.remarkOrganization(Integer.parseInt(businessKey));
                 }
             }

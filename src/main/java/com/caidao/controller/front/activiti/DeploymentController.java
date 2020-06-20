@@ -1,4 +1,4 @@
-package com.caidao.controller.activiti;
+package com.caidao.controller.front.activiti;
 
 import com.caidao.anno.SysLogs;
 import com.caidao.param.ActivityParam;
@@ -155,11 +155,11 @@ public class DeploymentController {
         Assert.notNull(activityParam,"参数不能为空");
 
         //判断是否强制删除
-        if (!activityParam.isFoucede){
-            activityParam.isFoucede = false;
+        if (!activityParam.isForced){
+            activityParam.isForced = false;
         }
         try {
-            repositoryService.deleteDeployment(activityParam.getDeploymentId(), activityParam.isFoucede);
+            repositoryService.deleteDeployment(activityParam.getDeploymentId(), activityParam.isForced);
         } catch (RuntimeException e) {
             throw new RuntimeException("有实例正在使用该流程，不能删除");
         }

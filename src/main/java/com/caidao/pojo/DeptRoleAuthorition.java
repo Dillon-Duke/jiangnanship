@@ -21,7 +21,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="DeptRoleConfig对象", description="")
-public class DeptRoleConfig implements Serializable {
+public class DeptRoleAuthorition implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

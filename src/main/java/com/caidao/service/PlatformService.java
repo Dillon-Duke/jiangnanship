@@ -66,6 +66,8 @@ public interface PlatformService extends IService<PlatformApply> {
 
     /**
      * 流程任务的转办，直接给别人，别人做好之后直接推到下一个需要办理的人手里
+     * @param taskId
+     * @param username
      * taskService.deleteCandidateUser(taskId,"原用户ID");
      * taskService.addCandidateUser(taskId,"新用户ID");
      */

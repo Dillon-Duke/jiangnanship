@@ -27,8 +27,8 @@ public class DateUtils {
     public static String getYyyyMm() {
         LocalDateTime arrivalDate = LocalDateTime.now();
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMM");
-        String yyyyMM = arrivalDate.format(format);
-        return yyyyMM;
+        String yyyyMm = arrivalDate.format(format);
+        return yyyyMm;
     }
 
     /**

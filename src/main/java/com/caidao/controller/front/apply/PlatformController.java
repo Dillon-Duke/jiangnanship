@@ -1,4 +1,4 @@
-package com.caidao.controller.front.flatcar;
+package com.caidao.controller.front.apply;
 
 import com.caidao.common.ResponseEntity;
 import com.caidao.param.ActivityQueryParam;

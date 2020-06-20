@@ -61,9 +61,9 @@ public class GolbalExceptionHandler {
 	/** 用户权限认证 IO异常 */
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(IOException.class)
-	public ResponseEntity<String> iOException(IOException iOException){
-		log.info("IO异常",iOException);
-		return ResponseEntity.badRequest().body(iOException.getMessage());
+	public ResponseEntity<String> ioException(IOException ioException){
+		log.info("IO异常",ioException);
+		return ResponseEntity.badRequest().body(ioException.getMessage());
 	}
 
 }

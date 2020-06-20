@@ -35,34 +35,37 @@ public class Car implements Serializable {
     private String carName;
 
     @ApiModelProperty(value = "车辆编号")
-    private Integer carNumber;
+    private String carNumber;
 
     @ApiModelProperty(value = "车辆牌照")
     private String carPlate;
 
-    @ApiModelProperty(value = "车辆长")
-    private Double carLength;
+    @ApiModelProperty(value = "车辆品牌名称")
+    private String carModel;
 
-    @ApiModelProperty(value = "车辆宽")
-    private Double carWight;
+    @ApiModelProperty(value = "车辆长 ：单位厘米")
+    private Integer carLength;
 
-    @ApiModelProperty(value = "车辆高")
-    private Double carHeight;
+    @ApiModelProperty(value = "车辆宽 ：单位厘米")
+    private Integer carWight;
 
-    @ApiModelProperty(value = "车辆图片")
-    private String carPhoto;
+    @ApiModelProperty(value = "车辆高 ：单位厘米")
+    private Integer carHeight;
+
+    @ApiModelProperty(value = "车辆图片文件名称")
+    private String fileImage;
 
     @ApiModelProperty(value = "车辆图片资源路径")
-    private String sourcePhoto;
+    private String sourceImage;
 
-    @ApiModelProperty(value = "空车重量")
-    private Double emptyWeight;
+    @ApiModelProperty(value = "空车重量 ：单位千克")
+    private Integer emptyWeight;
 
-    @ApiModelProperty(value = "荷载重量")
-    private Double fullWeight;
+    @ApiModelProperty(value = "荷载重量 ：单位千克")
+    private Integer fullWeight;
 
     @ApiModelProperty(value = "绑定的任务id 默认为未绑定 默认值0")
-    private Double bindTaskId;
+    private Integer bindTaskId;
 
     @ApiModelProperty(value = "1：正常，2：占用，3：维修，4：报废")
     private Integer carState;

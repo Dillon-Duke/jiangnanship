@@ -1,7 +1,7 @@
 package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.pojo.sysLog;
+import com.caidao.pojo.SysLog;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
  * @since 2020-03-25
  */
 @Repository
-public interface SysLogMapper extends BaseMapper<sysLog> {
+public interface SysLogMapper extends BaseMapper<SysLog> {
 
 }

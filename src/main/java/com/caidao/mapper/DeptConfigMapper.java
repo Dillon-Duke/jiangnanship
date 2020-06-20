@@ -1,6 +1,6 @@
 package com.caidao.mapper;
 
-import com.caidao.pojo.DeptConfig;
+import com.caidao.pojo.DeptAuthorition;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -13,7 +13,7 @@ import java.util.List;
  * @since 2020-05-27
  */
 @Repository
-public interface DeptConfigMapper extends BaseMapper<DeptConfig> {
+public interface DeptConfigMapper extends BaseMapper<DeptAuthorition> {
 
     /**
      * 获取用户的权限

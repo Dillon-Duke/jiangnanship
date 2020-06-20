@@ -25,9 +25,11 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author jinpeng
@@ -96,10 +98,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		sysUser.setUserSalt(salt);
 		sysUser.setState(1);
 
-		//自定义工号
-		SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
-		sysUser.setJobNum(Integer.valueOf(format.format(new Date())+(int)(Math.random()*9000+1000)));
-
 		//将密码设置为盐值密码
 		setSaltPass(sysUser, salt);
 
@@ -123,7 +121,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			deptUser.setAge(sysUser.getAge());
 			deptUser.setSex(sysUser.getSex());
 			deptUser.setPhone(sysUser.getPhone());
-			deptUser.setJobNum(sysUser.getJobNum());
 			deptUser.setUserRoleName("无");
 			deptUser.setUserDeptName("无");
 			deptUser.setCreateId(sysUser.getCreateId());
