@@ -31,14 +31,14 @@
       <userTask activiti:candidateUsers="${flatcarPlanGroupTask1}" activiti:exclusive="true" id="_10"
                 name="部门审批"/>
       <sequenceFlow id="_11" sourceRef="_4" targetRef="_10"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask2}" activiti:exclusive="true" id="_12"
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask2}" activiti:exclusive="true" id="_12"
                 name="车辆所属生产部门"/>
       <sequenceFlow id="_13" sourceRef="_5" targetRef="_12"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_15" name="ExclusiveGateway"/>
       <sequenceFlow id="_16" sourceRef="_12" targetRef="_15"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask3}" activiti:exclusive="true" id="_17"
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask3}" activiti:exclusive="true" id="_17"
                 name="生产运行部门审批"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask4}" activiti:exclusive="true" id="_18"
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask4}" activiti:exclusive="true" id="_18"
                 name="驳运部门申请"/>
       <sequenceFlow id="_19" sourceRef="_15" targetRef="_17">
          <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '不同意'}</conditionExpression>
@@ -46,16 +46,16 @@
       <sequenceFlow id="_20" sourceRef="_15" targetRef="_18">
          <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
       </sequenceFlow>
-      <userTask activiti:assignee="${flatcarPlanGroupTask5}" activiti:exclusive="true" id="_21"
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask5}" activiti:exclusive="true" id="_21"
                 name="编制驳动计划"/>
       <sequenceFlow id="_22" sourceRef="_18" targetRef="_21"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask6}" activiti:exclusive="true" id="_24"
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask6}" activiti:exclusive="true" id="_24"
                 name="驳运任务分配"/>
       <sequenceFlow id="_25" sourceRef="_21" targetRef="_24"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask7}" activiti:exclusive="true" id="_28" name="司机执行"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask8}" activiti:exclusive="true" id="_29"
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask7}" activiti:exclusive="true" id="_28" name="司机执行"/>
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask8}" activiti:exclusive="true" id="_29"
                 name="执行完成确认"/>
-      <userTask activiti:assignee="${flatcarPlanGroupTask9}" activiti:exclusive="true" id="_30" name="部门评价"/>
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask9}" activiti:exclusive="true" id="_30" name="部门评价"/>
       <sequenceFlow id="_32" sourceRef="_28" targetRef="_29"/>
       <sequenceFlow id="_33" sourceRef="_29" targetRef="_30"/>
       <sequenceFlow id="_34" sourceRef="_30" targetRef="_3"/>

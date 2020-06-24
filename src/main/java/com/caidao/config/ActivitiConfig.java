@@ -88,4 +88,5 @@ public class ActivitiConfig {
     public ManagementService managementService () {
         return processEngine().getManagementService();
     }
+
 }

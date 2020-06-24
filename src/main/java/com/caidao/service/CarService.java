@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.pojo.Car;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dillon
@@ -54,4 +55,10 @@ public interface CarService extends IService<Car> {
      * @return
      */
     void saveOrBindTaskWithCar(List<String> carId, String taskId);
+
+    /**
+     * 获得空闲的、在使用的车辆已经对应的司机信息
+     * @return
+     */
+    Map<String, Object> getAllAndFreeCarWithDrivers();
 }

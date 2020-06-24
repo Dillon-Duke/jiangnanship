@@ -5,7 +5,6 @@ import com.caidao.pojo.DeptUser;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.Map;
 
@@ -21,7 +20,7 @@ public interface DeptUserMapper extends BaseMapper<DeptUser> {
      * @param integer
      * @return
      */
-    Map<String, Object> selectDeptRole(@PathVariable("integer") Integer integer);
+    Map<String, Object> selectDeptRole(@Param("integer") Integer integer);
 
     /**
      * 忘记密码更新用户的密码
@@ -30,4 +29,6 @@ public interface DeptUserMapper extends BaseMapper<DeptUser> {
      */
     @Update("update dept_user set password = #{deptUser.password} where user_id = #{deptUser.userId}")
     Integer updatePassById(@Param("deptUser") DeptUser deptUser);
+
 }
+

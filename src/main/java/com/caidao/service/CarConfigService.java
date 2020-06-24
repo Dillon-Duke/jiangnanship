@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.pojo.CarConfig;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -22,5 +24,12 @@ public interface CarConfigService extends IService<CarConfig> {
 	 * @return
 	 */
 	IPage<CarConfig> findPage(Page<CarConfig> page, CarConfig config);
+
+	/**
+	 * 获得不同类型车辆的工作内容
+	 * @param configKey
+	 * @return
+	 */
+	List<CarConfig> getCarContent(String configKey);
 
 }

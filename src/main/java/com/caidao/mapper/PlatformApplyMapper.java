@@ -3,6 +3,7 @@ package com.caidao.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.PlatformApply;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Repository;
  * @since 2020-06-11
  */
 @Repository
-public interface PlatformMapper extends BaseMapper<PlatformApply> {
+public interface PlatformApplyMapper extends BaseMapper<PlatformApply> {
 
     /**
      * 用户拾取组任务
@@ -20,7 +21,7 @@ public interface PlatformMapper extends BaseMapper<PlatformApply> {
      * @param updateId
      * @return
      */
-    @Update("UPDATE platform_plan SET apply_name = #{username} , update_id = #{updateId} WHERE prs_id = #{businessKey}")
+    @Update("UPDATE platform_apply SET apply_name = #{username} , update_id = #{updateId} WHERE prs_id = #{businessKey}")
     Integer updateApplyName(@Param("businessKey") Integer businessKey, @Param("username") String username, @Param("updateId") Integer updateId);
 
     /**
@@ -29,7 +30,7 @@ public interface PlatformMapper extends BaseMapper<PlatformApply> {
      * @return
      */
     @Update("UPDATE platform SET apply_name = NULL , apply_state = 3 WHERE prs_id = #{businessKey}")
-    Integer setApprovalOpinion(Integer businessKey);
+    Integer fileEndFlatCarPlanTask(Integer businessKey);
 
     /**
      * 计划任务的完成
@@ -37,7 +38,7 @@ public interface PlatformMapper extends BaseMapper<PlatformApply> {
      * @return
      */
     @Update("UPDATE platform SET apply_name = NULL , apply_state = 2 WHERE prs_id = #{businessKey}")
-    Integer endFlatCarPlanTask(Integer businessKey);
+    Integer successEndFlatCarPlanTask(Integer businessKey);
 
     /**
      * 在表中标记改该记录为编制驳动计划
@@ -46,4 +47,12 @@ public interface PlatformMapper extends BaseMapper<PlatformApply> {
      */
     @Update("UPDATE platform SET reserve1 = 1 WHERE prs_id = #{businessKey}")
     Integer remarkOrganization(Integer businessKey);
+
+    /**
+     * 获得候选人的列表
+     * @param name
+     * @param instanceId
+     */
+    @Select("SELECT TEXT_ FROM ACT_RU_VARIABLE WHERE NAME_ = #{name} AND PROC_INST_ID_ = #{instanceId}")
+    String getcandidate(@Param("name") String name, @Param("instanceId") String instanceId);
 }

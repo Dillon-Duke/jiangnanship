@@ -33,7 +33,7 @@ public class AppUser {
      * @return
      */
     @GetMapping("/chooseById/{id}")
-    @ApiOperation("通过id查询运输分段信息")
+    @ApiOperation("通过id获取用户数据")
     public ResponseEntity<DeptUser> chooseById(@PathVariable("id") Integer id){
         DeptUser deptUser = deptUserService.getById(id);
         return ResponseEntity.ok(deptUser);

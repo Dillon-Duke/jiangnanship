@@ -2,4 +2,28 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.caidao.mapper.DeptUserCarMapper">
 
+    <resultMap id="baseProperties" type="com.caidao.pojo.DeptUserCar">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="username" column="username" />
+        <result property="carId" column="car_id" />
+        <result property="remark" column="remark" />
+        <result property="workShift" column="work_shift" />
+        <result property="startTime" column="start_time" />
+        <result property="endTime" column="end_time" />
+    </resultMap>
+
+    <sql id="baseSql">
+        ( user_id, username, car_id, remark, work_shift, start_time, end_time )
+    </sql>
+
+    <insert id="insertBatches" parameterType="java.util.List">
+        insert into dept_user_car
+        <include refid="baseSql" />
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            ( #{item.userId}, #{item.username}, #{item.carId}, #{item.remark}, #{item.workShift}, #{item.startTime}, #{item.endTime} )
+        </foreach>
+    </insert>
+
 </mapper>

@@ -40,7 +40,7 @@
       <userTask activiti:candidateUsers="${canditidateUser}" activiti:exclusive="true" id="_14"
                 name="部门审批"/>
       <sequenceFlow id="_15" sourceRef="_8" targetRef="_14"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_16"
+      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_16"
                 name="驳运部门审批"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_17" name="ExclusiveGateway"/>
       <sequenceFlow id="_18" sourceRef="_14" targetRef="_17"/>
@@ -50,7 +50,7 @@
       <sequenceFlow id="_20" sourceRef="_17" targetRef="_16">
          <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
       </sequenceFlow>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_21"
+      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_21"
                 name="编制驳运计划"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_22" name="ExclusiveGateway"/>
       <sequenceFlow id="_23" sourceRef="_16" targetRef="_22"/>
@@ -63,16 +63,16 @@
       </sequenceFlow>
       <sequenceFlow id="_30" sourceRef="_6" targetRef="_21"/>
       <sequenceFlow id="_31" sourceRef="_5" targetRef="_21"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_32"
+      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_32"
                 name="司机接单"/>
       <sequenceFlow id="_33" sourceRef="_21" targetRef="_32"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_34"
+      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_34"
                 name="司机任务执行"/>
       <sequenceFlow id="_35" sourceRef="_32" targetRef="_34"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_36"
+      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_36"
                 name="执行完成确认"/>
       <sequenceFlow id="_37" sourceRef="_34" targetRef="_36"/>
-      <userTask activiti:assignee="${applyName}" activiti:exclusive="true" id="_38"
+      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_38"
                 name="部门评价"/>
       <sequenceFlow id="_40" sourceRef="_38" targetRef="_3"/>
       <sequenceFlow id="_41" sourceRef="_36" targetRef="_38"/>

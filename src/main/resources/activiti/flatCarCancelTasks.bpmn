@@ -18,14 +18,14 @@
       <endEvent id="_3" name="EndEvent"/>
       <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_4"
                 name="平板车取消任务申请"/>
-      <userTask activiti:assignee="${flatcarCancelGroupTask1}" activiti:exclusive="true" id="_5"
+      <userTask activiti:candidateUsers="${flatcarCancelGroupTask1}" activiti:exclusive="true" id="_5"
                 name="申请部门取消"/>
-      <userTask activiti:assignee="${flatcarCancelGroupTask2}" activiti:exclusive="true" id="_6"
+      <userTask activiti:candidateUsers="${flatcarCancelGroupTask2}" activiti:exclusive="true" id="_6"
                 name="部门取消完成"/>
-      <userTask activiti:assignee="${flatcarCancelGroupTask3" activiti:exclusive="true" id="_7" name="驳运部门取消"/>
-      <userTask activiti:assignee="${flatcarCancelGroupTask4" activiti:exclusive="true" id="_8" name="司机接单"/>
-      <userTask activiti:assignee="${flatcarCancelGroupTask5" activiti:exclusive="true" id="_9" name="司机执行"/>
-      <userTask activiti:assignee="${flatcarCancelGroupTask6" activiti:exclusive="true" id="_10" name="执行完成"/>
+      <userTask activiti:candidateUsers="${flatcarCancelGroupTask3" activiti:exclusive="true" id="_7" name="驳运部门取消"/>
+      <userTask activiti:candidateUsers="${flatcarCancelGroupTask4" activiti:exclusive="true" id="_8" name="司机接单"/>
+      <userTask activiti:candidateUsers="${flatcarCancelGroupTask5" activiti:exclusive="true" id="_9" name="司机执行"/>
+      <userTask activiti:candidateUsers="${flatcarCancelGroupTask6" activiti:exclusive="true" id="_10" name="执行完成"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_11" name="ExclusiveGateway"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_12" name="ExclusiveGateway"/>
       <sequenceFlow id="_13" sourceRef="_2" targetRef="_4"/>

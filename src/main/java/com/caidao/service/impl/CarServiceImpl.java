@@ -6,10 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.CarMapper;
+import com.caidao.mapper.DeptUserCarMapper;
 import com.caidao.pojo.Car;
+import com.caidao.pojo.DeptUserCar;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.CarService;
 import com.caidao.util.FastDfsClientUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dillon
@@ -32,6 +39,9 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
     @Autowired
     private CarMapper carMapper;
+
+    @Autowired
+    private DeptUserCarMapper deptUserCarMapper;
 
     @Autowired
     private FastDfsClientUtils fastDfsClientUtils;
@@ -47,6 +57,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
      */
     @Override
     public IPage<Car> findSysCarPage(Page<Car> page, Car car) {
+        log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<Car> carPage = carMapper.selectPage(page, new LambdaQueryWrapper<Car>()
                 .eq(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName()));
 
@@ -72,6 +83,9 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
      */
     @Override
     public boolean batchRemoveByIds(List<Car> cars) {
+
+        Assert.notNull(cars,"批量删除车辆信息，车辆信息不能为空");
+        log.info("批量删除车辆信息",cars);
 
         //删除图片
         for (Car car : cars) {
@@ -100,6 +114,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
      */
     @Override
     public Integer getCarCount() {
+        log.info("查询数据库可用车辆");
         Integer count = carMapper.getCarCount();
         return count;
     }
@@ -112,6 +127,8 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Override
     public List<Car> selectConditionCar(Car car) {
 
+        Assert.notNull(car,"筛选条件不能为空");
+        log.info("根据条件查询可用车辆信息");
         //因为数字格式不能为空，所以 需要提前将数字转为string格式，StringUtils.hasText才会判定为没有
         String carLength = null;
         String carWight = null;
@@ -146,6 +163,11 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean save(Car car) {
+
+        Assert.notNull(car,"车辆信息不能为空");
+        log.info("新增车牌号为{}的车辆", car.getCarPlate());
+        SysUser principal = (SysUser) SecurityUtils.getSubject().getPrincipal();
+        car.setCreateId(principal.getUserId());
         car.setCreateDate(LocalDateTime.now());
         car.setState(1);
 
@@ -171,6 +193,9 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean updateById(Car car) {
+
+        Assert.notNull(car,"更新车辆信息 不能为空");
+        log.info("更新车辆id为{}的车辆信息",car.getCarId());
         car.setUpdateDate(LocalDateTime.now());
 
         //判断给那些新增的没有前缀的条目加上前缀
@@ -192,7 +217,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Override
     public List<Car> getFreeCarList() {
         List<Car> carList = carMapper.selectList(new LambdaQueryWrapper<Car>()
-                .in(Car::getCarId, 1)
+                .in(Car::getBindTaskId, 0)
                 .orderByDesc(Car::getCarId));
         return carList;
     }
@@ -221,4 +246,75 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         }
     }
 
+    /**
+     * 根据id查询对应的条目
+     * @param id
+     * @return
+     */
+    @Override
+    public Car getById(Serializable id) {
+        Assert.notNull(id,"id 不能为空");
+        log.info("查询车辆id为{}的车辆信息",id);
+        return super.getById(id);
+    }
+
+    /**
+     * 获得空闲的、在使用的车辆已经对应的司机信息
+     * @return
+     */
+    @Override
+    public Map<String, Object> getAllAndFreeCarWithDrivers() {
+        Map<String, Object> map = new HashMap<>(3);
+        //获取所有车辆列表
+        List<Car> carList = carMapper.selectList(null);
+        //获取所有的部门用户车辆中间表
+        List<DeptUserCar> deptUserCars = deptUserCarMapper.selectList(null);
+        //从部门车辆中间表中统计多少个车辆被绑定了
+        HashMap<Integer, Integer> hashMap = new HashMap<>();
+        HashMap<Integer, StringBuilder> carDriver = new HashMap<>();
+        HashMap<Integer, StringBuilder> carOperate = new HashMap<>();
+        for (DeptUserCar deptUserCar : deptUserCars) {
+            if (deptUserCar.getUsername() == null) {
+                throw new MyException("查询用户名为空，请联系管理员");
+            }
+            Integer carId = deptUserCar.getCarId();
+            //统计每辆车的任务次数
+            Integer integer = hashMap.get(carId);
+            if (integer == null) {
+                hashMap.put(carId,1);
+            } else {
+                hashMap.put(carId,hashMap.get(carId) + 1);
+            }
+            //统计司机
+            StringBuilder driver = carDriver.get(carId);
+            if (driver == null && deptUserCar.getRemark().equals("司机")) {
+                carDriver.put(carId,new StringBuilder(deptUserCar.getUsername()));
+            } else if (deptUserCar.getRemark().equals("司机")){
+                StringBuilder drivers = carDriver.get(integer);
+                carDriver.put(carId,drivers.append(",").append(deptUserCar.getUsername()));
+            }
+            //统计操作员
+            StringBuilder operate = carOperate.get(carId);
+            if (operate == null && deptUserCar.getRemark().equals("操作员")) {
+                carOperate.put(carId,new StringBuilder(deptUserCar.getUsername()));
+            } else if (deptUserCar.getRemark().equals("操作员")) {
+                StringBuilder operates = carOperate.get(integer);
+                carOperate.put(carId,operates.append(",").append(deptUserCar.getUsername()));
+            }
+        }
+        Integer carCount = hashMap.size();
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Car car : carList) {
+            Map<String, Object> map1 = new HashMap<>(4);
+            map1.put("car",car);
+            map1.put("catTaskCount",hashMap.get(car.getCarId()));
+            map1.put("carDriver",carDriver.get(car.getCarId()));
+            map1.put("carOperate",carOperate.get(car.getCarId()));
+            list.add(map1);
+        }
+        map.put("freeCarCount",carList.size() - carCount);
+        map.put("useCarCount",carCount);
+        map.put("carDetails",list);
+        return map;
+    }
 }

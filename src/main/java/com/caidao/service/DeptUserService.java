@@ -3,6 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.param.UserCarBindParam;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
@@ -49,10 +50,9 @@ public interface DeptUserService extends IService<DeptUser> {
 
     /**
      * 获取有空余时间的司机
-     * @param deptUser
      * @return
      */
-    HashMap<String, Object> getFreeDriver(DeptUser deptUser);
+    HashMap<String, Object> getFreeDrivers();
 
     /**
      * 获取司机的任务
@@ -63,17 +63,11 @@ public interface DeptUserService extends IService<DeptUser> {
 
     /**
      * 用户车辆绑定
-     * @param deptUserCars
+     * @param param
+     * @param taskId
      * @return
      */
-    boolean userBindCar(List<DeptUserCar> deptUserCars);
-
-    /**
-     * 获得用户app首页信息
-     * @param userId
-     * @return
-     */
-    Integer getAppMassageCount(Integer userId);
+    boolean userBindCar(UserCarBindParam param, String taskId);
 
     /**
      * 获得用户的app首页个人信息

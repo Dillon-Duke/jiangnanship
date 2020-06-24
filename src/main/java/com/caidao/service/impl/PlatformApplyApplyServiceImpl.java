@@ -3,23 +3,23 @@ package com.caidao.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.exception.MyException;
+import com.caidao.mapper.AppMassageMapper;
 import com.caidao.mapper.DeptUserMapper;
+import com.caidao.mapper.PlatformApplyMapper;
 import com.caidao.mapper.PlatformGoodsMapper;
-import com.caidao.mapper.PlatformMapper;
 import com.caidao.param.ActivityQueryParam;
+import com.caidao.pojo.AppMassage;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.PlatformApply;
 import com.caidao.pojo.PlatformGoods;
-import com.caidao.service.PlatformService;
+import com.caidao.service.PlatformApplyService;
 import com.caidao.util.ActivitiObj2MapUtils;
 import com.caidao.util.DateUtils;
 import com.caidao.util.PropertiesReaderUtils;
 import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.ManagementService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.bpmn.model.*;
+import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricProcessInstanceQuery;
 import org.activiti.engine.history.HistoricTaskInstance;
@@ -29,7 +29,6 @@ import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.NativeProcessInstanceQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
-import org.activiti.engine.task.NativeTaskQuery;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.apache.shiro.SecurityUtils;
@@ -48,13 +47,16 @@ import java.util.*;
  */
 @Service
 @Slf4j
-public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApply> implements PlatformService {
+public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapper, PlatformApply> implements PlatformApplyService {
 
     @Autowired
     private RuntimeService runtimeService;
 
     @Autowired
     private ManagementService managementService;
+
+    @Autowired
+    private RepositoryService repositoryService;
 
     @Autowired
     private TaskService taskService;
@@ -66,10 +68,13 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
     private PlatformGoodsMapper platformGoodsMapper;
 
     @Autowired
-    private PlatformMapper platformMapper;
+    private PlatformApplyMapper platformApplyMapper;
 
     @Autowired
     private DeptUserMapper deptUserMapper;
+
+    @Autowired
+    private AppMassageMapper appMassageMapper;
 
     /**
      * 保存一个平板车计划任务流程
@@ -93,7 +98,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         platformApply.setState(1);
 
         //将申请任务保存
-        int insert = platformMapper.insert(platformApply);
+        int insert = platformApplyMapper.insert(platformApply);
         if (insert != 1) {
             throw new MyException("平板车计划任务插入失败");
         }
@@ -147,7 +152,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         }
         String requestName = goodsName + " " + platformApply.getJobContent() + "(" + platformApply.getRequestType() + ")";
         platformApply.setRequestName(requestName);
-        Integer update = platformMapper.updateById(platformApply);
+        Integer update = platformApplyMapper.updateById(platformApply);
         if (update != 1) {
             throw new MyException("保存平板车任务失败");
         }
@@ -172,7 +177,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("用户{}删除未申请的任务",deptUser.getUsername());
 
-        PlatformApply platformApply = platformMapper.selectById(id);
+        PlatformApply platformApply = platformApplyMapper.selectById(id);
         //获取任务的申请状态，已提交状态的任务不能被删除
         Integer state = platformApply.getApplyState();
         if(state != 0) {
@@ -180,7 +185,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         }
 
         //删除未提交的任务
-        int delete = platformMapper.deleteById(id);
+        int delete = platformApplyMapper.deleteById(id);
         if(delete <= 0) {
             throw new MyException("删除操作失败，请重试");
         }
@@ -229,7 +234,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         platformApply.setUpdateDate(LocalDateTime.now());
         platformApply.setApplyName("");
         platformApply.setApplyState(1);
-        platformMapper.updateById(platformApply);
+        platformApplyMapper.updateById(platformApply);
         //获取任务ID
         Object businessKey = saveFlatCarPlanMap.get("BusinessKey");
         TaskQuery taskQuery = taskService.createTaskQuery();
@@ -241,10 +246,29 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
 
         //完成任务审批
         try {
+            //完成前获得任务实例Id
+            String instanceId = singleResult.getProcessInstanceId();
+            //完成任务
             taskService.complete(taskId);
+            //反求流程定义的Key
+            Task task = taskQuery.processInstanceId(instanceId).singleResult();
+            String definitionKey = task.getTaskDefinitionKey();
+            BpmnModel bpmnModel = repositoryService.getBpmnModel(singleResult.getProcessDefinitionId());
+            FlowNode flowNode = (FlowNode) bpmnModel.getFlowElement(definitionKey);
+            // 输出连线
+            List<SequenceFlow> outFlows = flowNode.getOutgoingFlows();
+            String name = loopNextPoint(bpmnModel, outFlows, null);
+            String candidateUsers = platformApplyMapper.getcandidate(name, instanceId);
+            //将用户批量放在信息表中 ,获取流程ID
+            String taskId1 = task.getId();
+            String taskName = task.getName();
+            Boolean result = insertAppMassage(taskId1, taskName, candidateUsers);
+            if (result) {
+                throw new MyException("插入消息失败，请联系管理员");
+            }
             Map<String, Object> map = new HashMap<>(4);
             map.put("requestName",saveFlatCarPlanMap.get("requestName"));
-            map.put("returnMessage","平板车任务申请成功");
+            map.put("returnMessage",taskName + "平板车任务申请成功");
             map.put("applicationNum",saveFlatCarPlanMap.get("applicationNum"));
             map.put("BusinessKey",saveFlatCarPlanMap.get("BusinessKey"));
             return map;
@@ -366,22 +390,35 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         log.info("拾取用户名为{}的组任务列表", username);
 
         try {
+            AppMassage massage = appMassageMapper.selectOne(new LambdaQueryWrapper<AppMassage>()
+                    .eq(AppMassage::getTaskId, taskId)
+                    .eq(AppMassage::getDeptUsername,username));
+            //判断别人是否拾取
+            if (massage == null || (massage.getIsRead() == -1)) {
+                throw new MyException("任务已被拾取");
+            }
             taskService.claim(taskId, username);
+
+            //更新该任务id的消息
+            Integer massages = appMassageMapper.updateReanState(taskId);
+            if (massages == 0) {
+                throw new MyException("任务拾取失败，请联系管理员");
+            }
             //获取流程的业务主键
-            String businuessKey;
+            String businessKey;
             TaskQuery taskQuery = taskService.createTaskQuery();
             TaskEntity taskEntity = (TaskEntity) taskQuery.taskId(taskId).singleResult();
             HistoricProcessInstanceQuery instanceQuery = historyService.createHistoricProcessInstanceQuery();
             HistoricProcessInstance processInstance = instanceQuery.processInstanceId(taskEntity.getProcessInstanceId()).singleResult();
             if (processInstance.getSuperProcessInstanceId() != null && processInstance.getBusinessKey() == null){
                 processInstance = instanceQuery.processInstanceId(processInstance.getSuperProcessInstanceId()).singleResult();
-                businuessKey = processInstance.getBusinessKey();
+                businessKey = processInstance.getBusinessKey();
             } else {
-                businuessKey = processInstance.getBusinessKey();
+                businessKey = processInstance.getBusinessKey();
             }
 
             //增加数据库中审批人
-            Integer update = platformMapper.updateApplyName(Integer.parseInt(businuessKey), username,updateId);
+            Integer update = platformApplyMapper.updateApplyName(Integer.parseInt(businessKey), username,updateId);
             if (update <= 0){
                 throw new MyException("任务拾取失败，请重试");
             }
@@ -404,6 +441,19 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         Assert.notNull(username,"用户名称不能为空");
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("任务id为{}交给{}",taskId,username);
+
+        //用户转交之前查询
+        AppMassage massage = appMassageMapper.selectOne(new LambdaQueryWrapper<AppMassage>()
+                .eq(AppMassage::getTaskId, taskId));
+        if (massage == null ) {
+            throw new MyException("任务已被拾取");
+        }
+        massage.setMassageName(username);
+        massage.setIsRead(1);
+        int update1 = appMassageMapper.updateById(massage);
+        if (update1 == 0) {
+            throw new MyException("任务转交失败，请联系管理员");
+        }
         try {
             taskService.setOwner(taskId, deptUser.getUsername());
             taskService.setAssignee(taskId,username);
@@ -421,7 +471,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
             }
 
             //增加数据库中审批人
-            Integer update = platformMapper.updateApplyName(Integer.parseInt(businessKey),username,deptUser.getUserId());
+            Integer update = platformApplyMapper.updateApplyName(Integer.parseInt(businessKey),username,deptUser.getUserId());
             if (update <= 0){
                 throw new MyException("任务指派失败，请重试");
             }
@@ -444,6 +494,12 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         Integer updateId = deptUser.getUserId();
         log.info("拾取用户名为{}的组任务列表",deptUser.getUsername());
 
+        //用户归还任务
+        Integer massage = appMassageMapper.backTasks(taskId);
+        if (massage == 0 ) {
+            throw new MyException("任务归还失败，请联系管理员");
+        }
+
         try {
             taskService.setAssignee(taskId,null);
             //获取流程的业务主键
@@ -460,7 +516,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
             }
 
             //增加数据库中审批人
-            Integer update = platformMapper.updateApplyName(Integer.parseInt(businessKey),null,updateId);
+            Integer update = platformApplyMapper.updateApplyName(Integer.parseInt(businessKey),null,updateId);
             if (update <= 0){
                 throw new MyException("任务指派失败，请重试");
             }
@@ -491,7 +547,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         log.info("查询用户名为{}的任务列表",username);
 
         //获取所有满足条件的任务列表
-        List<PlatformApply> submitList = platformMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
+        List<PlatformApply> submitList = platformApplyMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
                 .eq(StringUtils.hasText(param.getTaskName()), PlatformApply::getRequestType, param.getTaskName())
                 .eq(StringUtils.hasText(param.taskState), PlatformApply::getApplyState, param.getTaskState())
                 .eq(PlatformApply::getApplyName, username)
@@ -551,7 +607,6 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         String string = arrayList.toString();
         String substring = string.substring(1, string.length() - 1);
         //自定义查询对应BusinessKeys
-        NativeTaskQuery taskQuery = taskService.createNativeTaskQuery();
         NativeProcessInstanceQuery instanceQuery = runtimeService.createNativeProcessInstanceQuery();
         List<ProcessInstance> instanceList = instanceQuery.sql("SELECT * FROM " + managementService.getTableName(Execution.class) + " T " + "WHERE T.BUSINESS_KEY_ IS NOT NULL AND T.PROC_INST_ID_ IN (#{substring})").parameter("substring", substring).list();
 
@@ -561,7 +616,7 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
             integers.add(Integer.parseInt(instance.getBusinessKey()));
         }
         //获取对应的列表
-        List<PlatformApply> platformApplyList = platformMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
+        List<PlatformApply> platformApplyList = platformApplyMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
                 .in(PlatformApply::getPrsId, integers)
                 .orderByDesc(PlatformApply::getPrsId));
         return platformApplyList;
@@ -576,25 +631,50 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
      * @return
      */
     private String getProcessInstance(String flatcarPlanName, String flatcarPlanPrefix, PlatformApply platformApply, String businessKey) {
+        String count = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "DeploymentGroupCount");
         //插入一条平板车任务的申请
-        Map<String, Object> variables = new HashMap<>(1);
+        Map<String, Object> variables = new HashMap<>(Integer.parseInt(count) + 2);
         variables.put("startName", platformApply.getApplyName());
         variables.put("dept", platformApply.getRequestDepartment() + "申请");
         //动态的向流程中添加审批角色属性
-        String count = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "DeploymentGroupCount");
+        List<String> roleIdsList = new ArrayList<>(Integer.parseInt(count));
+        for (int i = 1 ; i <= Integer.parseInt(count) ; i++ ) {
+            String roleIds = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "GroupTask" + i);
+            roleIdsList.add(roleIds);
+        }
+        //一次性查出来所有的角色用户
+        List<DeptUser> usersList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .in(DeptUser::getUserRoleId, roleIdsList));
         for (int i = 1 ; i <= Integer.parseInt(count) ; i++ ) {
             String roleId = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "GroupTask" + i);
-            //获取角色用的ids
-            List<DeptUser> users = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
-                    .eq(DeptUser::getUserRoleId, roleId));
+            List<DeptUser> deptUsers = new ArrayList<>(usersList.size());
+            for (DeptUser deptUser : usersList) {
+                String userRoleId = String.valueOf(deptUser.getUserRoleId());
+                if (roleId.equals(userRoleId)) {
+                    deptUsers.add(deptUser);
+                }
+            }
             //获取角色用户的名字
             StringBuilder builder = new StringBuilder();
-            for (DeptUser user : users) {
+            for (DeptUser user : deptUsers ) {
                 builder.append(user.getUsername()).append(",");
             }
             String substring = builder.substring(0, builder.length() - 1);
             variables.put(flatcarPlanPrefix + "GroupTask" + i, substring);
         }
+//        for (int i = 1 ; i <= Integer.parseInt(count) ; i++ ) {
+//            String roleId = PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "GroupTask" + i);
+//            //获取角色用的ids
+//            List<DeptUser> users = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+//                    .eq(DeptUser::getUserRoleId, roleId));
+//            //获取角色用户的名字
+//            StringBuilder builder = new StringBuilder();
+//            for (DeptUser user : users) {
+//                builder.append(user.getUsername()).append(",");
+//            }
+//            String substring = builder.substring(0, builder.length() - 1);
+//            variables.put(flatcarPlanPrefix + "GroupTask" + i, substring);
+//        }
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(PropertiesReaderUtils.getMap().get(flatcarPlanPrefix + "DeploymentId"), businessKey, variables);
         String processInstanceId = processInstance.getProcessInstanceId();
         if (processInstanceId == null || processInstanceId == "" || processInstanceId.isEmpty()){
@@ -613,5 +693,64 @@ public class PlatformServiceImpl extends ServiceImpl<PlatformMapper, PlatformApp
         return goodsName;
     }
 
-}
+    /**
+     * 递归调用 找到下一个节点里面的name
+     * @param bpmnModel
+     * @param outFlows
+     * @param opinion
+     * @return
+     */
+    private String loopNextPoint(BpmnModel bpmnModel, List<SequenceFlow> outFlows,String opinion) {
+        for (SequenceFlow outFlow : outFlows) {
+            FlowElement element = outFlow.getTargetFlowElement();
+            if (element instanceof ExclusiveGateway) {
+                String id = element.getId();
+                FlowNode flowNode = (FlowNode) bpmnModel.getFlowElement(id);
+                List<SequenceFlow> out = flowNode.getOutgoingFlows();
+                return loopNextPoint(bpmnModel, out, opinion);
+            } else if (element instanceof UserTask) {
+                UserTask userTask = (UserTask) element;
+                if (opinion == null) {
+                    List<String> candidateUsers = userTask.getCandidateUsers();
+                    return candidateUsers.get(0).replaceAll("\\$", "")
+                            .replaceAll("\\{", "")
+                            .replaceAll("}", "");
+                }
+                String expression = outFlow.getConditionExpression();
+                if (expression.contains("不同意")) {
+                    expression = "不同意";
+                } else {
+                    expression = "同意";
+                }
+                if (opinion.equals(expression)) {
+                    List<String> candidateUsers = userTask.getCandidateUsers();
+                    return candidateUsers.get(0).replaceAll("\\$", "")
+                            .replaceAll("\\{", "")
+                            .replaceAll("}", "");
+                }
+            }
+        }
+        return null;
+    }
 
+    /**
+     * 递归调用 找到下一个节点里面的name
+     * @param candidateUser
+     * @return
+     */
+    private Boolean insertAppMassage(String taskId, String taskName, String candidateUser) {
+        String[] candidateUse = candidateUser.split(",");
+        List<AppMassage> massages = new ArrayList<>(candidateUse.length);
+        for (String sting : candidateUse) {
+            AppMassage appMassage = new AppMassage();
+            appMassage.setIsRead(1);
+            appMassage.setMassageName(taskName + "未审批任务");
+            appMassage.setTaskId(Integer.parseInt(taskId));
+            appMassage.setCreateTime(LocalDateTime.now());
+            appMassage.setDeptUsername(sting);
+            massages.add(appMassage);
+        }
+        return appMassageMapper.insertBatches(massages);
+    }
+
+}

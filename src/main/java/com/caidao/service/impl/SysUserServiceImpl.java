@@ -83,9 +83,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	@Transactional(rollbackFor = RuntimeException.class)
 	public boolean save(SysUser sysUser) {
-		
 		Assert.notNull(sysUser, "sysUser must not be null");
-
 		//查询数据库中是否有该用户名，如果有，则提示更换用户名
 		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
 				.eq(SysUser::getUsername, sysUser.getUsername()));
@@ -93,20 +91,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			throw new MyException("该名称已被注册，请更换其他名称");
 		}
 		sysUser.setCreateDate(LocalDateTime.now());
-
 		String salt = UUID.randomUUID().toString().replaceAll("-","");
 		sysUser.setUserSalt(salt);
 		sysUser.setState(1);
-
 		//将密码设置为盐值密码
 		setSaltPass(sysUser, salt);
-
 		boolean save = super.save(sysUser);
-
 		//判断是否需要创建部门角色
 		String userAdd = sysUser.getDeptUserAdd();
 		if ("true".equals(userAdd)){
-
 			//判断是否昵称已被注册
 			DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
 					.eq(DeptUser::getUsername, sysUser.getUsername()));
@@ -134,13 +127,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (roleIds == null || roleIds.isEmpty()) {
 			return save;
 		}
+		List<SysUserRole> userRoles = new ArrayList<>(roleIds.size());
 		for (Integer roleId : roleIds) {
 			SysUserRole sysUserRole = new SysUserRole();
 			sysUserRole.setUserId(sysUser.getUserId());
 			sysUserRole.setRoleId(roleId);
-			sysUserRoleMapper.insert(sysUserRole);
+			userRoles.add(sysUserRole);
 		}
-		return save;
+		Boolean result = sysUserRoleMapper.insertBatches(userRoles);
+		if (result) {
+			return save;
+		}
+		return false;
 	}
 
 
@@ -167,18 +165,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	@Transactional(rollbackFor = RuntimeException.class)
 	public void deleteByIds(List<Integer> ids) {
-
-		//批量更新 设置状态为0
-//		List<SysUser> sysUsers = new ArrayList<>();
-//		for (Integer id : ids) {
-//			SysUser user = new SysUser();
-//			user.setUserId(id);
-//			user.setState(0);
-//			sysUsers.add(user);
-//		}
-//		//将主键传到mapper sql批量删除
-//		this.updateBatchById(sysUsers,100);
-
 		Integer integer = sysUserMapper.batchDelete(ids);
 		if (integer == 0){
 			throw new MyException("用户删除失败");
@@ -277,12 +263,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (roleIdList == null || roleIdList.isEmpty()) {
 			return updateById;
 		}
+		List<SysUserRole> userRoles = new ArrayList<>(roleIdList.size());
 		for (Integer idList : roleIdList) {
 			SysUserRole sysUserRole = new SysUserRole();
 			sysUserRole.setUserId(sysUser.getUserId());
 			sysUserRole.setRoleId(idList);
-			sysUserRoleMapper.insert(sysUserRole);
+			userRoles.add(sysUserRole);
 		}
+		Boolean batches = sysUserRoleMapper.insertBatches(userRoles);
 
 		//获取被删除用户的token
 		Object token = redisTemplate.opsForHash().get(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
@@ -290,8 +278,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (token != null) {
 			redisTemplate.delete(PropertyUtils.USER_SESSION+token);
 		}
-		
-		return updateById ;
+		if (batches) {
+			return updateById ;
+		}
+		return false ;
 	}
 
 	/**

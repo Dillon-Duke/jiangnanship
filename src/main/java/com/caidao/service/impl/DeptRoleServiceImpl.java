@@ -76,32 +76,36 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
     public boolean save(DeptRole deptRole) {
         deptRole.setCreateDate(LocalDateTime.now());
         deptRole.setState(1);
-
         boolean save = super.save(deptRole);
-
-        //新增角色部门的中间表
+        //批量新增角色部门的中间表
         List<Integer> deptIdList = deptRole.getDeptIdList();
+        List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
             for (Integer integer : deptIdList) {
                 DeptDeptRole role = new DeptDeptRole();
                 role.setDeptId(integer);
                 role.setRoleId(deptRole.getRoleId());
-                deptDeptRoleMapper.insert(role);
+                deptDeptRoles.add(role);
             }
         }
-
+        Boolean result = deptDeptRoleMapper.insertBatches(deptDeptRoles);
         //新增角色权限的中间表
         List<Integer> powerIdList = deptRole.getPowerIdList();
+        List<DeptRoleAuthorition> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
             for (Integer integer : powerIdList) {
                 DeptRoleAuthorition config = new DeptRoleAuthorition();
                 config.setDeptId(deptIdList.get(0));
                 config.setRoleId(deptRole.getRoleId());
                 config.setConfigId(integer);
-                deptRoleConfigMapper.insert(config);
+                authorisations.add(config);
             }
         }
-        return save;
+        Boolean result1 = deptRoleConfigMapper.insertBatches(authorisations);
+        if (result && result1) {
+            return save;
+        }
+        return false;
     }
 
     /**
@@ -151,40 +155,41 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      */
     @Override
     public boolean updateById(DeptRole deptRole) {
-
         deptRole.setUpdateDate(LocalDateTime.now());
-
         //更新角色之前，先删除对应的部门
         deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
                 .in(DeptDeptRole::getRoleId, deptRole.getRoleId()));
-
         //更新角色之前，先删除对应的部门
         deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorition>()
                 .in(DeptRoleAuthorition::getRoleId, deptRole.getRoleId()));
-
         List<Integer> deptIdList = deptRole.getDeptIdList();
+        List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
             for (Integer integer : deptIdList) {
                 DeptDeptRole role = new DeptDeptRole();
                 role.setDeptId(integer);
                 role.setRoleId(deptRole.getRoleId());
-                deptDeptRoleMapper.insert(role);
+                deptDeptRoles.add(role);
             }
         }
-
+        Boolean batches = deptDeptRoleMapper.insertBatches(deptDeptRoles);
         //新增角色权限的中间表
         List<Integer> powerIdList = deptRole.getPowerIdList();
+        List<DeptRoleAuthorition> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
             for (Integer integer : powerIdList) {
                 DeptRoleAuthorition config = new DeptRoleAuthorition();
                 config.setDeptId(deptIdList.get(0));
                 config.setRoleId(deptRole.getRoleId());
                 config.setConfigId(integer);
-                deptRoleConfigMapper.insert(config);
+                authorisations.add(config);
             }
         }
-
-        return super.updateById(deptRole);
+        Boolean insertBatches = deptRoleConfigMapper.insertBatches(authorisations);
+        if (batches && insertBatches) {
+            return super.updateById(deptRole);
+        }
+        return false;
     }
 
     /**

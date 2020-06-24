@@ -4,30 +4,24 @@ package com.caidao.controller.back.car;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
+import com.caidao.enums.CarTypeEnums;
 import com.caidao.pojo.CarConfig;
 import com.caidao.service.CarConfigService;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * <p>
- *  前端控制器
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */
 @RestController
 @RequestMapping("/car/config")
-@Slf4j
 public class CarConfigController {
 
 	public static final Logger logger = LoggerFactory.getLogger(CarConfigController.class);
@@ -44,12 +38,19 @@ public class CarConfigController {
 	@GetMapping("/page")
 	@ApiOperation("获取当前页字典数据")
 	public ResponseEntity<IPage<CarConfig>> getSysConfigPage(Page<CarConfig> page, CarConfig config){
-
-		Assert.notNull(config, "sysConfig must not be null");
-		log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
-
 		IPage<CarConfig> configPage = configService.findPage(page, config);
 		return ResponseEntity.ok(configPage);
+	}
+
+	/**
+	 * 查询需要新增字典值的大类
+	 * @return
+	 */
+	@GetMapping("/findCarTypeEnums")
+	@ApiOperation("查询需要新增字典值的大类")
+	public ResponseEntity<CarTypeEnums[]> findCarTypeEnums(){
+		CarTypeEnums[] values = CarTypeEnums.values();
+		return ResponseEntity.ok(values);
 	}
 	
 	/**
@@ -59,13 +60,12 @@ public class CarConfigController {
 	 */
 	@PostMapping
 	@ApiOperation("新增字典数据")
-	public ResponseEntity<CarConfig> addSysConfig(@RequestBody CarConfig config){
-
-		Assert.notNull(config,"新增数据字典参数不能为空");
-		log.info("新增参数名为{}的数据",config.getParamKey());
-
-		configService.save(config);
-		return ResponseEntity.ok().build();
+	public ResponseEntity<String> addSysConfig(@RequestBody CarConfig config){
+		boolean save = configService.save(config);
+		if (save) {
+			return ResponseEntity.ok("新增配置成功");
+		}
+		return ResponseEntity.ok("新增配置失败");
 	}
 	
 	/**
@@ -76,28 +76,23 @@ public class CarConfigController {
 	@GetMapping("/info/{id}")
 	@ApiOperation("通过ID查询字典数据")
 	public ResponseEntity<CarConfig> beforeUpdate(@PathVariable("id") Integer id){
-
-		Assert.state(id !=null, "Id不能为空");
-		log.info("新增参数ID为{}的数据",id);
-
 		CarConfig config = configService.getById(id);
 		return ResponseEntity.ok(config);
 	}
 	
 	/**
-	 * 更新字典值  看看是否需要进行必须值判断
+	 * 更新字典值
 	 * @param config
 	 * @return
 	 */
 	@PutMapping
 	@ApiOperation("更新字典数据")
-	public ResponseEntity<CarConfig> updateSysConfig(@RequestBody CarConfig config){
-
-		Assert.notNull(config,"更新数据字典参数不能为空");
-		log.info("更新参数名为{}的数据",config.getParamKey());
-
-		configService.updateById(config);
-		return ResponseEntity.ok().build();
+	public ResponseEntity<String> updateSysConfig(@RequestBody CarConfig config){
+		boolean update = configService.updateById(config);
+		if (update) {
+			return ResponseEntity.ok("修改配置成功");
+		}
+		return ResponseEntity.ok("修改配置失败");
 	}
 	
 	/**
@@ -108,13 +103,13 @@ public class CarConfigController {
 	@SysLogs("批量删除字典数据")
 	@DeleteMapping
 	@ApiOperation("批量删除字典数据")
-	public ResponseEntity<Void> deleteSysConfig(@RequestBody List<Integer> configId){
+	public ResponseEntity<String> deleteSysConfig(@RequestBody List<Integer> configId){
+		boolean remove = configService.removeByIds(configId);
+		if (remove) {
+			return ResponseEntity.ok("批量删除配置成功");
+		}
+		return ResponseEntity.ok("批量删除配置失败");
 
-		Assert.state(configId.size() !=0, "Id不能为空");
-		log.info("新增参数ID为{}的数据",configId);
-
-		configService.removeByIds(configId);
-		return ResponseEntity.ok().build();
 	}
 
 }

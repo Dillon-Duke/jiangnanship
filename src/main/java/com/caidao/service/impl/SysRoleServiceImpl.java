@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.pojo.SysRole;
-import com.caidao.pojo.SysRoleMenu;
-import com.caidao.pojo.SysUserRole;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.SysRoleMapper;
 import com.caidao.mapper.SysRoleMenuMapper;
 import com.caidao.mapper.SysUserRoleMapper;
+import com.caidao.pojo.SysRole;
+import com.caidao.pojo.SysRoleMenu;
+import com.caidao.pojo.SysUserRole;
 import com.caidao.service.SysRoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +25,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>
- *  服务实现类
- * </p>
- *
  * @author jinpeng
  * @since 2020-03-25
  */
@@ -65,17 +61,22 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		sysRole.setCreateDate(LocalDateTime.now());
 		sysRole.setState(1);
 		boolean save = super.save(sysRole);
-		
+		//批量新增角色菜单
 		List<Integer> menuIdLists = sysRole.getMenuIdList();
-		if (!menuIdLists.isEmpty()&&save) {
+		List<SysRoleMenu> roleMenus = new ArrayList<>(menuIdLists.size());
+		if (!menuIdLists.isEmpty() && save) {
 			for (Integer menuIdList: menuIdLists) {
 				SysRoleMenu sysRoleMenu = new SysRoleMenu();
 				sysRoleMenu.setRoleId(sysRole.getRoleId());
 				sysRoleMenu.setMenuId(menuIdList);
-				sysRoleMenuMapper.insert(sysRoleMenu);				
+				roleMenus.add(sysRoleMenu);
 			}
 		}
-		return save;
+		Boolean result = sysRoleMenuMapper.insertBatches(roleMenus);
+		if (result) {
+			return save;
+		}
+		return false;
 	}
 	
 	/**
@@ -93,7 +94,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		
 		boolean updateById = super.updateById(sysRole);
 		List<Integer> menuIdLists = sysRole.getMenuIdList();
-					
+		List<SysRoleMenu> roleMenus = new ArrayList<>(menuIdLists.size());
 		if (!menuIdLists.isEmpty()&&updateById) {
 			
 			//修改角色之前吧所有的角色对应的菜单id删除掉
@@ -103,10 +104,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 				SysRoleMenu sysRoleMenu = new SysRoleMenu();
 				sysRoleMenu.setRoleId(sysRole.getRoleId());
 				sysRoleMenu.setMenuId(menuIdList);
-				sysRoleMenuMapper.insert(sysRoleMenu);					
+				roleMenus.add(sysRoleMenu);
 			}
 		}
-		return updateById;
+		Boolean batches = sysRoleMenuMapper.insertBatches(roleMenus);
+		if (batches) {
+			return updateById;
+		}
+		return false;
 	}
 	
 	/**

@@ -2,4 +2,20 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.caidao.mapper.DeptDeptRoleMapper">
 
+    <resultMap id="baseProperties" type="com.caidao.pojo.DeptDeptRole">
+        <id property="id" column="id" />
+        <result property="deptId" column="dept_id" />
+        <result property="roleId" column="role_id" />
+    </resultMap>
+
+    <insert id="insertBatches" parameterType="java.util.List">
+        insert into
+            dept_dept_role 
+            ( dept_id, role_id )
+        values 
+            <foreach collection="list" item="item" index="index" separator=",">
+                ( #{item.deptId}, #{item.roleId} )
+            </foreach>
+    </insert>
+
 </mapper>

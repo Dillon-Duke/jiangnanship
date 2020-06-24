@@ -5,6 +5,7 @@ import com.caidao.common.ResponseEntity;
 import com.caidao.exception.MyException;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
+import com.caidao.service.AppMassageService;
 import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
@@ -50,6 +51,9 @@ public class AppLoginController {
 
 	@Autowired
 	private DeptConfigService deptConfigService;
+
+	@Autowired
+	private AppMassageService appMassageService;
 
 	/**
 	 * 获取用户登录的公钥
@@ -130,7 +134,7 @@ public class AppLoginController {
 		map.put("userMassage",userMassage);
 
 		//获取用户的首页信息列表
-		Integer userMassageCount = deptUserService.getAppMassageCount(deptUser.getUserId());
+		Integer userMassageCount = appMassageService.getAppMassageCount(deptUser.getUsername());
 		map.put("appHomePage", userMassageCount);
 		return ResponseEntity.ok(map);
 	}

@@ -2,4 +2,14 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.caidao.mapper.DeptRoleConfigMapper">
 
+    <insert id="insertBatches" parameterType="java.util.List">
+        insert into
+            dept_role_authorition
+            ( dept_id, role_id, config_id )
+        values
+            <foreach collection="list" item="item" index="index" separator=",">
+                ( #{item.deptId}, #{item.roleId}, #{item.configId} )
+            </foreach>
+    </insert>
+
 </mapper>

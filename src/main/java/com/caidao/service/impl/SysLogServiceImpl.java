@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.mapper.SysLogMapper;
 import com.caidao.pojo.SysLog;
 import com.caidao.service.SysLogService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
  * @since 2020-03-25
  */
 @Service
+@Slf4j
 public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> implements SysLogService {
 
 	@Autowired
@@ -30,6 +32,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
 	 */
 	@Override
 	public IPage<SysLog> findPage(Page<SysLog> page, SysLog logs) {
+		log.info("角色分页 页大小{},第几页{}",page.getCurrent(),page.getSize());
 		IPage<SysLog> selectPage = sysLogMapper.selectPage(page, new LambdaQueryWrapper<SysLog>()
 				.like(StringUtils.hasText(logs.getUsername()), SysLog::getUsername,logs.getUsername())
 				.like(StringUtils.hasText(logs.getOperation()), SysLog::getOperation,logs.getOperation()));

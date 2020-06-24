@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Dillon
  * @since 2020-06-11
  */
-public interface PlatformService extends IService<PlatformApply> {
+public interface PlatformApplyService extends IService<PlatformApply> {
 
     /**
      * 保存一个平板车计划任务流程

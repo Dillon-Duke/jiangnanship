@@ -34,11 +34,17 @@ public class DeptUserCar implements Serializable {
     @ApiModelProperty(value = "部门用户的Id")
     private Integer userId;
 
+    @ApiModelProperty(value = "部门用户的Id")
+    private String username;
+
     @ApiModelProperty(value = "车辆Id")
     private Integer carId;
 
     @ApiModelProperty(value = "类别标记")
     private String remark;
+
+    @ApiModelProperty(value = "排班班次")
+    private String workShift;
 
     @ApiModelProperty(value = "开始时间")
     private LocalDateTime startTime;
