@@ -3,7 +3,6 @@ package com.caidao.controller.back.dept;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.param.UserCarBindParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
 import com.caidao.service.DeptUserService;
@@ -136,17 +135,13 @@ public class DeptUserController {
 
     /**
      * 用户车辆绑定
-     * @param param
-     * @param taskId
+     * @param deptUserCar
      * @return
      */
     @ApiOperation("用户车辆绑定")
     @PostMapping("/userBindCar")
-    public ResponseEntity<String> userBindCar(@RequestBody UserCarBindParam param, String taskId){
-        boolean car = deptUserService.userBindCar(param, taskId);
-        if (car){
-            return ResponseEntity.ok("绑定成功");
-        }
-        return ResponseEntity.ok("绑定失败");
+    public com.caidao.common.ResponseEntity<DeptUserCar> userBindCar(@RequestBody DeptUserCar deptUserCar){
+        DeptUserCar userBindCar = deptUserService.userBindCar(deptUserCar);
+        return com.caidao.common.ResponseEntity.ok(userBindCar);
     }
 }

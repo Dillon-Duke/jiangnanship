@@ -3,7 +3,6 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.param.UserCarBindParam;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
@@ -63,11 +62,10 @@ public interface DeptUserService extends IService<DeptUser> {
 
     /**
      * 用户车辆绑定
-     * @param param
-     * @param taskId
+     * @param deptUserCar
      * @return
      */
-    boolean userBindCar(UserCarBindParam param, String taskId);
+    DeptUserCar userBindCar(DeptUserCar deptUserCar);
 
     /**
      * 获得用户的app首页个人信息

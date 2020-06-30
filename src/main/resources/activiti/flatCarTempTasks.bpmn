@@ -17,12 +17,9 @@
       <startEvent id="_2" name="StartEvent"/>
       <endEvent id="_3" name="EndEvent"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_4" name="ExclusiveGateway"/>
-      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_5"
-                name="生产运行部门申请"/>
-      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_6"
-                name="驳运部门申请"/>
-      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_7"
-                name="部门驳运申请"/>
+      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_5" name="生产运行部门申请"/>
+      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_6" name="驳运部门申请"/>
+      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_7" name="部门驳运申请"/>
       <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_8" name="作业区申请"/>
       <sequenceFlow id="_9" sourceRef="_2" targetRef="_4"/>
       <sequenceFlow id="_10" sourceRef="_4" targetRef="_5">
@@ -35,44 +32,44 @@
          <conditionExpression xsi:type="tFormalExpression">${dept == '部门驳运申请'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_13" sourceRef="_4" targetRef="_8">
-         <conditionExpression xsi:type="tFormalExpression">${dept == '作业区申请'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${dept == '作业部门申请'}</conditionExpression>
       </sequenceFlow>
-      <userTask activiti:candidateUsers="${canditidateUser}" activiti:exclusive="true" id="_14"
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask1}" activiti:exclusive="true" id="_14"
                 name="部门审批"/>
       <sequenceFlow id="_15" sourceRef="_8" targetRef="_14"/>
-      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_16"
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask2}" activiti:exclusive="true" id="_16"
                 name="驳运部门审批"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_17" name="ExclusiveGateway"/>
       <sequenceFlow id="_18" sourceRef="_14" targetRef="_17"/>
       <sequenceFlow id="_19" sourceRef="_17" targetRef="_3">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '不同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_20" sourceRef="_17" targetRef="_16">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '1'}</conditionExpression>
       </sequenceFlow>
-      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_21"
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask3}" activiti:exclusive="true" id="_21"
                 name="编制驳运计划"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_22" name="ExclusiveGateway"/>
       <sequenceFlow id="_23" sourceRef="_16" targetRef="_22"/>
       <sequenceFlow id="_24" sourceRef="_22" targetRef="_21">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '1'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_28" sourceRef="_7" targetRef="_16"/>
       <sequenceFlow id="_29" sourceRef="_22" targetRef="_3">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '不同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_30" sourceRef="_6" targetRef="_21"/>
       <sequenceFlow id="_31" sourceRef="_5" targetRef="_21"/>
-      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_32"
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask4}" activiti:exclusive="true" id="_32"
                 name="司机接单"/>
       <sequenceFlow id="_33" sourceRef="_21" targetRef="_32"/>
-      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_34"
-                name="司机任务执行"/>
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask5}" activiti:exclusive="true" id="_34"
+                name="司机执行"/>
       <sequenceFlow id="_35" sourceRef="_32" targetRef="_34"/>
-      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_36"
-                name="执行完成确认"/>
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask6}" activiti:exclusive="true" id="_36"
+                name="执行完成"/>
       <sequenceFlow id="_37" sourceRef="_34" targetRef="_36"/>
-      <userTask activiti:candidateUsers="${applyName}" activiti:exclusive="true" id="_38"
+      <userTask activiti:candidateUsers="${flatcarTempGroupTask7}" activiti:exclusive="true" id="_38"
                 name="部门评价"/>
       <sequenceFlow id="_40" sourceRef="_38" targetRef="_3"/>
       <sequenceFlow id="_41" sourceRef="_36" targetRef="_38"/>

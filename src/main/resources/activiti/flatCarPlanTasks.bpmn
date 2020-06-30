@@ -18,8 +18,17 @@
       <startEvent id="_2" name="StartEvent"/>
       <endEvent id="_3" name="EndEvent"/>
       <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_4" name="作业区申请"/>
-      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_5"
-                name="部门驳运申请"/>
+      <userTask activiti:assignee="${startName}" activiti:exclusive="true" id="_5" name="部门驳运申请"/>
+	  <userTask activiti:candidateUsers="${flatcarPlanGroupTask1}" activiti:exclusive="true" id="_10" name="部门审批"/>
+	  <userTask activiti:candidateUsers="${flatcarPlanGroupTask2}" activiti:exclusive="true" id="_12" name="车辆所属生产部门"/>
+	  <userTask activiti:candidateUsers="${flatcarPlanGroupTask3}" activiti:exclusive="true" id="_17" name="生产运行部门审批"/>
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask4}" activiti:exclusive="true" id="_18" name="驳运部门申请"/>
+	  <userTask activiti:candidateUsers="${flatcarPlanGroupTask5}" activiti:exclusive="true" id="_21" name="编制驳动计划"/>
+	  <userTask activiti:candidateUsers="${flatcarPlanGroupTask6}" activiti:exclusive="true" id="_24" name="驳运任务分配"/>
+	  <userTask activiti:candidateUsers="${flatcarPlanGroupTask7}" activiti:exclusive="true" id="_23" name="司机接单"/>
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask8}" activiti:exclusive="true" id="_28" name="司机执行"/>
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask9}" activiti:exclusive="true" id="_29" name="执行完成"/>
+      <userTask activiti:candidateUsers="${flatcarPlanGroupTask10}" activiti:exclusive="true" id="_30"  name="部门评价"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_6" name="ExclusiveGateway"/>
       <sequenceFlow id="_7" sourceRef="_2" targetRef="_6"/>
       <sequenceFlow id="_8" sourceRef="_6" targetRef="_4">
@@ -28,34 +37,18 @@
       <sequenceFlow id="_9" sourceRef="_6" targetRef="_5">
          <conditionExpression xsi:type="tFormalExpression">${dept == '部门驳运申请'}</conditionExpression>
       </sequenceFlow>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask1}" activiti:exclusive="true" id="_10"
-                name="部门审批"/>
       <sequenceFlow id="_11" sourceRef="_4" targetRef="_10"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask2}" activiti:exclusive="true" id="_12"
-                name="车辆所属生产部门"/>
       <sequenceFlow id="_13" sourceRef="_5" targetRef="_12"/>
       <exclusiveGateway gatewayDirection="Unspecified" id="_15" name="ExclusiveGateway"/>
       <sequenceFlow id="_16" sourceRef="_12" targetRef="_15"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask3}" activiti:exclusive="true" id="_17"
-                name="生产运行部门审批"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask4}" activiti:exclusive="true" id="_18"
-                name="驳运部门申请"/>
       <sequenceFlow id="_19" sourceRef="_15" targetRef="_17">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '不同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_20" sourceRef="_15" targetRef="_18">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
-      </sequenceFlow>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask5}" activiti:exclusive="true" id="_21"
-                name="编制驳动计划"/>
-      <sequenceFlow id="_22" sourceRef="_18" targetRef="_21"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask6}" activiti:exclusive="true" id="_24"
-                name="驳运任务分配"/>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '1'}</conditionExpression>
+      </sequenceFlow>   
+      <sequenceFlow id="_22" sourceRef="_18" targetRef="_21"/> 
       <sequenceFlow id="_25" sourceRef="_21" targetRef="_24"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask7}" activiti:exclusive="true" id="_28" name="司机执行"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask8}" activiti:exclusive="true" id="_29"
-                name="执行完成确认"/>
-      <userTask activiti:candidateUsers="${flatcarPlanGroupTask9}" activiti:exclusive="true" id="_30" name="部门评价"/>
       <sequenceFlow id="_32" sourceRef="_28" targetRef="_29"/>
       <sequenceFlow id="_33" sourceRef="_29" targetRef="_30"/>
       <sequenceFlow id="_34" sourceRef="_30" targetRef="_3"/>
@@ -63,19 +56,20 @@
       <exclusiveGateway gatewayDirection="Unspecified" id="_36" name="ExclusiveGateway"/>
       <sequenceFlow id="_37" sourceRef="_10" targetRef="_35"/>
       <sequenceFlow id="_38" sourceRef="_35" targetRef="_12">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '1'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_39" sourceRef="_35" targetRef="_3">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '不同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_40" sourceRef="_17" targetRef="_36"/>
       <sequenceFlow id="_41" sourceRef="_36" targetRef="_21">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '1'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_42" sourceRef="_36" targetRef="_3">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '不同意'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
       </sequenceFlow>
-      <sequenceFlow id="_14" sourceRef="_24" targetRef="_28"/>
+      <sequenceFlow id="_14" sourceRef="_24" targetRef="_23"/>
+      <sequenceFlow id="_26" sourceRef="_23" targetRef="_28"/>
    </process>
    <bpmndi:BPMNDiagram xmlns=""
                        documentation="background=#3C3F41;count=1;horizontalcount=1;orientation=0;width=842.4;height=1195.2;imageableWidth=832.4;imageableHeight=1185.2;imageableX=5.0;imageableY=5.0"
@@ -149,13 +143,13 @@
             </bpmndi:BPMNLabel>
          </bpmndi:BPMNShape>
          <bpmndi:BPMNShape bpmnElement="_24" id="Shape-_24">
-            <dc:Bounds height="55.0" width="85.0" x="915.0" y="200.0"/>
+            <dc:Bounds height="55.0" width="85.0" x="915.0" y="170.0"/>
             <bpmndi:BPMNLabel>
                <dc:Bounds height="55.0" width="85.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
          </bpmndi:BPMNShape>
          <bpmndi:BPMNShape bpmnElement="_28" id="Shape-_28">
-            <dc:Bounds height="55.0" width="85.0" x="915.0" y="300.0"/>
+            <dc:Bounds height="55.0" width="85.0" x="915.0" y="325.0"/>
             <bpmndi:BPMNLabel>
                <dc:Bounds height="55.0" width="85.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
@@ -184,6 +178,12 @@
                <dc:Bounds height="32.0" width="32.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
          </bpmndi:BPMNShape>
+         <bpmndi:BPMNShape bpmnElement="_23" id="Shape-_23">
+            <dc:Bounds height="55.0" width="85.0" x="915.0" y="245.0"/>
+            <bpmndi:BPMNLabel>
+               <dc:Bounds height="55.0" width="85.0" x="0.0" y="0.0"/>
+            </bpmndi:BPMNLabel>
+         </bpmndi:BPMNShape>
          <bpmndi:BPMNEdge bpmnElement="_13" id="BPMNEdge__13" sourceElement="_5" targetElement="_12">
             <di:waypoint x="295.0" y="62.5"/>
             <di:waypoint x="420.0" y="62.5"/>
@@ -205,9 +205,9 @@
                <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
          </bpmndi:BPMNEdge>
-         <bpmndi:BPMNEdge bpmnElement="_14" id="BPMNEdge__14" sourceElement="_24" targetElement="_28">
-            <di:waypoint x="957.5" y="255.0"/>
-            <di:waypoint x="957.5" y="300.0"/>
+         <bpmndi:BPMNEdge bpmnElement="_14" id="BPMNEdge__14" sourceElement="_24" targetElement="_23">
+            <di:waypoint x="957.5" y="225.0"/>
+            <di:waypoint x="957.5" y="245.0"/>
             <bpmndi:BPMNLabel>
                <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
@@ -279,9 +279,16 @@
                <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
          </bpmndi:BPMNEdge>
+         <bpmndi:BPMNEdge bpmnElement="_26" id="BPMNEdge__26" sourceElement="_23" targetElement="_28">
+            <di:waypoint x="957.5" y="300.0"/>
+            <di:waypoint x="957.5" y="325.0"/>
+            <bpmndi:BPMNLabel>
+               <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>
+            </bpmndi:BPMNLabel>
+         </bpmndi:BPMNEdge>
          <bpmndi:BPMNEdge bpmnElement="_25" id="BPMNEdge__25" sourceElement="_21" targetElement="_24">
             <di:waypoint x="957.5" y="150.0"/>
-            <di:waypoint x="957.5" y="200.0"/>
+            <di:waypoint x="957.5" y="170.0"/>
             <bpmndi:BPMNLabel>
                <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>
             </bpmndi:BPMNLabel>
@@ -324,7 +331,7 @@
             </bpmndi:BPMNLabel>
          </bpmndi:BPMNEdge>
          <bpmndi:BPMNEdge bpmnElement="_32" id="BPMNEdge__32" sourceElement="_28" targetElement="_29">
-            <di:waypoint x="957.5" y="355.0"/>
+            <di:waypoint x="957.5" y="380.0"/>
             <di:waypoint x="957.5" y="395.0"/>
             <bpmndi:BPMNLabel>
                <dc:Bounds height="0.0" width="0.0" x="0.0" y="0.0"/>

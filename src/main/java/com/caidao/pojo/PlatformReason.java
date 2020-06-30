@@ -31,8 +31,8 @@ public class PlatformReason implements Serializable {
     @TableId(value = "reason_id", type = IdType.AUTO)
     private Integer reasonId;
 
-    @ApiModelProperty(value = "业务申请ID 业务主键")
-    private String requestId;
+    @ApiModelProperty(value = "任务ID")
+    private String taskId;
 
     @ApiModelProperty(value = "是否同意 1：同意 0：不同意")
     private Integer opinion;
@@ -48,15 +48,5 @@ public class PlatformReason implements Serializable {
 
     @ApiModelProperty(value = "创建人")
     private Integer createId;
-
-    @ApiModelProperty(value = "更新日期")
-    private LocalDateTime updateDate;
-
-    @ApiModelProperty(value = "更新人")
-    private Integer updateId;
-
-    @ApiModelProperty(value = "是否可用 1：正常 0：禁用")
-    private Integer state;
-
 
 }

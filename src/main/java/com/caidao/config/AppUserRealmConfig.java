@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class AppUserRealmConfig extends AuthorizingRealm {
 
-
     @Autowired
     private StringRedisTemplate redisTemplate;
 

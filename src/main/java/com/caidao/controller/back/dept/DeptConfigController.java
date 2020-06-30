@@ -4,7 +4,7 @@ package com.caidao.controller.back.dept;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
-import com.caidao.pojo.DeptAuthorition;
+import com.caidao.pojo.DeptAuthorisation;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.DeptConfigService;
 import io.swagger.annotations.ApiOperation;
@@ -41,18 +41,18 @@ public class DeptConfigController {
     /**
      * 获取页面的分页数据
      * @param page
-     * @param deptAuthorition
+     * @param deptAuthorisation
      * @return
      */
     @GetMapping("/page")
     @ApiOperation("获取当前页权限字典数据")
     @RequiresPermissions("dept:config:page")
-    public ResponseEntity<IPage<DeptAuthorition>> getSysConfigPage(Page<DeptAuthorition> page, DeptAuthorition deptAuthorition){
+    public ResponseEntity<IPage<DeptAuthorisation>> getSysConfigPage(Page<DeptAuthorisation> page, DeptAuthorisation deptAuthorisation){
 
-        Assert.notNull(deptAuthorition, "sysConfig must not be null");
+        Assert.notNull(deptAuthorisation, "sysConfig must not be null");
         log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
 
-        IPage<DeptAuthorition> configPage = deptConfigService.findPage(page, deptAuthorition);
+        IPage<DeptAuthorisation> configPage = deptConfigService.findPage(page, deptAuthorisation);
         return ResponseEntity.ok(configPage);
     }
 
@@ -63,28 +63,28 @@ public class DeptConfigController {
     @GetMapping("/list")
     @ApiOperation("查询菜单")
     @RequiresPermissions("dept:config:list")
-    public ResponseEntity<List<DeptAuthorition>> addSysmenu(){
-        List<DeptAuthorition> findDeptAuthorition = deptConfigService.getListDept();
-        return ResponseEntity.ok(findDeptAuthorition);
+    public ResponseEntity<List<DeptAuthorisation>> addSysmenu(){
+        List<DeptAuthorisation> findDeptAuthorisation = deptConfigService.getListDept();
+        return ResponseEntity.ok(findDeptAuthorisation);
     }
 
     /**
      * 新增字典值
-     * @param deptAuthorition
+     * @param deptAuthorisation
      * @return
      */
     @PostMapping
     @ApiOperation("新增权限字典数据")
     @RequiresPermissions("dept:config:save")
-    public ResponseEntity<String> addSysConfig(@RequestBody DeptAuthorition deptAuthorition){
+    public ResponseEntity<String> addSysConfig(@RequestBody DeptAuthorisation deptAuthorisation){
 
-        Assert.notNull(deptAuthorition,"新增数据字典参数不能为空");
-        log.info("新增参数名为{}的数据", deptAuthorition.getParamKey());
+        Assert.notNull(deptAuthorisation,"新增数据字典参数不能为空");
+        log.info("新增参数名为{}的数据", deptAuthorisation.getParamKey());
 
         SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-        deptAuthorition.setCreateId(sysUser.getUserId());
+        deptAuthorisation.setCreateId(sysUser.getUserId());
 
-        boolean save = deptConfigService.save(deptAuthorition);
+        boolean save = deptConfigService.save(deptAuthorisation);
         if (save){
             return ResponseEntity.ok("新增权限字典成功");
         }
@@ -99,32 +99,32 @@ public class DeptConfigController {
     @GetMapping("/info/{id}")
     @ApiOperation("通过ID查询权限字典数据")
     @RequiresPermissions("dept:config:info")
-    public ResponseEntity<DeptAuthorition> beforeUpdate(@PathVariable("id") Integer id){
+    public ResponseEntity<DeptAuthorisation> beforeUpdate(@PathVariable("id") Integer id){
 
         Assert.state(id !=null, "Id不能为空");
         log.info("新增参数ID为{}的数据",id);
 
-        DeptAuthorition deptAuthorition = deptConfigService.getById(id);
-        return ResponseEntity.ok(deptAuthorition);
+        DeptAuthorisation deptAuthorisation = deptConfigService.getById(id);
+        return ResponseEntity.ok(deptAuthorisation);
     }
 
     /**
      * 更新字典值  看看是否需要进行必须值判断
-     * @param deptAuthorition
+     * @param deptAuthorisation
      * @return
      */
     @PutMapping
     @ApiOperation("更新权限字典数据")
     @RequiresPermissions("dept:config:update")
-    public ResponseEntity<String> updateSysConfig(@RequestBody DeptAuthorition deptAuthorition){
+    public ResponseEntity<String> updateSysConfig(@RequestBody DeptAuthorisation deptAuthorisation){
 
-        Assert.notNull(deptAuthorition,"更新数据字典参数不能为空");
-        log.info("更新参数名为{}的数据", deptAuthorition.getParamKey());
+        Assert.notNull(deptAuthorisation,"更新数据字典参数不能为空");
+        log.info("更新参数名为{}的数据", deptAuthorisation.getParamKey());
 
         SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-        deptAuthorition.setUpdateId(sysUser.getUserId());
+        deptAuthorisation.setUpdateId(sysUser.getUserId());
 
-        boolean update = deptConfigService.updateById(deptAuthorition);
+        boolean update = deptConfigService.updateById(deptAuthorisation);
         if (update){
             return ResponseEntity.ok("更新权限字典成功");
         }

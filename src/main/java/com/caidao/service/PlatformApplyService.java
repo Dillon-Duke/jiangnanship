@@ -2,6 +2,7 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.ActivityQueryParam;
+import com.caidao.param.FlatCarCancelParam;
 import com.caidao.pojo.PlatformApply;
 import org.activiti.engine.history.HistoricTaskInstance;
 
@@ -62,7 +63,7 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * @param taskId
      * @return
      */
-    void getPlanOwnerGroupTask(String taskId);
+    String getPlanOwnerGroupTask(String taskId);
 
     /**
      * 流程任务的转办，直接给别人，别人做好之后直接推到下一个需要办理的人手里
@@ -86,4 +87,38 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      */
     List<PlatformApply> getPlatformOrganizationTasks();
 
+    /**
+     * 开始一个取消任务申请
+     * @param businessKey
+     * @return
+     */
+    Map<String, String> startCancelApplyTask(Integer businessKey);
+
+    /**
+     * 部门评价人员进行评价
+     * @param taskId
+     * @return
+     */
+    boolean departmentEvaluate(String taskId);
+
+    /**
+     * 司机完成任务的执行
+     * @param taskId
+     * @return
+     */
+    String driverCompleteTask(String taskId);
+
+    /**
+     * 取消任务司机完成任务的执行
+     * @param param
+     * @return
+     */
+    String flatcarCancelDriverCompleteTask(FlatCarCancelParam param);
+
+    /**
+     * 取消任务部门评价人员进行评价
+     * @param param
+     * @return
+     */
+    boolean flatcarCancelDepartmentEvaluate(FlatCarCancelParam param);
 }

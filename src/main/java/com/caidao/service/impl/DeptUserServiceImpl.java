@@ -9,7 +9,6 @@ import com.caidao.mapper.AppMassageMapper;
 import com.caidao.mapper.DeptUserCarMapper;
 import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.DeptUserRoleMapper;
-import com.caidao.param.UserCarBindParam;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.*;
 import com.caidao.service.DeptUserService;
@@ -24,7 +23,6 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.ByteSource;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -143,7 +141,6 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             userRole.setUserId(userId);
             userRole.setRoleId(integer);
             deptUserRoles.add(userRole);
-            deptUserRoleMapper.insert(userRole);
         }
         Boolean result = deptUserRoleMapper.insertBatches(deptUserRoles);
         //判断是否插入成功
@@ -224,27 +221,28 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
         //判断为空 则直接返回
         List<Integer> roleIdList = deptUser.getRoleIdList();
+        Boolean batches = true;
         if (roleIdList == null || roleIdList.isEmpty()){
             deptUser.setUserRoleName("无");
             deptUser.setUserDeptName("无");
-            return super.updateById(deptUser);
-        }
-        //批量新增用户角色中间表
-        ArrayList<DeptUserRole> deptUserRoles1 = new ArrayList<>(roleIdList.size());
-        for (Integer integer : roleIdList) {
-            DeptUserRole userRole = new DeptUserRole();
-            userRole.setUserId(deptUser.getUserId());
-            userRole.setRoleId(integer);
-            deptUserRoles1.add(userRole);
-        }
-        Boolean batches = deptUserRoleMapper.insertBatches(deptUserRoles1);
-        //从其他三张表中查询对应的角色部门信息，填到用户字段里面
-        for (Integer integer : roleIdList) {
-            Map<String, Object> map = deptUserMapper.selectDeptRole(integer);
-            deptUser.setUserRoleId(integer);
-            deptUser.setUserRoleName(map.get("role_name").toString());
-            deptUser.setUserDeptId(Integer.parseInt(map.get("dept_id").toString()));
-            deptUser.setUserDeptName(map.get("dept_name").toString());
+        } else {
+            //批量新增用户角色中间表
+            ArrayList<DeptUserRole> deptUserRoles1 = new ArrayList<>(roleIdList.size());
+            for (Integer integer : roleIdList) {
+                DeptUserRole userRole = new DeptUserRole();
+                userRole.setUserId(deptUser.getUserId());
+                userRole.setRoleId(integer);
+                deptUserRoles1.add(userRole);
+            }
+            batches = deptUserRoleMapper.insertBatches(deptUserRoles1);
+            //从其他三张表中查询对应的角色部门信息，填到用户字段里面
+            for (Integer integer : roleIdList) {
+                Map<String, Object> map = deptUserMapper.selectDeptRole(integer);
+                deptUser.setUserRoleId(integer);
+                deptUser.setUserRoleName(map.get("role_name").toString());
+                deptUser.setUserDeptId(Integer.parseInt(map.get("dept_id").toString()));
+                deptUser.setUserDeptName(map.get("dept_name").toString());
+            }
         }
         //获取被删除用户的token
         Object token = redisTemplate.opsForHash().get(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
@@ -335,15 +333,27 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         Assert.notNull(deptUser,"用户登录超时，请重新登录");
         //查询用户车辆表当天所有有任务的人
-        List<DeptUserCar> deptUserCarList = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
-                                        .orderByAsc(DeptUserCar::getUserId));
-        //获取该部门所有的空闲人员
-        List<DeptUser> deptUserList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
-                                                    .eq(DeptUser::getUserDeptId, deptUser.getUserDeptId())
-                                                    .eq(DeptUser::getUserRoleId, deptUser.getUserRoleId()));
+        List<DeptUserCar> deptUserCarList = deptUserCarMapper.selectList(null);
+        List<String> integers = new ArrayList<>();
+        for (DeptUserCar deptUserCar : deptUserCarList) {
+            Integer driverId = deptUserCar.getDriverId();
+            String operatorId = deptUserCar.getOperatorId();
+            if (!integers.contains(driverId)) {
+                integers.add(String.valueOf(driverId));
+            }
+            if (!integers.contains(operatorId)) {
+                integers.add(operatorId);
+            }
+        }
+        //TODO 获取所有的空闲人员 后来可能会需要加条件，比如说部门条件
+        List<DeptUser> freeUsers = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .notIn(DeptUser::getUserId, integers));
+        //TODO 获取所有的不空闲人员 后来可能会需要加条件，比如说部门条件
+        List<DeptUser> taskDriver = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .in(DeptUser::getUserId, integers));
         HashMap<String, Object> map = new HashMap<>(2);
-        map.put("freeDriver",deptUserList);
-        map.put("taskDriver",deptUserCarList);
+        map.put("freeDriver",freeUsers);
+        map.put("taskDriver",taskDriver);
         return map;
     }
 
@@ -356,49 +366,70 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     public List<DeptUserCar> getFreeDriverById(Integer id) {
         Assert.notNull(id,"部门用户Id不能为空");
         log.info("查询部门用户id为{}的空闲时间",id);
+        //获得该司机的所有任务 包括司机和操作员的
         List<DeptUserCar> deptUserCars = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
-                .eq(DeptUserCar::getUserId, id));
-
+                .eq(DeptUserCar::getDriverId, id)
+                .or(true)
+                .eq(DeptUserCar::getOperatorId,id));
+        //获得对应的车辆ID 去重
+        List<Integer> integers = new ArrayList<>();
+        for (DeptUserCar deptUserCar : deptUserCars) {
+            Integer carId = deptUserCar.getCarId();
+            if (!integers.contains(carId)) {
+                integers.add(carId);
+            }
+        }
+        //TODO 获得对应的车辆任务 之后逻辑确定是否是获取对应的申请任务，再写逻辑
         return deptUserCars;
     }
 
     /**
      * 用户车辆绑定
-     * @param param
-     * @param taskId
+     * @param deptUserCar
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public boolean userBindCar(UserCarBindParam param, String taskId) {
-        Assert.notNull(param,"绑定数据不能为空");
-        Assert.notNull(taskId,"任务ID不能为空");
-        log.info("用户绑定车辆",param);
-        //获得操作员数组
-        Integer[] operateId = param.getOperateId();
-        String[] operateName = param.getOperateName();
-        List<DeptUserCar> deptUserCars = new ArrayList<>();
-        List<AppMassage> appMassages = new ArrayList<>();
-        //循环遍历操作员中间表
-        for (int i = 0 ; i < operateId.length ; i++) {
-            DeptUserCar userCar = addDeptUserCarBind(param, "操作员", operateId[i], operateName[i]);
-            deptUserCars.add(userCar);
-            AppMassage appMassage = sendBindMassage(taskId, operateName[i]);
-            appMassages.add(appMassage);
+    public DeptUserCar userBindCar(DeptUserCar deptUserCar) {
+        Assert.notNull(deptUserCar,"绑定数据不能为空");
+        log.info("用户绑定车辆",deptUserCar);
+        //自定义工号
+        deptUserCar.setWorkNum(PropertyUtils.USER_BIND_CAR_TASK_PREFIX + DateUtils.getYyyyMm() + deptUserCar.getCarPlant());
+        //司机车辆绑定
+        int insert = deptUserCarMapper.insert(deptUserCar);
+        if (insert == 0) {
+            throw new MyException("车辆司机绑定失败，请重试");
         }
-        //插入司机中间表
-        DeptUserCar userCar = addDeptUserCarBind(param, "司机", param.getDriverId(), param.getDriverName());
-        deptUserCars.add(userCar);
-        AppMassage appMassage = sendBindMassage(taskId, param.getDriverName());
-        appMassages.add(appMassage);
-        //批量插入用户车辆中间表
-        Boolean insertBatches = deptUserCarMapper.insertBatches(deptUserCars);
-        //批量推送绑定消息到用户
-        Boolean insertBatches1 = appMassageMapper.insertBatches(appMassages);
-        if (insertBatches && insertBatches1) {
-            return true;
+        //推送消息到消息表
+        String[] operatorNames = deptUserCar.getOperatorName().split(",");
+        List<AppMassage> massages = new ArrayList<>(operatorNames.length + 1);
+        for (String operatorName : operatorNames) {
+            AppMassage appMassage = addAppDriverAndOperatorMassage(deptUserCar.getTaskId(), operatorName);
+            massages.add(appMassage);
         }
-        return false;
+        AppMassage appMassage = addAppDriverAndOperatorMassage(deptUserCar.getTaskId(), deptUserCar.getDriverName());
+        massages.add(appMassage);
+        Boolean batches = appMassageMapper.insertBatches(massages);
+        if (!batches) {
+            throw new MyException("绑定失败，请联系管理员");
+        }
+        return deptUserCar;
+    }
+
+    /**
+     * 增加绑定信息
+     * @param taskId
+     * @param driverName
+     * @return
+     */
+    private AppMassage addAppDriverAndOperatorMassage(Integer taskId, String driverName) {
+        AppMassage appMassage = new AppMassage();
+        appMassage.setCreateTime(LocalDateTime.now());
+        appMassage.setDeptUsername(driverName);
+        appMassage.setIsRead(1);
+        appMassage.setMassageName("操作员任务");
+        appMassage.setTaskId(taskId);
+        return appMassage;
     }
 
     /**
@@ -473,43 +504,6 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             }
         }
         return pinyin.toString();
-    }
-
-    /**
-     * 将推送消息封装到实体类中
-     * @param taskId
-     * @param deptUserName
-     */
-    @NotNull
-    private AppMassage sendBindMassage(String taskId, String deptUserName) {
-        AppMassage massage = new AppMassage();
-        massage.setCreateTime(LocalDateTime.now());
-        massage.setDeptUsername(deptUserName);
-        massage.setIsRead(1);
-        massage.setMassageName("跟车人员跟车任务");
-        massage.setTaskId(Integer.parseInt(taskId));
-        return massage;
-    }
-
-    /**
-     * 将绑定信息拆分封装到实体类中
-     * @param param
-     * @param remark
-     * @param remarkId
-     * @param remarkName
-     * @return
-     */
-    @NotNull
-    private DeptUserCar addDeptUserCarBind(UserCarBindParam param, String remark, Integer remarkId, String remarkName) {
-        DeptUserCar userCar = new DeptUserCar();
-        userCar.setCarId(param.getCarId());
-        userCar.setEndTime(param.getEndTime());
-        userCar.setRemark(remark);
-        userCar.setStartTime(param.getStartTime());
-        userCar.setUserId(remarkId);
-        userCar.setUsername(remarkName);
-        userCar.setWorkShift(param.getWorkShift());
-        return userCar;
     }
 
 }

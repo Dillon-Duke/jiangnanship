@@ -67,7 +67,7 @@ public class AppLoginController {
 		log.info("获取用户登录用的公钥");
 		//获取加密解密数据
 		Map<Integer, String> integerStringMap = RsaUtils.genKeyPair();
-		String uuid = UUID.randomUUID().toString();
+		String uuid = UUID.randomUUID().toString().replaceAll("-","");
 		redis.opsForValue().set(PropertyUtils.APP_USER_PRIVATE_KEY + uuid,integerStringMap.get(1),5, TimeUnit.MINUTES);
 		Map<String, String> map = new HashMap<>(2);
 		map.put("publicKey",integerStringMap.get(0));

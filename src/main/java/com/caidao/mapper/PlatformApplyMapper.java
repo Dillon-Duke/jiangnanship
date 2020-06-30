@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author tom
  * @since 2020-06-11
@@ -29,7 +31,7 @@ public interface PlatformApplyMapper extends BaseMapper<PlatformApply> {
      * @param businessKey
      * @return
      */
-    @Update("UPDATE platform SET apply_name = NULL , apply_state = 3 WHERE prs_id = #{businessKey}")
+    @Update("UPDATE platform_apply SET apply_name = NULL , apply_state = 3 WHERE prs_id = #{businessKey}")
     Integer fileEndFlatCarPlanTask(Integer businessKey);
 
     /**
@@ -37,22 +39,47 @@ public interface PlatformApplyMapper extends BaseMapper<PlatformApply> {
      * @param businessKey
      * @return
      */
-    @Update("UPDATE platform SET apply_name = NULL , apply_state = 2 WHERE prs_id = #{businessKey}")
+    @Update("UPDATE platform_apply SET apply_name = NULL , apply_state = 2 WHERE prs_id = #{businessKey}")
     Integer successEndFlatCarPlanTask(Integer businessKey);
-
-    /**
-     * 在表中标记改该记录为编制驳动计划
-     * @param businessKey
-     * @return
-     */
-    @Update("UPDATE platform SET reserve1 = 1 WHERE prs_id = #{businessKey}")
-    Integer remarkOrganization(Integer businessKey);
 
     /**
      * 获得候选人的列表
      * @param name
      * @param instanceId
+     * @return
      */
     @Select("SELECT TEXT_ FROM ACT_RU_VARIABLE WHERE NAME_ = #{name} AND PROC_INST_ID_ = #{instanceId}")
-    String getcandidate(@Param("name") String name, @Param("instanceId") String instanceId);
+    String getCandidate(@Param("name") String name, @Param("instanceId") String instanceId);
+
+    /**
+     * 查询流程中所有人已参与或者将参与人员的信息
+     * @param instanceId
+     * @return
+     */
+    @Select("SELECT TEXT_ FROM ACT_RU_VARIABLE WHERE PROC_INST_ID_ = #{instanceId} AND NAME_ LIKE '%GroupTask%'")
+    List<String> getPlatCarApplyAndApprovalUsers(@Param("instanceId") String instanceId);
+
+    /**
+     * 更新申请状态为取消
+     * @param businessKey
+     * @return
+     */
+    @Update("UPDATE platform_apply SET apply_state = 4 WHERE prs_id = #{businessKey}")
+    Integer updateApplyState(@Param("businessKey") String businessKey);
+
+    /**
+     * 更新物件绑定信息为未绑定
+     * @param businessKey
+     * @return
+     */
+    @Update("UPDATE platform_goods G SET G.is_binder = 0 WHERE G.goods_id = (SELECT A.object_id FROM platform_apply A WHERE A.prs_id = #{businessKey})")
+    Integer updateGoodsBindState(@Param("businessKey") String businessKey);
+
+    /**
+     * 更新审批人为null
+     * @param businessKey
+     * @return
+     */
+    @Update("UPDATE platform_apply SET apply_name = null WHERE prs_id = {businessKey}")
+    Integer updateApplyNameAsNull(@Param("businessKey") String businessKey);
 }

@@ -26,7 +26,7 @@ public class TokenSessionManageConfig extends DefaultWebSessionManager {
 	protected Serializable getSessionId(ServletRequest request, ServletResponse response) {
 		String token = WebUtils.toHttp(request).getHeader(PropertyUtils.TOKEN_HEADER);
 		if (!StringUtils.hasText(token)) {
-			token = UUID.randomUUID().toString();
+			token = UUID.randomUUID().toString().replaceAll("-","");
 		}
 		return token;
 	}

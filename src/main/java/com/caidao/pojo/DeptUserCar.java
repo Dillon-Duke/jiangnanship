@@ -1,6 +1,7 @@
 package com.caidao.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -12,10 +13,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * <p>
- * 
- * </p>
- *
  * @author Dillon
  * @since 2020-06-06
  */
@@ -31,20 +28,36 @@ public class DeptUserCar implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    @ApiModelProperty(value = "部门用户的Id")
-    private Integer userId;
+    @ApiModelProperty(value = "业务Id")
+    private Integer businessKey;
 
-    @ApiModelProperty(value = "部门用户的Id")
-    private String username;
+    @ApiModelProperty(value = "任务Id")
+    @TableField(exist = false)
+    private Integer taskId;
+
+    @ApiModelProperty(value = "司机Id")
+    private Integer driverId;
+
+    @ApiModelProperty(value = "司机名称")
+    private String driverName;
+
+    @ApiModelProperty(value = "操作员Id")
+    private String operatorId;
+
+    @ApiModelProperty(value = "操作员名称")
+    private String operatorName;
 
     @ApiModelProperty(value = "车辆Id")
     private Integer carId;
 
-    @ApiModelProperty(value = "类别标记")
-    private String remark;
+    @ApiModelProperty(value = "车辆牌照")
+    private Integer carPlant;
 
     @ApiModelProperty(value = "排班班次")
     private String workShift;
+
+    @ApiModelProperty(value = "排班工单号")
+    private String workNum;
 
     @ApiModelProperty(value = "开始时间")
     private LocalDateTime startTime;

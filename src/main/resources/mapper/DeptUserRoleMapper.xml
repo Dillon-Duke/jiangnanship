@@ -8,7 +8,7 @@
             ( user_id, role_id )
         values
             <foreach collection="list" item="item" index="index" separator=",">
-                ( #{item.user_id}, #{item.roleId} )
+                ( #{item.userId}, #{item.roleId} )
             </foreach>
     </insert>
 

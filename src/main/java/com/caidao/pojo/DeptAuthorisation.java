@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @ApiModel(value="DeptConfig对象", description="")
-public class DeptAuthorition implements Serializable {
+public class DeptAuthorisation implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

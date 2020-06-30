@@ -3,6 +3,7 @@ package com.caidao.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.DeptUser;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
@@ -30,5 +31,12 @@ public interface DeptUserMapper extends BaseMapper<DeptUser> {
     @Update("update dept_user set password = #{deptUser.password} where user_id = #{deptUser.userId}")
     Integer updatePassById(@Param("deptUser") DeptUser deptUser);
 
+    /**
+     * 通过业务主键获取申请人姓名
+     * @param businessKey
+     * @return
+     */
+    @Select("SELECT D.username FROM dept_user D LEFT JOIN platform_apply P ON P.create_id = D.user_id WHERE P.prs_id = #{businessKey}")
+    String selectApplyName(@Param("businessKey") String businessKey);
 }
 

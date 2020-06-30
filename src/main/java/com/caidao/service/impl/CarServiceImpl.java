@@ -270,48 +270,42 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         //获取所有的部门用户车辆中间表
         List<DeptUserCar> deptUserCars = deptUserCarMapper.selectList(null);
         //从部门车辆中间表中统计多少个车辆被绑定了
-        HashMap<Integer, Integer> hashMap = new HashMap<>();
-        HashMap<Integer, StringBuilder> carDriver = new HashMap<>();
-        HashMap<Integer, StringBuilder> carOperate = new HashMap<>();
+        Map<Integer, Integer> bindCarCount = new HashMap<>(deptUserCars.size());
+        Map<Integer, DeptUserCar> carDriver = new HashMap<>(deptUserCars.size());
+        Map<Integer, DeptUserCar> carOperate = new HashMap<>(deptUserCars.size());
+        //统计每辆车的任务次数
         for (DeptUserCar deptUserCar : deptUserCars) {
-            if (deptUserCar.getUsername() == null) {
-                throw new MyException("查询用户名为空，请联系管理员");
-            }
             Integer carId = deptUserCar.getCarId();
-            //统计每辆车的任务次数
-            Integer integer = hashMap.get(carId);
-            if (integer == null) {
-                hashMap.put(carId,1);
+            Integer bindCarId = bindCarCount.get(carId);
+            if (bindCarId == null) {
+                bindCarCount.put(carId,1);
             } else {
-                hashMap.put(carId,hashMap.get(carId) + 1);
-            }
-            //统计司机
-            StringBuilder driver = carDriver.get(carId);
-            if (driver == null && deptUserCar.getRemark().equals("司机")) {
-                carDriver.put(carId,new StringBuilder(deptUserCar.getUsername()));
-            } else if (deptUserCar.getRemark().equals("司机")){
-                StringBuilder drivers = carDriver.get(integer);
-                carDriver.put(carId,drivers.append(",").append(deptUserCar.getUsername()));
-            }
-            //统计操作员
-            StringBuilder operate = carOperate.get(carId);
-            if (operate == null && deptUserCar.getRemark().equals("操作员")) {
-                carOperate.put(carId,new StringBuilder(deptUserCar.getUsername()));
-            } else if (deptUserCar.getRemark().equals("操作员")) {
-                StringBuilder operates = carOperate.get(integer);
-                carOperate.put(carId,operates.append(",").append(deptUserCar.getUsername()));
+                bindCarCount.put(carId,bindCarCount.get(carId) + 1);
             }
         }
-        Integer carCount = hashMap.size();
+        //返回显示车辆司机和操作员信息
+        for (DeptUserCar deptUserCar : deptUserCars) {
+            Integer carId = deptUserCar.getCarId();
+            if (carId == null) {
+                carDriver.put(carId,deptUserCar);
+                carOperate.put(carId,deptUserCar);
+            } else if (deptUserCar.getStartTime().isBefore(carDriver.get(carId).getStartTime())) {
+                carDriver.remove(carId);
+                carDriver.put(carId,deptUserCar);
+                carOperate.remove(carId);
+                carOperate.put(carId,deptUserCar);
+            }
+        }
         List<Map<String, Object>> list = new ArrayList<>();
         for (Car car : carList) {
             Map<String, Object> map1 = new HashMap<>(4);
             map1.put("car",car);
-            map1.put("catTaskCount",hashMap.get(car.getCarId()));
-            map1.put("carDriver",carDriver.get(car.getCarId()));
-            map1.put("carOperate",carOperate.get(car.getCarId()));
+            map1.put("catTaskCount",bindCarCount.get(car.getCarId()));
+            map1.put("carDriver",carDriver.get(car.getCarId()).getDriverName());
+            map1.put("carOperate",carOperate.get(car.getCarId()).getOperatorName());
             list.add(map1);
         }
+        Integer carCount = bindCarCount.size();
         map.put("freeCarCount",carList.size() - carCount);
         map.put("useCarCount",carCount);
         map.put("carDetails",list);

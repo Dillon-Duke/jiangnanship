@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.pojo.DeptDeptRole;
 import com.caidao.pojo.DeptRole;
-import com.caidao.pojo.DeptRoleAuthorition;
+import com.caidao.pojo.DeptRoleAuthorisation;
 import com.caidao.pojo.DeptUserRole;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptDeptRoleMapper;
@@ -91,10 +91,10 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         Boolean result = deptDeptRoleMapper.insertBatches(deptDeptRoles);
         //新增角色权限的中间表
         List<Integer> powerIdList = deptRole.getPowerIdList();
-        List<DeptRoleAuthorition> authorisations = new ArrayList<>(powerIdList.size());
+        List<DeptRoleAuthorisation> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
             for (Integer integer : powerIdList) {
-                DeptRoleAuthorition config = new DeptRoleAuthorition();
+                DeptRoleAuthorisation config = new DeptRoleAuthorisation();
                 config.setDeptId(deptIdList.get(0));
                 config.setRoleId(deptRole.getRoleId());
                 config.setConfigId(integer);
@@ -133,14 +133,14 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         }
 
         //从中间表获取权限数据
-        List<DeptRoleAuthorition> deptRoleAuthoritions = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleAuthorition>()
-                                                                    .eq(DeptRoleAuthorition::getRoleId, id));
+        List<DeptRoleAuthorisation> deptRoleAuthorisations = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleAuthorisation>()
+                                                                    .eq(DeptRoleAuthorisation::getRoleId, id));
 
         //判断中间表是否有数据
         ArrayList<Integer> arrayList1 = new ArrayList<Integer>();
-        if ((deptRoleAuthoritions != null) && (!deptRoleAuthoritions.isEmpty())){
+        if ((deptRoleAuthorisations != null) && (!deptRoleAuthorisations.isEmpty())){
             //将权限id放在角色里
-            for (DeptRoleAuthorition config : deptRoleAuthoritions) {
+            for (DeptRoleAuthorisation config : deptRoleAuthorisations) {
                 arrayList1.add(config.getConfigId());
             }
             deptRole.setPowerIdList(arrayList1);
@@ -160,8 +160,8 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
                 .in(DeptDeptRole::getRoleId, deptRole.getRoleId()));
         //更新角色之前，先删除对应的部门
-        deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorition>()
-                .in(DeptRoleAuthorition::getRoleId, deptRole.getRoleId()));
+        deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorisation>()
+                .in(DeptRoleAuthorisation::getRoleId, deptRole.getRoleId()));
         List<Integer> deptIdList = deptRole.getDeptIdList();
         List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
@@ -175,10 +175,10 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         Boolean batches = deptDeptRoleMapper.insertBatches(deptDeptRoles);
         //新增角色权限的中间表
         List<Integer> powerIdList = deptRole.getPowerIdList();
-        List<DeptRoleAuthorition> authorisations = new ArrayList<>(powerIdList.size());
+        List<DeptRoleAuthorisation> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
             for (Integer integer : powerIdList) {
-                DeptRoleAuthorition config = new DeptRoleAuthorition();
+                DeptRoleAuthorisation config = new DeptRoleAuthorisation();
                 config.setDeptId(deptIdList.get(0));
                 config.setRoleId(deptRole.getRoleId());
                 config.setConfigId(integer);
@@ -213,8 +213,8 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
             deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
                     .in(DeptDeptRole::getRoleId, serializable));
             //删除角色之前，先删除对应的权限中间表
-            deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorition>()
-                    .in(DeptRoleAuthorition::getRoleId, serializable));
+            deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorisation>()
+                    .in(DeptRoleAuthorisation::getRoleId, serializable));
         }
         return super.removeByIds(idList);
     }

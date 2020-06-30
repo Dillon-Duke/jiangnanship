@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.pojo.DeptAuthorition;
-import com.caidao.pojo.DeptRoleAuthorition;
+import com.caidao.pojo.DeptAuthorisation;
+import com.caidao.pojo.DeptRoleAuthorisation;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptConfigMapper;
 import com.caidao.mapper.DeptRoleConfigMapper;
@@ -26,7 +26,7 @@ import java.util.List;
  * @since 2020-05-27
  */
 @Service
-public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAuthorition> implements DeptConfigService {
+public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAuthorisation> implements DeptConfigService {
 
     @Autowired
     private DeptConfigMapper deptConfigMapper;
@@ -37,13 +37,13 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
     /**
      * 获取页面的分页数据
      * @param page
-     * @param deptAuthorition
+     * @param deptAuthorisation
      * @return
      */
     @Override
-    public IPage<DeptAuthorition> findPage(Page<DeptAuthorition> page, DeptAuthorition deptAuthorition) {
-        IPage<DeptAuthorition> selectPage = deptConfigMapper.selectPage(page, new LambdaQueryWrapper<DeptAuthorition>()
-                .eq(StringUtils.hasText(deptAuthorition.getParamKey()), DeptAuthorition::getParamKey, deptAuthorition.getParamKey()));
+    public IPage<DeptAuthorisation> findPage(Page<DeptAuthorisation> page, DeptAuthorisation deptAuthorisation) {
+        IPage<DeptAuthorisation> selectPage = deptConfigMapper.selectPage(page, new LambdaQueryWrapper<DeptAuthorisation>()
+                .eq(StringUtils.hasText(deptAuthorisation.getParamKey()), DeptAuthorisation::getParamKey, deptAuthorisation.getParamKey()));
         return selectPage;
     }
 
@@ -52,9 +52,9 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
      * @return
      */
     @Override
-    public List<DeptAuthorition> getListDept() {
-        List<DeptAuthorition> deptAuthoritions = deptConfigMapper.selectList(new LambdaQueryWrapper<DeptAuthorition>(null));
-        return deptAuthoritions;
+    public List<DeptAuthorisation> getListDept() {
+        List<DeptAuthorisation> deptAuthorisations = deptConfigMapper.selectList(new LambdaQueryWrapper<DeptAuthorisation>(null));
+        return deptAuthorisations;
     }
 
     /**
@@ -66,15 +66,15 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
     public List<String> getPowerByUserId(Integer userId) {
 
         //获取权限ID
-        List<Integer> list = deptConfigMapper.getpowerids(userId);
+        List<Integer> list = deptConfigMapper.getPowerIds(userId);
         if (list == null || list.isEmpty()){
             return null;
         }
 
         //获得对应的权限信息
-        List<Object> deptConfigs = deptConfigMapper.selectObjs(new LambdaQueryWrapper<DeptAuthorition>()
-                .select(DeptAuthorition::getParamValue)
-                .in(DeptAuthorition::getConfId, list));
+        List<Object> deptConfigs = deptConfigMapper.selectObjs(new LambdaQueryWrapper<DeptAuthorisation>()
+                .select(DeptAuthorisation::getParamValue)
+                .in(DeptAuthorisation::getConfId, list));
 
         List<String> result = new ArrayList<String>();
         for (Object object : deptConfigs) {
@@ -89,16 +89,16 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
 
     /**
      * 新增字典值
-     * @param deptAuthorition
+     * @param deptAuthorisation
      * @return
      */
     @Override
-    public boolean save(DeptAuthorition deptAuthorition) {
+    public boolean save(DeptAuthorisation deptAuthorisation) {
 
-        deptAuthorition.setCreateDate(LocalDateTime.now());
-        deptAuthorition.setState(1);
+        deptAuthorisation.setCreateDate(LocalDateTime.now());
+        deptAuthorisation.setState(1);
 
-        return super.save(deptAuthorition);
+        return super.save(deptAuthorisation);
     }
 
     /**
@@ -111,9 +111,9 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
     public boolean removeByIds(Collection<? extends Serializable> idList) {
 
         //删除权限之前需要删除查询是否有角色在使用该权限，如果有，则删除失败
-        List<DeptRoleAuthorition> deptRoleAuthoritions = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleAuthorition>()
-                .in(DeptRoleAuthorition::getConfigId, idList));
-        if (deptRoleAuthoritions.size() != 0 || (!deptRoleAuthoritions.isEmpty())){
+        List<DeptRoleAuthorisation> deptRoleAuthorisations = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleAuthorisation>()
+                .in(DeptRoleAuthorisation::getConfigId, idList));
+        if (deptRoleAuthorisations.size() != 0 || (!deptRoleAuthorisations.isEmpty())){
             throw new MyException("还有角色在使用该权限，删除失败");
         }
         return super.removeByIds(idList);

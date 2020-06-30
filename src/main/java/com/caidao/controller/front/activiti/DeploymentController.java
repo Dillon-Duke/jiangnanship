@@ -1,13 +1,16 @@
 package com.caidao.controller.front.activiti;
 
 import com.caidao.anno.SysLogs;
-import com.caidao.param.ActivityParam;
+import com.caidao.param.ActivityQueryParam;
 import com.caidao.util.ActivitiObj2MapUtils;
 import com.caidao.util.PropertiesReaderUtils;
 import io.swagger.annotations.ApiOperation;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
-import org.activiti.engine.repository.*;
+import org.activiti.engine.repository.Deployment;
+import org.activiti.engine.repository.DeploymentBuilder;
+import org.activiti.engine.repository.ProcessDefinition;
+import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.apache.shiro.util.Assert;
@@ -71,18 +74,18 @@ public class DeploymentController {
     }
 
     /**
-     * 平板车取消流程的发布
+     * 发布平板车快速任务流程
      * @return
      */
-    @ApiOperation("发布平板车取消任务流程")
-    @GetMapping("/flatCarCancelDeploymentPublish")
-    public ResponseEntity<String> flatCarCancelDeploymentPublish(){
+    @ApiOperation("发布平板车快速任务流程")
+    @GetMapping("/flatCarFastDeploymentPublish")
+    public ResponseEntity<String> flatCarFastDeploymentPublish(){
 
         Map<String, String> map = PropertiesReaderUtils.getMap();
-        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarCancelDeploymentZip"));
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarFastDeploymentZip"));
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
         DeploymentBuilder deployment = repositoryService.createDeployment();
-        Deployment deploy = deployment.name(map.get("flatcarCancelDeploymentName"))
+        Deployment deploy = deployment.name(map.get("flatcarFastDeploymentName"))
                 .addZipInputStream(zipInputStream)
                 .deploy();
         return ResponseEntity.ok(deploy.getId());
@@ -101,6 +104,24 @@ public class DeploymentController {
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
         DeploymentBuilder deployment = repositoryService.createDeployment();
         Deployment deploy = deployment.name(map.get("flatcarOtherTempDeploymentName"))
+                .addZipInputStream(zipInputStream)
+                .deploy();
+        return ResponseEntity.ok(deploy.getId());
+    }
+
+    /**
+     * 平板车取消流程的发布
+     * @return
+     */
+    @ApiOperation("发布平板车取消任务流程")
+    @GetMapping("/flatCarCancelDeploymentPublish")
+    public ResponseEntity<String> flatCarCancelDeploymentPublish(){
+
+        Map<String, String> map = PropertiesReaderUtils.getMap();
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarCancelDeploymentZip"));
+        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+        DeploymentBuilder deployment = repositoryService.createDeployment();
+        Deployment deploy = deployment.name(map.get("flatcarCancelDeploymentName"))
                 .addZipInputStream(zipInputStream)
                 .deploy();
         return ResponseEntity.ok(deploy.getId());
@@ -144,22 +165,17 @@ public class DeploymentController {
 
     /**
      * 通过Id删除平板车已发布的流程
-     * @param activityParam
+     * @param param
      * @return
      */
     @SysLogs("通过Id删除平板车已发布的流程")
     @ApiOperation("通过Id删除平板车已发布的流程")
     @DeleteMapping("/delete")
-    public ResponseEntity<Void> deleteFlatCarDeployment(@RequestBody ActivityParam activityParam){
+    public ResponseEntity<Void> deleteFlatCarDeployment(@RequestBody ActivityQueryParam param){
 
-        Assert.notNull(activityParam,"参数不能为空");
-
-        //判断是否强制删除
-        if (!activityParam.isForced){
-            activityParam.isForced = false;
-        }
+        Assert.notNull(param,"参数不能为空");
         try {
-            repositoryService.deleteDeployment(activityParam.getDeploymentId(), activityParam.isForced);
+            repositoryService.deleteDeployment(param.getDeploymentId(), param.isForced());
         } catch (RuntimeException e) {
             throw new RuntimeException("有实例正在使用该流程，不能删除");
         }
@@ -172,7 +188,7 @@ public class DeploymentController {
      */
     @ApiOperation("查询正在运行的实例")
     @PostMapping("/getAllInstance")
-    public ResponseEntity<List<Map<String, Object>>> getAllInstance(@RequestBody ActivityParam activityParam){
+    public ResponseEntity<List<Map<String, Object>>> getAllInstance(@RequestBody  ActivityQueryParam activityParam){
 
         ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
         List<Map<String, Object>> listMap = new ArrayList<>();

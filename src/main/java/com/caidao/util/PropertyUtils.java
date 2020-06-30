@@ -46,7 +46,7 @@ public class PropertyUtils {
 	/**
 	 * 所有用户的登录token集合
 	 */
-	public static final String ALL_USER_TOKEN = "allUserToken:";
+	public static final String ALL_USER_TOKEN = "allUserToken";
 
 	/**
 	 * 自定义token头部
@@ -69,11 +69,6 @@ public class PropertyUtils {
 	public static final String MASSAGE_CODE = "massage_code";
 
 	/**
-	 *部门取消任务是否开始驳运
-	 */
-	public static final String IS_START_TRANS = "is_start_trans";
-
-	/**
 	 * 平板车计划任务申请工单号前缀
 	 */
 	public static final String FLAT_CAR_PLAN_ODD_NUMBER_PREFIX = "PBSQJH";
@@ -92,5 +87,15 @@ public class PropertyUtils {
 	 * 平板车衍生任务申请工单号前缀
 	 */
 	public static final String FLAT_CAR_OTHER_TEMP_ODD_NUMBER_PREFIX = "PBSQKS";
+
+	/**
+	 * 司机绑定车辆信息前缀
+	 */
+	public static final String USER_BIND_CAR_TASK_PREFIX = "PBRW";
+
+	/**
+	 * 工作流程中司机执行，执行确认的后几个流程名称，用来判断任务是否已经开始执行了
+	 */
+	public static final String PLAT_CAR_PROCESS_IS_OR_NOT_EXECUTE = "司机执行,执行完成,部门评价";
 
 }

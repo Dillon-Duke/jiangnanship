@@ -9,6 +9,12 @@ import lombok.Data;
 @Data
 public class ActivityQueryParam {
 
+    @ApiModelProperty("是否强制执行该操作")
+    private boolean isForced = false;
+
+    @ApiModelProperty("流程定义名称")
+    private String processDefinitionName;
+
     @ApiModelProperty("已发布的工作流Id")
     private String deploymentId;
 
@@ -16,15 +22,15 @@ public class ActivityQueryParam {
     private String userName;
 
     @ApiModelProperty("工作流当前任务名称")
-    public String taskName;
+    private String taskName;
 
     @ApiModelProperty("工作流当前任务状态")
-    public String taskState;
+    private String taskState;
 
     @ApiModelProperty("工作流历史任务开始时间")
-    public String historyStartTime;
+    private String historyStartTime;
 
     @ApiModelProperty("工作流历史任务结束时间")
-    public String historyEndTime;
+    private String historyEndTime;
 
 }
