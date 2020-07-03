@@ -60,12 +60,9 @@ public class CarConfigController {
 	 */
 	@PostMapping
 	@ApiOperation("新增字典数据")
-	public ResponseEntity<String> addSysConfig(@RequestBody CarConfig config){
-		boolean save = configService.save(config);
-		if (save) {
-			return ResponseEntity.ok("新增配置成功");
-		}
-		return ResponseEntity.ok("新增配置失败");
+	public ResponseEntity<Boolean> addSysConfig(@RequestBody CarConfig config){
+		Boolean save = configService.save(config);
+		return ResponseEntity.ok(save);
 	}
 	
 	/**
@@ -87,12 +84,9 @@ public class CarConfigController {
 	 */
 	@PutMapping
 	@ApiOperation("更新字典数据")
-	public ResponseEntity<String> updateSysConfig(@RequestBody CarConfig config){
-		boolean update = configService.updateById(config);
-		if (update) {
-			return ResponseEntity.ok("修改配置成功");
-		}
-		return ResponseEntity.ok("修改配置失败");
+	public ResponseEntity<Boolean> updateSysConfig(@RequestBody CarConfig config){
+		Boolean update = configService.updateById(config);
+		return ResponseEntity.ok(update);
 	}
 	
 	/**
@@ -103,12 +97,9 @@ public class CarConfigController {
 	@SysLogs("批量删除字典数据")
 	@DeleteMapping
 	@ApiOperation("批量删除字典数据")
-	public ResponseEntity<String> deleteSysConfig(@RequestBody List<Integer> configId){
-		boolean remove = configService.removeByIds(configId);
-		if (remove) {
-			return ResponseEntity.ok("批量删除配置成功");
-		}
-		return ResponseEntity.ok("批量删除配置失败");
+	public ResponseEntity<Boolean> deleteSysConfig(@RequestBody List<Integer> configId){
+		Boolean remove = configService.removeByIds(configId);
+		return ResponseEntity.ok(remove);
 
 	}
 

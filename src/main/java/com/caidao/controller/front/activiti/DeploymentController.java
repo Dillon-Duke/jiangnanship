@@ -44,7 +44,6 @@ public class DeploymentController {
     @ApiOperation("发布平板车计划任务流程")
     @GetMapping("/flatCarPlanDeploymentPublish")
     public ResponseEntity<String> flatCarPlanDeploymentPublish(){
-
         Map<String, String> map = PropertiesReaderUtils.getMap();
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarPlanDeploymentZip"));
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
@@ -62,7 +61,6 @@ public class DeploymentController {
     @ApiOperation("发布平板车临时任务流程")
     @GetMapping("/flatCarTempDeploymentPublish")
     public ResponseEntity<String> flatCarTempDeploymentPublish(){
-
         Map<String, String> map = PropertiesReaderUtils.getMap();
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarTempDeploymentZip"));
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
@@ -80,7 +78,6 @@ public class DeploymentController {
     @ApiOperation("发布平板车快速任务流程")
     @GetMapping("/flatCarFastDeploymentPublish")
     public ResponseEntity<String> flatCarFastDeploymentPublish(){
-
         Map<String, String> map = PropertiesReaderUtils.getMap();
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarFastDeploymentZip"));
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
@@ -98,7 +95,6 @@ public class DeploymentController {
     @ApiOperation("发布平板车衍生任务流程")
     @GetMapping("/flatCarOtherTempDeploymentPublish")
     public ResponseEntity<String> flatCarOtherTempDeploymentPublish(){
-
         Map<String, String> map = PropertiesReaderUtils.getMap();
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarOtherTempDeploymentZip"));
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
@@ -116,7 +112,6 @@ public class DeploymentController {
     @ApiOperation("发布平板车取消任务流程")
     @GetMapping("/flatCarCancelDeploymentPublish")
     public ResponseEntity<String> flatCarCancelDeploymentPublish(){
-
         Map<String, String> map = PropertiesReaderUtils.getMap();
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(map.get("flatcarCancelDeploymentZip"));
         ZipInputStream zipInputStream = new ZipInputStream(inputStream);
@@ -151,7 +146,6 @@ public class DeploymentController {
     @ApiOperation("查询已经部署的流程")
     @GetMapping("/getDeployment")
     public ResponseEntity<List<Map<String, Object>>> getDeployment(){
-
         ProcessDefinitionQuery processDefinitionQuery = repositoryService.createProcessDefinitionQuery();
         List<Map<String, Object>> listMap = new ArrayList<>();
         List<ProcessDefinition> list = processDefinitionQuery.orderByProcessDefinitionVersion().desc().list();
@@ -172,7 +166,6 @@ public class DeploymentController {
     @ApiOperation("通过Id删除平板车已发布的流程")
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteFlatCarDeployment(@RequestBody ActivityQueryParam param){
-
         Assert.notNull(param,"参数不能为空");
         try {
             repositoryService.deleteDeployment(param.getDeploymentId(), param.isForced());
@@ -189,11 +182,9 @@ public class DeploymentController {
     @ApiOperation("查询正在运行的实例")
     @PostMapping("/getAllInstance")
     public ResponseEntity<List<Map<String, Object>>> getAllInstance(@RequestBody  ActivityQueryParam activityParam){
-
         ProcessInstanceQuery instanceQuery = runtimeService.createProcessInstanceQuery();
         List<Map<String, Object>> listMap = new ArrayList<>();
-        List<ProcessInstance> instances = null;
-
+        List<ProcessInstance> instances;
         //判断是否有查询条件
         if (activityParam.getProcessDefinitionName() == null || activityParam.getProcessDefinitionName() == ""){
             instances = instanceQuery.orderByProcessInstanceId().desc().list();

@@ -1,9 +1,9 @@
 package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.param.MenuParam;
 import com.caidao.pojo.SysMenu;
 import com.caidao.pojo.SysUser;
-import com.caidao.param.Menu;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public interface SysMenuService extends IService<SysMenu> {
 	 * @param user
 	 * @return
 	 */
-	List<Menu> getMenuListByUserId(SysUser user);
+	List<MenuParam> getMenuListByUserId(SysUser user);
 	
 	/**
 	 * 查询用户的权限列表

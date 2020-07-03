@@ -25,21 +25,36 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
-  redis:  #redis配置
+  #redis配置
+  redis:
+    # Redis数据库索引（默认为0）
+    database: 0
+    # Redis服务器地址
     host: 129.204.74.133
+    # Redis服务器连接端口
     port: 6379
     jedis:
       pool:
         max-idle: 15
-        min-idle: 10
-        max-active: 20
+        min-idle: 0
+        max-active: 200
+        max-wait: 1000ms
 
+  #公司数据库地址
   datasource:
     username: root
-    password: Mail123456
+    password: Kaifa2019!
     #&nullCatalogMeansCurrent=true 指代工作流在扫描的时候只扫描当前数据库，没有表则创建表 不要去扫描所有数据库
-    url: jdbc:mysql://129.204.74.133:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
+    url: jdbc:mysql://192.168.222.5:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+#个人数据库地址
+#  datasource:
+#    username: root
+#    password: Mail123456
+#    #&nullCatalogMeansCurrent=true 指代工作流在扫描的时候只扫描当前数据库，没有表则创建表 不要去扫描所有数据库
+#    url: jdbc:mysql://129.204.74.133:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
+#    driver-class-name: com.mysql.cj.jdbc.Driver
 
 #进行数据加密
   #spring.encrypt.responseEncryptUriList[1]=/encryptEntity

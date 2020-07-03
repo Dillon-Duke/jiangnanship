@@ -2,8 +2,9 @@ package com.caidao.controller.back;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
+import com.caidao.config.BackUserRealmConfig;
 import com.caidao.exception.MyException;
-import com.caidao.param.Menu;
+import com.caidao.param.MenuParam;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.SysMenuService;
@@ -20,15 +21,14 @@ import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import redis.clients.jedis.Jedis;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +42,9 @@ import java.util.Map;
 public class LoginController {
 
 	public static final Logger logger = LoggerFactory.getLogger(LoginController.class);
-	
+
 	@Autowired
-	private StringRedisTemplate redis;
+	private Jedis jedis;
 	
 	@Autowired
 	private SysMenuService sysMenuService;
@@ -67,7 +67,7 @@ public class LoginController {
 		try {
 			outputStream = response.getOutputStream();
 			createCircleCaptcha.write(outputStream);
-			redis.opsForValue().set(PropertyUtils.VALCODE_PRIFAX+uuid, createCircleCaptcha.getCode(), Duration.ofSeconds(60));
+			jedis.setex(PropertyUtils.VALCODE_PRIFAX+uuid,60, createCircleCaptcha.getCode());
 		} catch (IOException e) {
 			throw new IOException(e.getMessage());
 		}finally {
@@ -103,7 +103,7 @@ public class LoginController {
 
 		//将所有登录用户信息token放在redis中，之后修改密码时删除对应的token
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-		redis.opsForHash().put(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt(),token);
+		jedis.hset(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt(),token);
 		return ResponseEntity.ok(token);
 	}
 	
@@ -122,7 +122,7 @@ public class LoginController {
 		Map<String, Object> result = new HashMap<String,Object>(2);
 
 		//用户的菜单列表
-		List<Menu> menuList = sysMenuService.getMenuListByUserId(user);
+		List<MenuParam> menuList = sysMenuService.getMenuListByUserId(user);
 		result.put("menuList", menuList);
 
 		//用户的菜单权限
@@ -150,14 +150,14 @@ public class LoginController {
 	@PostMapping("/sys/logout")
 	@ApiOperation("退出账号")
 	public ResponseEntity<Void> logout(){
-
-		//获取对应的登录用户session
-		String token = SecurityUtils.getSubject().getSession().getId().toString();
-		redis.delete(PropertyUtils.USER_SESSION + token);
-
 		//删除用户在redis 里面的token
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-		redis.opsForHash().delete(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt());
+		jedis.hdel(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt());
+		//获取对应的登录用户session
+		String token = SecurityUtils.getSubject().getSession().getId().toString();
+		jedis.del(PropertyUtils.USER_SESSION + token);
+		//清空缓存中的信息
+		new BackUserRealmConfig().getBackClearAllCache();
 		return ResponseEntity.ok().build();
 	}
 
@@ -168,7 +168,7 @@ public class LoginController {
 	 */
 	@PostMapping("/sys/user/password")
 	@ApiOperation("更新自己的密码")
-	public ResponseEntity<String> uptedaPass(@RequestBody UserParam userParam){
+	public ResponseEntity<String> updatePass(@RequestBody UserParam userParam){
 		SysUser sysUser = (SysUser)SecurityUtils.getSubject().getPrincipal();
 		int updatePass = sysUserService.updatePass(sysUser, userParam);
 		if (updatePass == 1){
@@ -185,7 +185,7 @@ public class LoginController {
 			throw new MyException("验证码校验失败");
 		}
 		//获取redis里面的验证码并校验
-		String redisImageCode = redis.opsForValue().get(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
+		String redisImageCode = jedis.get(PropertyUtils.VALCODE_PRIFAX + sessionUuid);
 		if (!StringUtils.hasText(redisImageCode)) {
 			throw new MyException("验证码超时，请重新验证");
 		}
@@ -193,7 +193,7 @@ public class LoginController {
 			throw new MyException("验证码错误，请重新输入");
 		}
 		//验证码使用之后 删除
-		redis.delete(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
+		jedis.del(PropertyUtils.VALCODE_PRIFAX+sessionUuid);
 	}
 
 

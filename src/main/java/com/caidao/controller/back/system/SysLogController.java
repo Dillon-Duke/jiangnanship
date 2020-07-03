@@ -6,9 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.pojo.SysLog;
 import com.caidao.service.SysLogService;
 import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/sys/log")
-@Slf4j
 public class SysLogController {
 
 	public static final Logger logger = LoggerFactory.getLogger(SysLogController.class);
@@ -41,10 +38,6 @@ public class SysLogController {
 	@ApiOperation("获取当前页日志信息")
 	@RequiresPermissions("sys:log:page")
 	public ResponseEntity<IPage<SysLog>> getPage(Page<SysLog> page, SysLog logs){
-
-		Assert.notNull(page,"日志页面属性不能为空");
-		log.info("日志获取当前页{}，页大小{}",page.getCurrent(),page.getSize());
-
 		IPage<SysLog> findPage = sysLogService.findPage(page,logs);
 		return ResponseEntity.ok(findPage);
 	}

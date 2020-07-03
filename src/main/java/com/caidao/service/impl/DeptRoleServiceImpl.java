@@ -4,19 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.pojo.DeptDeptRole;
-import com.caidao.pojo.DeptRole;
-import com.caidao.pojo.DeptRoleAuthorisation;
-import com.caidao.pojo.DeptUserRole;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptDeptRoleMapper;
 import com.caidao.mapper.DeptRoleConfigMapper;
 import com.caidao.mapper.DeptRoleMapper;
 import com.caidao.mapper.DeptUserRoleMapper;
+import com.caidao.pojo.*;
 import com.caidao.service.DeptRoleService;
+import com.caidao.util.EntityUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -30,6 +31,7 @@ import java.util.List;
  * @since 2020-05-27
  */
 @Service
+@Slf4j
 public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> implements DeptRoleService {
 
     @Autowired
@@ -52,6 +54,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      */
     @Override
     public IPage<DeptRole> getDeptRolePage(Page<DeptRole> page , DeptRole deptRole) {
+        log.info("获取部门角色当前页{}，页大小{}",page.getCurrent(),page.getSize());
         IPage<DeptRole> selectPage = deptRoleMapper.selectPage(page, new LambdaQueryWrapper<DeptRole>()
                 .eq(StringUtils.hasText(deptRole.getRoleName()), DeptRole::getRoleName, deptRole.getRoleName()));
         return selectPage;
@@ -63,6 +66,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      */
     @Override
     public List<DeptRole> getDeptRoleList() {
+        log.info("获取部门角色列表");
         List<DeptRole> deptRoles = deptRoleMapper.selectList(null);
         return deptRoles;
     }
@@ -73,7 +77,12 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean save(DeptRole deptRole) {
+        Assert.notNull(deptRole,"新增部门角色不能为空");
+        log.info("新增角色名为{}的部门角色",deptRole.getRoleName());
+        SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+        deptRole.setCreateId(sysUser.getUserId());
         deptRole.setCreateDate(LocalDateTime.now());
         deptRole.setState(1);
         boolean save = super.save(deptRole);
@@ -82,10 +91,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
             for (Integer integer : deptIdList) {
-                DeptDeptRole role = new DeptDeptRole();
-                role.setDeptId(integer);
-                role.setRoleId(deptRole.getRoleId());
-                deptDeptRoles.add(role);
+                deptDeptRoles.add(EntityUtils.getDeptDeptRole(integer, deptRole.getRoleId()));
             }
         }
         Boolean result = deptDeptRoleMapper.insertBatches(deptDeptRoles);
@@ -94,11 +100,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<DeptRoleAuthorisation> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
             for (Integer integer : powerIdList) {
-                DeptRoleAuthorisation config = new DeptRoleAuthorisation();
-                config.setDeptId(deptIdList.get(0));
-                config.setRoleId(deptRole.getRoleId());
-                config.setConfigId(integer);
-                authorisations.add(config);
+                authorisations.add(EntityUtils.getDeptRoleAuthorisation(deptIdList.get(0), deptRole.getRoleId(), integer));
             }
         }
         Boolean result1 = deptRoleConfigMapper.insertBatches(authorisations);
@@ -115,13 +117,12 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      */
     @Override
     public DeptRole getById(Serializable id) {
-
+        Assert.notNull(id,"角色id{}不能为空");
+        log.info("查询角色id为{}的部门角色",id);
         DeptRole deptRole = super.getById(id);
-
         //从中间表获取部门数据
         List<DeptDeptRole> deptDeptRoles = deptDeptRoleMapper.selectList(new LambdaQueryWrapper<DeptDeptRole>()
                                                                 .eq(DeptDeptRole::getRoleId, id));
-
         //判断中间表是否有数据
         List<Integer> arrayList = new ArrayList<>();
         if ((deptDeptRoles != null) && (!deptDeptRoles.isEmpty())){
@@ -131,11 +132,9 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
             }
             deptRole.setDeptIdList(arrayList);
         }
-
         //从中间表获取权限数据
         List<DeptRoleAuthorisation> deptRoleAuthorisations = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleAuthorisation>()
                                                                     .eq(DeptRoleAuthorisation::getRoleId, id));
-
         //判断中间表是否有数据
         ArrayList<Integer> arrayList1 = new ArrayList<Integer>();
         if ((deptRoleAuthorisations != null) && (!deptRoleAuthorisations.isEmpty())){
@@ -154,7 +153,12 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean updateById(DeptRole deptRole) {
+        Assert.notNull(deptRole,"更新角色{}不能为空");
+        log.info("更新角色名称为{}的部门角色",deptRole.getRoleName());
+        SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
+        deptRole.setUpdateId(sysUser.getUserId());
         deptRole.setUpdateDate(LocalDateTime.now());
         //更新角色之前，先删除对应的部门
         deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
@@ -166,10 +170,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
             for (Integer integer : deptIdList) {
-                DeptDeptRole role = new DeptDeptRole();
-                role.setDeptId(integer);
-                role.setRoleId(deptRole.getRoleId());
-                deptDeptRoles.add(role);
+                deptDeptRoles.add(EntityUtils.getDeptDeptRole(integer, deptRole.getRoleId()));
             }
         }
         Boolean batches = deptDeptRoleMapper.insertBatches(deptDeptRoles);
@@ -178,11 +179,7 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<DeptRoleAuthorisation> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
             for (Integer integer : powerIdList) {
-                DeptRoleAuthorisation config = new DeptRoleAuthorisation();
-                config.setDeptId(deptIdList.get(0));
-                config.setRoleId(deptRole.getRoleId());
-                config.setConfigId(integer);
-                authorisations.add(config);
+                authorisations.add(EntityUtils.getDeptRoleAuthorisation(deptIdList.get(0), deptRole.getRoleId(), integer));
             }
         }
         Boolean insertBatches = deptRoleConfigMapper.insertBatches(authorisations);
@@ -200,14 +197,14 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean removeByIds(Collection<? extends Serializable> idList) {
-
+        Assert.notNull(idList,"删除角色{}不能为空");
+        log.info("删除角色Id为{}的部门角色",idList);
         //判断如果有用户存在，则不能删除角色
         List<DeptUserRole> userRoles = deptUserRoleMapper.selectList(new LambdaQueryWrapper<DeptUserRole>()
                                         .in(DeptUserRole::getRoleId, idList));
         if ((!userRoles.isEmpty()) || (userRoles != null)){
             throw new MyException("该角色上面有绑定的用户，不能删除");
         }
-
         for (Serializable serializable : idList) {
             //删除角色之前，先删除对应的角色部门中间表
             deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
@@ -218,4 +215,5 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         }
         return super.removeByIds(idList);
     }
+
 }

@@ -5,7 +5,6 @@ import com.caidao.service.DeptConfigService;
 import com.caidao.service.DeptUserService;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.UserLoginTokenUtils;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -18,11 +17,9 @@ import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 前端手机页面realm登录授权使用
@@ -31,9 +28,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Configuration
 public class AppUserRealmConfig extends AuthorizingRealm {
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private DeptUserService deptUserService;
@@ -66,12 +60,6 @@ public class AppUserRealmConfig extends AuthorizingRealm {
             return null;
         }
 
-        //更新shiro里面账号信息的过期时间
-        String token = SecurityUtils.getSubject().getSession().getId().toString();
-        redisTemplate.expire(PropertyUtils.USER_SESSION + token, 30, TimeUnit.MINUTES);
-        redisTemplate.expire(PropertyUtils.APP_USER_PRIVATE_KEY + token, 30, TimeUnit.MINUTES);
-        redisTemplate.expire(PropertyUtils.APP_USER_PUBLIC_KEY+ token, 30, TimeUnit.MINUTES);
-
         simpleAuthorizationInfo.setStringPermissions(new HashSet<>(powerByUserId));
         return simpleAuthorizationInfo;
     }
@@ -93,6 +81,38 @@ public class AppUserRealmConfig extends AuthorizingRealm {
         ByteSource byteSource = ByteSource.Util.bytes(deptUser.getUserSalt().getBytes());
         SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(deptUser,deptUser.getPassword(),byteSource,getName());
         return simpleAuthenticationInfo;
+    }
+
+    /**
+     * 重写方法,清除当前用户的的 授权缓存
+     * @param principals
+     */
+    @Override
+    public void clearCachedAuthorizationInfo(PrincipalCollection principals) {
+        super.clearCachedAuthorizationInfo(principals);
+    }
+
+    /**
+     * 重写方法，清除当前用户的 认证缓存
+     * @param principals
+     */
+    @Override
+    public void clearCachedAuthenticationInfo(PrincipalCollection principals) {
+        super.clearCachedAuthenticationInfo(principals);
+    }
+
+    @Override
+    public void clearCache(PrincipalCollection principals) {
+        super.clearCache(principals);
+    }
+
+
+    /**
+     * 自定义方法：清除所有的  认证缓存  和 授权缓存
+     */
+    public void getAppClearAllCache(Object token) {
+        getAuthorizationCache().remove(token);
+        getAuthenticationCache().remove(token);
     }
 
 }

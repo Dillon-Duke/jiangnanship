@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 @Aspect
 @Component
 public class SysLogAspectj {
+	private static final int MAX_CONTENT_LENGTH = 250;
 	
 	@Autowired
 	private SysLogService sysLogService;
@@ -60,7 +61,7 @@ public class SysLogAspectj {
 		Object[] args = joinPoint.getArgs();
 		String jsonStr = JSONUtil.toJsonStr(args);
 
-		if (jsonStr.length() > 250){
+		if (jsonStr.length() > MAX_CONTENT_LENGTH){
 			jsonStr = jsonStr.substring(0,250) + "...";
 		}
 		log.setParams(args == null?"": jsonStr);

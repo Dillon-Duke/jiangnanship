@@ -80,8 +80,7 @@ public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig
 	public CarConfig getById(Serializable id) {
 		Assert.notNull(id , "Id不能为空");
 		log.info("获取参数ID为{}的数据",id);
-		CarConfig update = super.getById(id);
-		return update;
+		return super.getById(id);
 	}
 
 	/**

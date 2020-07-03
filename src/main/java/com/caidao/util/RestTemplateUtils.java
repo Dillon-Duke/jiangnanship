@@ -17,14 +17,11 @@ import org.springframework.web.client.RestTemplate;
 public class RestTemplateUtils {
 
     public static final Logger logger = LoggerFactory.getLogger(RestTemplateUtils.class);
-
     private static class SingletonRestTemplate {
         static final RestTemplate INSTANCE = new RestTemplate();
     }
-
     private RestTemplateUtils() {
     }
-
     public static RestTemplate getInstance() {
         return SingletonRestTemplate.INSTANCE;
     }

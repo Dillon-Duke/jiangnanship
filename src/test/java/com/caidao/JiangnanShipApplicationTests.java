@@ -1,48 +1,42 @@
 package com.caidao;
 
-import com.caidao.mapper.AppMassageMapper;
-import com.caidao.mapper.DeptUserCarMapper;
-import org.activiti.engine.TaskService;
-import org.activiti.engine.task.Task;
+import com.caidao.mapper.CarMapper;
+import com.caidao.mapper.CarPlatformApplyMapper;
+import com.caidao.pojo.Car;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.StringRedisTemplate;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @SpringBootTest
 class JiangnanShipApplicationTests {
 
     @Autowired
-    private DeptUserCarMapper deptUserCarMapper;
+    private CarMapper carMapper;
 
    @Autowired
-   private TaskService taskService;
+   private CarPlatformApplyMapper carPlatformApplyMapper;
 
-   @Autowired
-   private AppMassageMapper appMassageMapper;
-
-   @Autowired
-   private StringRedisTemplate stringRedisTemplate;
-
-
-    @Test
-    void contextLoads() {
-
-        System.out.println((int)((Math.random()*9+1)*100000));
-    }
 
     @Test
     void deptTest(){
-        Task task = taskService.createTaskQuery()
-                .processInstanceBusinessKey("admin:14")
-                .singleResult();
-        System.out.println(task);
-    }
+        //获得所有的车辆信息
+        List<Car> carLists = carMapper.selectList(null);
+        //获取所有当前时间点有任务的车辆id
+        List<Integer> carIds = carPlatformApplyMapper.selectTaskCarList(LocalDateTime.now());
 
-    @Test
-    void test1 () {
-        System.out.println(stringRedisTemplate.opsForValue().get("appUserPrivateKey:225a37ed-baa7-4c00-a33d-655d43faf1ec"));
+        //去除当前时间有任务的车辆
+        List<Car> carList = new ArrayList<>(carLists.size());
+        for (Car car : carLists) {
+            if (!carIds.contains(car.getCarId())) {
+                carList.add(car);
+            }
+        }
+        System.out.println(carList);
     }
 
 }

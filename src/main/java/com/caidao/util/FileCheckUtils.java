@@ -16,19 +16,16 @@ import java.io.IOException;
  */
 public class FileCheckUtils {
 
-
     /**
      * 检查文件是否符合上传标准
      * @param fileParam
      */
     public static String checkFile(FileParam fileParam){
         File file = fileParam.getFile();
-
         //判断是否为文件
         if (!file.isFile()){
             return "文件类型错误";
         }
-
         //判断文件类型是否符合要求
         String fileType = fileParam.getFileType();
         String[] strings = fileType.split(",");
@@ -44,12 +41,10 @@ public class FileCheckUtils {
         if (count == 0){
             return "上传文件类型不在规定类型之内";
         }
-
         //判断上传文件大小是否超过默认最大值
         if (fileParam.getMaxFileSize() < file.length()){
             return "上传文件过大";
         }
-
         //判断上传文件长宽是否超过最大
         FileInputStream inputStream;
         BufferedImage read;

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.SysRoleMenu;
 import org.springframework.stereotype.Repository;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -20,4 +21,11 @@ public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenu> {
      * @return
      */
     Boolean insertBatches(List<SysRoleMenu> roleMenus);
+
+    /**
+     * 批量通过角色Id删除记录
+     * @param list
+     * @return
+     */
+    Boolean deleteBatchRoleIds(List<Serializable> list);
 }

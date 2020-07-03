@@ -1,6 +1,7 @@
 package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.param.FlatCarAdjustmentParam;
 import com.caidao.param.FlatCarCancelParam;
 import com.caidao.pojo.PlatformReason;
 
@@ -24,7 +25,7 @@ public interface PlatformReasonService extends IService<PlatformReason> {
      * @param param
      * @return
      */
-    String completeCancelApplyTask(FlatCarCancelParam param);
+    boolean completeCancelApplyTask(FlatCarCancelParam param);
 
     /**
      * 完成不带意见的审批
@@ -46,4 +47,18 @@ public interface PlatformReasonService extends IService<PlatformReason> {
      * @return
      */
     void cancelApplyTaskDriverWorking(FlatCarCancelParam param);
+
+    /**
+     * 未开始执行的平板车任务调整
+     * @param param
+     * @return
+     */
+    Boolean flatcarAdjustmentWithNoStart(FlatCarAdjustmentParam param);
+
+    /**
+     * 已开始执行的平板车任务调整
+     * @param param
+     * @return
+     */
+    Boolean flatcarAdjustmentWithStart(FlatCarAdjustmentParam param);
 }

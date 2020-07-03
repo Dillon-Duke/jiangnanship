@@ -37,4 +37,11 @@ public interface AppMassageMapper extends BaseMapper<AppMassage> {
      * @return
      */
     Boolean insertBatches(List<AppMassage> appMassages);
+
+    /**
+     * 批量更新消息
+     * @param list
+     * @return
+     */
+    Boolean updateBatches(List<AppMassage> list);
 }

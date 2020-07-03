@@ -13,7 +13,7 @@ import java.util.List;
  */
 
 @Data
-public class Menu implements Serializable {
+public class MenuParam implements Serializable {
 
 	@ApiModelProperty("菜单id")
 	private Integer menuId;
@@ -25,6 +25,6 @@ public class Menu implements Serializable {
 	private String url;
 	
 	@ApiModelProperty("子菜单列表")
-	private List<Menu> list = new ArrayList<Menu>(0);
+	private List<MenuParam> list = new ArrayList<MenuParam>(0);
 
 }

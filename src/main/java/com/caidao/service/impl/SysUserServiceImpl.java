@@ -14,15 +14,17 @@ import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.SysUser;
 import com.caidao.pojo.SysUserRole;
 import com.caidao.service.SysUserService;
+import com.caidao.util.EntityUtils;
 import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
-import org.apache.shiro.util.ByteSource;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import redis.clients.jedis.Jedis;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -36,6 +38,7 @@ import java.util.UUID;
  * @since 2020-03-25
  */
 @Service
+@Slf4j
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
 	@Autowired
@@ -45,7 +48,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	private DeptUserMapper deptUserMapper;
 
 	@Autowired
-	private StringRedisTemplate redisTemplate;
+	private Jedis jedis;
 	
 	@Autowired
 	private SysUserRoleMapper sysUserRoleMapper;
@@ -69,6 +72,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 */
 	@Override
 	public IPage<SysUser> getUserPage(Page<SysUser> page, SysUser sysUser) {
+		Assert.notNull(page,"用户属性不能为空");
+		log.info("查询用户页面当前页{}，页大小{}",page.getCurrent(),page.getSize());
 		IPage<SysUser> usersPage = sysUserMapper.selectPage(page, new LambdaQueryWrapper<SysUser>()
 				.like(StringUtils.hasText(sysUser.getUsername()),SysUser::getUsername,sysUser.getUsername())
 				.like(StringUtils.hasText(sysUser.getPhone()),SysUser::getPhone,sysUser.getPhone())
@@ -83,7 +88,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	@Transactional(rollbackFor = RuntimeException.class)
 	public boolean save(SysUser sysUser) {
-		Assert.notNull(sysUser, "sysUser must not be null");
+		Assert.notNull(sysUser,"新增用户属性不能为空");
+		log.info("新增用户名为{}的用户",sysUser.getUsername());
+		SysUser sysUser2 = (SysUser) SecurityUtils.getSubject().getPrincipal();
+		sysUser.setCreateId(sysUser2.getUserId());
 		//查询数据库中是否有该用户名，如果有，则提示更换用户名
 		SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
 				.eq(SysUser::getUsername, sysUser.getUsername()));
@@ -95,7 +103,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		sysUser.setUserSalt(salt);
 		sysUser.setState(1);
 		//将密码设置为盐值密码
-		setSaltPass(sysUser, salt);
+		String saltPassword = Md5Utils.getHashAndSaltAndTime(sysUser.getPassword(), salt, 1024);
+		sysUser.setPassword(saltPassword);
 		boolean save = super.save(sysUser);
 		//判断是否需要创建部门角色
 		String userAdd = sysUser.getDeptUserAdd();
@@ -121,7 +130,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 			deptUser.setState(1);
 			deptUserMapper.insert(deptUser);
 		}
-
 		//设置用户角色列表
 		List<Integer> roleIds = sysUser.getRoleIdList();
 		if (roleIds == null || roleIds.isEmpty()) {
@@ -129,19 +137,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		}
 		List<SysUserRole> userRoles = new ArrayList<>(roleIds.size());
 		for (Integer roleId : roleIds) {
-			SysUserRole sysUserRole = new SysUserRole();
-			sysUserRole.setUserId(sysUser.getUserId());
-			sysUserRole.setRoleId(roleId);
-			userRoles.add(sysUserRole);
+			userRoles.add(EntityUtils.getSysUserRole(sysUser.getUserId(),roleId));
 		}
-		Boolean result = sysUserRoleMapper.insertBatches(userRoles);
-		if (result) {
-			return save;
-		}
-		return false;
+		return sysUserRoleMapper.insertBatches(userRoles);
 	}
-
-
 
 	/**
 	 * 批量移除用户
@@ -150,6 +149,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	@Transactional(rollbackFor = NullPointerException.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
+		Assert.notNull(idList,"用户IDs不能为空");
+		log.info("删除用户ID为{}的用户",idList);
 		boolean removeByIds = super.removeByIds(idList);
 		if (idList==null || idList.isEmpty()) {
 			throw new MyException("批量删除用户不能为空");
@@ -181,15 +182,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	public int updatePass(SysUser sysUser, UserParam userParam) {
 
 		//获得加盐密码
-		ByteSource bytes = ByteSource.Util.bytes(sysUser.getUserSalt().getBytes());
-		String saltPass = Md5Utils.getHashAndSaltAndTime(userParam.getCredentials(), bytes, 1024);
+		String saltPass = Md5Utils.getHashAndSaltAndTime(userParam.getCredentials(), sysUser.getUserSalt(), 1024);
 		String oldPassword = sysUser.getPassword();
 		//判断老密码是否正确
 		Assert.isTrue(oldPassword.equals(saltPass),"原密码不正确");
-
 		//设置新密码
 		sysUser.setPassword(userParam.getNewCredentials());
-		setSaltPass(sysUser,sysUser.getUserSalt());
+		String saltPassword = Md5Utils.getHashAndSaltAndTime(sysUser.getPassword(), sysUser.getUserSalt(), 1024);
+		sysUser.setPassword(saltPassword);
 		sysUser.setUpdateDate(LocalDateTime.now());
 		sysUser.setUpdateId(sysUser.getUserId());
 		int updateById = sysUserMapper.updateById(sysUser);
@@ -202,6 +202,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 */
 	@Override
 	public SysUser getById(Serializable id) {
+		Assert.notNull(id,"用户ID不能为空");
+		log.info("查询用户ID为{}的用户",id);
 		if (id == null || id=="") {
 			throw new MyException("id为空");
 		}
@@ -213,7 +215,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (selectObjs == null || selectObjs.isEmpty()) {
 			return sysUser;
 		}
-		
 		List<Integer> roleIdList = new ArrayList<Integer>(selectObjs.size());
 		for (Object object : selectObjs) {
 			roleIdList.add(Integer.valueOf(object.toString()));
@@ -228,7 +229,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public boolean updateById(SysUser sysUser) {
-
+		Assert.notNull(sysUser,"用户信息不能为空");
+		log.info("修改用户名为{}的用户",sysUser.getUsername());
+		//设置更新人id
+		SysUser sysUser2 = (SysUser)SecurityUtils.getSubject().getPrincipal();
+		sysUser.setUpdateId(sysUser2.getUserId());
 		//查询数据库中是否有该用户名，如果有，则提示更换用户名
 		DeptUser user = deptUserMapper.selectById(sysUser.getUserId());
 		if (!user.getUsername().equals(sysUser.getUsername())){
@@ -238,63 +243,37 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				throw new MyException("该名称已被注册，请更换其他名称");
 			}
 		}
-
 		//判断密码是否重新输入过，如果输入过，则改密码，若无，则直接存数据库里面
 		String password = sysUser.getPassword();
 		if (password != null && password != ""){
 			//设置加盐密码
-			ByteSource bytes = ByteSource.Util.bytes(sysUser .getUserSalt().getBytes());
-			String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+			String saltPass = Md5Utils.getHashAndSaltAndTime(password, sysUser.getUserSalt(), 1024);
 			sysUser.setPassword(saltPass);
 		} else {
 			sysUser.setPassword(user.getPassword());
 		}
-
 		//设置更新时间
 		sysUser.setUpdateDate(LocalDateTime.now());
-		
 		boolean updateById = super.updateById(sysUser);
 		Assert.state(sysUser!=null && sysUser.getPassword()!=null && sysUser.getUsername()!=null, "更新用户失败，请查找传值信息");
-		
 		//删除之前的用户角色对应之后重新更新
 		sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, sysUser.getUserId()));
-		
 		List<Integer> roleIdList = sysUser.getRoleIdList();
 		if (roleIdList == null || roleIdList.isEmpty()) {
 			return updateById;
 		}
 		List<SysUserRole> userRoles = new ArrayList<>(roleIdList.size());
 		for (Integer idList : roleIdList) {
-			SysUserRole sysUserRole = new SysUserRole();
-			sysUserRole.setUserId(sysUser.getUserId());
-			sysUserRole.setRoleId(idList);
-			userRoles.add(sysUserRole);
+			userRoles.add(EntityUtils.getSysUserRole(sysUser.getUserId(),idList));
 		}
-		Boolean batches = sysUserRoleMapper.insertBatches(userRoles);
-
+		boolean batches = sysUserRoleMapper.insertBatches(userRoles);
 		//获取被删除用户的token
-		Object token = redisTemplate.opsForHash().get(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
+		Object token = jedis.hget(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
 		//判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
 		if (token != null) {
-			redisTemplate.delete(PropertyUtils.USER_SESSION+token);
+			jedis.del(PropertyUtils.USER_SESSION+token);
 		}
-		if (batches) {
-			return updateById ;
-		}
-		return false ;
-	}
-
-	/**
-	 * 将密码设置为盐值密码
-	 * @param sysUser
-	 * @param salt
-	 */
-	private void setSaltPass(SysUser sysUser, String salt) {
-		//盐值更新
-		String password = sysUser.getPassword();
-		ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
-		String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
-		sysUser.setPassword(saltPass);
+		return batches;
 	}
 
 }

@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author Dillon
  * @since 2020-05-18
@@ -29,4 +31,11 @@ public interface CarMapper extends BaseMapper<Car> {
      */
     @Update("UPDATE car SET bind_task_id = ${taskId} WHERE car_id IN (${substring})")
     Integer saveOrBindTaskWithCar(@Param("substring") String substring, @Param("taskId") String taskId);
+
+    /**
+     * 获得所有的车辆信息
+     * @return
+     */
+    @Select("SELECT * FROM car")
+    List<Car> selectAllCarList();
 }

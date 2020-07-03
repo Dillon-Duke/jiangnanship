@@ -6,14 +6,15 @@ import com.caidao.exception.MyException;
 import com.caidao.filter.wrapper.SaveAppBaseMsgRequestWrapper;
 import com.caidao.pojo.AppBaseMsg;
 import com.caidao.service.AppBaseMsgService;
+import com.caidao.util.AesUtils;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.RsaUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+import redis.clients.jedis.Jedis;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -31,23 +32,25 @@ import java.util.List;
 @Slf4j
 public class SaveAppBaseMsgFilter implements Filter {
 
+    private static final String LOGIN_USER_ID_VOUCHER = "0";
+
     /** 需要过滤的地址 */
     private static List<String> urlList = Arrays.asList("/app");
 
     /** 需要注入的实体类 */
-    private static StringRedisTemplate stringRedisTemplate;
+    private static Jedis jedis;
     private static AppBaseMsgService appBaseMsgService;
 
     @Override
     public void init(FilterConfig config) {
         ServletContext servletContext = config.getServletContext();
         ApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-        this.setStringRedisTemplate(ctx.getBean(StringRedisTemplate.class));
+        this.setJedis(ctx.getBean(Jedis.class));
         this.setAppBaseMsgService(ctx.getBean(AppBaseMsgService.class));
     }
 
-    private synchronized void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
-        SaveAppBaseMsgFilter.stringRedisTemplate = stringRedisTemplate;
+    private synchronized void setJedis(Jedis jedis) {
+        SaveAppBaseMsgFilter.jedis = jedis;
     }
 
     private synchronized void setAppBaseMsgService(AppBaseMsgService appBaseMsgService) {
@@ -55,7 +58,7 @@ public class SaveAppBaseMsgFilter implements Filter {
     }
 
     /** 是否需要过滤 */
-    public boolean isPast(String requestUrl) {
+    private boolean isPast(String requestUrl) {
         for (String url : urlList) {
             String substring = requestUrl.substring(0, 4);
             if (substring.contains(url)) {
@@ -104,33 +107,26 @@ public class SaveAppBaseMsgFilter implements Filter {
             String encryption = jsonObject.getString("encryption");
             String decrypt ;
             String json ;
-            if ("".equals(userId) || "0".equals(userId)){
-
+            if ("".equals(userId) || LOGIN_USER_ID_VOUCHER.equals(userId)){
                 //获得用户登录的uuid
                 String uuid = jsonObject.getString("uuid");
-
                 //替换解密内容
-                String primaryKey = stringRedisTemplate.opsForValue().get(PropertyUtils.APP_USER_PRIVATE_KEY + uuid);
+                String primaryKey = jedis.get(PropertyUtils.APP_USER_PRIVATE_KEY + uuid);
                 try {
                     decrypt = RsaUtils.decrypt(encryption, primaryKey);
                 } catch (Exception e) {
                     throw new MyException("登录解密错误，请联系管理员");
                 }
                 appBaseMsg.setEncryption(decrypt);
-                stringRedisTemplate.delete(PropertyUtils.APP_USER_PRIVATE_KEY + uuid);
-                stringRedisTemplate.delete(PropertyUtils.APP_USER_PUBLIC_KEY + uuid);
                 // 把参数转换之后放到我们的body里面
                 JSONObject parseObject = JSONObject.parseObject(decrypt);
                 json = parseObject.toJSONString();
             } else {
-
                 if (encryption == null || encryption.isEmpty()){
                     throw new MyException("数据中加密数据没有传值");
                 }
-
                 //获得用户token
                 String token = SecurityUtils.getSubject().getSession().getId().toString();
-
                 if (isJson(encryption)) {
                     //将未加密的字符串放在基础表中
                     appBaseMsg.setEncryption(encryption);
@@ -138,10 +134,9 @@ public class SaveAppBaseMsgFilter implements Filter {
                     JSONObject parseObject = JSONObject.parseObject(encryption);
                     json = parseObject.toJSONString();
                 } else {
-
                     //解析字符串转为json对象
                     try {
-                        decrypt = RsaUtils.decrypt(encryption, stringRedisTemplate.opsForValue().get(PropertyUtils.APP_USER_PRIVATE_KEY + token));
+                        decrypt = AesUtils.decrypt(encryption,jedis.get(PropertyUtils.AES_PREFIX + token));
                     } catch (Exception e) {
                         throw new MyException("信息解密错误，请联系管理员");
                     }
@@ -155,7 +150,6 @@ public class SaveAppBaseMsgFilter implements Filter {
 
             //将信息保存再基本表中
             appBaseMsgService.save(appBaseMsg);
-
             //设置json参数格式
             requestWrapper.setBody(json.getBytes("UTF-8"));
             // 放行

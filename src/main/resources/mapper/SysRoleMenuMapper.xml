@@ -12,4 +12,16 @@
             </foreach>
     </insert>
 
+    <delete id="deleteBatchRoleIds" parameterType="java.util.List">
+        DELETE FROM
+            sys_role_menu
+        WHERE
+            role_id
+        IN
+        <foreach collection="list" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+    </delete>
+
 </mapper>

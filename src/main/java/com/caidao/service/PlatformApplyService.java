@@ -3,6 +3,7 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.ActivityQueryParam;
 import com.caidao.param.FlatCarCancelParam;
+import com.caidao.pojo.CarPlatformApply;
 import com.caidao.pojo.PlatformApply;
 import org.activiti.engine.history.HistoricTaskInstance;
 
@@ -20,14 +21,14 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * @param platformApply
      * @return 流程实例Id
      */
-    Map<String, Object> saveFlatCarPlan(PlatformApply platformApply);
+    Map<String, String> saveFlatCarPlan(PlatformApply platformApply);
 
     /**
      * 开始一个平板车计划任务流程
      * @param platformApply
      * @return 流程实例Id
      */
-    Map<String, Object> startPlanTasks(PlatformApply platformApply);
+    Map<String, String> startPlanTasks(PlatformApply platformApply);
 
     /**
      * 获取用户的所有任务列表
@@ -104,9 +105,10 @@ public interface PlatformApplyService extends IService<PlatformApply> {
     /**
      * 司机完成任务的执行
      * @param taskId
+     * @param carPlatformApples
      * @return
      */
-    String driverCompleteTask(String taskId);
+    String driverCompleteTask(List<CarPlatformApply> carPlatformApples, String taskId);
 
     /**
      * 取消任务司机完成任务的执行
@@ -121,4 +123,5 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * @return
      */
     boolean flatcarCancelDepartmentEvaluate(FlatCarCancelParam param);
+
 }

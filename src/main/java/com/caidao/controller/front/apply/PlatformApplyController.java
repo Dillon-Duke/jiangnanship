@@ -1,7 +1,8 @@
 package com.caidao.controller.front.apply;
 
-import com.caidao.common.ResponseEntity;
+import com.caidao.common.MyResponseEntity;
 import com.caidao.param.ActivityQueryParam;
+import com.caidao.param.FlatCarAdjustmentParam;
 import com.caidao.param.FlatCarCancelParam;
 import com.caidao.pojo.*;
 import com.caidao.service.CarService;
@@ -48,10 +49,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("保存一个平板车计划流程")
     @PostMapping("/savePlatformTasks")
-    public ResponseEntity<Map<String, Object>> savePlatformTasks(@RequestBody PlatformApply platformApply){
-
-        Map<String, Object> flatCarPlan = platformApplyService.saveFlatCarPlan(platformApply);
-        return ResponseEntity.ok(flatCarPlan);
+    public MyResponseEntity<Map<String, String>> savePlatformTasks(@RequestBody PlatformApply platformApply){
+        Map<String, String> flatCarPlan = platformApplyService.saveFlatCarPlan(platformApply);
+        return MyResponseEntity.ok(flatCarPlan);
     }
 
     /**
@@ -61,13 +61,12 @@ public class PlatformApplyController {
      */
     @ApiOperation("删除一个平板车计划流程")
     @DeleteMapping("/deletePlatformTask/{id}")
-    public ResponseEntity<String> deletePlatformTask(@PathVariable("id") String id,String reason){
-
+    public MyResponseEntity<String> deletePlatformTask(@PathVariable("id") String id,String reason){
         Boolean remove = platformApplyService.removePlanById(id,reason);
         if (remove) {
-            return ResponseEntity.ok("未提交任务删除成功");
+            return MyResponseEntity.ok("未提交任务删除成功");
         }
-        return ResponseEntity.error("未提交任务删除失败");
+        return MyResponseEntity.error("未提交任务删除失败");
     }
 
     /**
@@ -77,10 +76,10 @@ public class PlatformApplyController {
      */
     @ApiOperation("开始一个平板车流程")
     @PostMapping("/startPlatformTask")
-    public ResponseEntity<Map<String, Object>> startPlatformTask(@RequestBody PlatformApply platformApply){
+    public MyResponseEntity<Map<String, String>> startPlatformTask(@RequestBody PlatformApply platformApply){
 
-        Map<String, Object> flatCarPlan = platformApplyService.startPlanTasks(platformApply);
-        return ResponseEntity.ok(flatCarPlan);
+        Map<String, String> flatCarPlan = platformApplyService.startPlanTasks(platformApply);
+        return MyResponseEntity.ok(flatCarPlan);
     }
 
     /**
@@ -90,9 +89,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("用户来拾取组任务")
     @GetMapping("/getPlatformOwnerGroupTask")
-    public ResponseEntity<String> getPlatformOwnerGroupTask(String taskId){
+    public MyResponseEntity<String> getPlatformOwnerGroupTask(String taskId){
         String massage = platformApplyService.getPlanOwnerGroupTask(taskId);
-        return ResponseEntity.ok(massage);
+        return MyResponseEntity.ok(massage);
     }
 
     /**
@@ -102,9 +101,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("完成带意见的审批")
     @PostMapping("/completeApprovalWithOpinion")
-    public ResponseEntity<String> completeApprovalWithOpinion(@RequestBody PlatformReason platformReason){
+    public MyResponseEntity<String> completeApprovalWithOpinion(@RequestBody PlatformReason platformReason){
         String newTaskId = platformReasonService.completeApprovalWithOpinion(platformReason);
-        return ResponseEntity.ok(newTaskId);
+        return MyResponseEntity.ok(newTaskId);
     }
 
     /**
@@ -114,21 +113,22 @@ public class PlatformApplyController {
      */
     @ApiOperation("完成不带意见的审批")
     @GetMapping("/completeApprovalWithNoOpinion/{taskId}")
-    public ResponseEntity<String> completeApprovalWithNoOpinion(@PathVariable("taskId") String taskId){
+    public MyResponseEntity<String> completeApprovalWithNoOpinion(@PathVariable("taskId") String taskId){
         String newTaskId = platformReasonService.completeApprovalWithNoOpinion(taskId);
-        return ResponseEntity.ok(newTaskId);
+        return MyResponseEntity.ok(newTaskId);
     }
 
     /**
      * 司机完成任务的执行
+     * @param carPlatformApples
      * @param taskId
      * @return
      */
     @ApiOperation("司机完成任务的执行")
-    @GetMapping("/driverCompleteTask/{taskId}")
-    public ResponseEntity<String> driverCompleteTask (@PathVariable("taskId") String taskId) {
-        String newTaskId = platformApplyService.driverCompleteTask(taskId);
-        return ResponseEntity.ok(newTaskId);
+    @PostMapping("/driverCompleteTask")
+    public MyResponseEntity<String> driverCompleteTask (@RequestBody List<CarPlatformApply> carPlatformApples, String taskId) {
+        String newTaskId = platformApplyService.driverCompleteTask(carPlatformApples, taskId);
+        return MyResponseEntity.ok(newTaskId);
     }
 
     /**
@@ -138,9 +138,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("部门评价人员进行评价")
     @GetMapping("/departmentEvaluate/{taskId}")
-    public ResponseEntity<Boolean> departmentEvaluate (@PathVariable("taskId") String taskId) {
+    public MyResponseEntity<Boolean> departmentEvaluate (@PathVariable("taskId") String taskId) {
         boolean evaluate = platformApplyService.departmentEvaluate(taskId);
-        return ResponseEntity.ok(evaluate);
+        return MyResponseEntity.ok(evaluate);
     }
 
     /**
@@ -150,10 +150,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("任务指派给别人")
     @PostMapping("/platform2OtherUser")
-    public ResponseEntity<Void> platform2OtherUser(String taskId, String username){
-
+    public MyResponseEntity<Void> platform2OtherUser(String taskId, String username){
         platformApplyService.flatCarPlan2OtherUser(taskId,username);
-        return ResponseEntity.ok().build();
+        return MyResponseEntity.ok().build();
     }
 
     /**
@@ -163,9 +162,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("用户归还组任务")
     @GetMapping("/backPlatformOwner2GroupTask")
-    public ResponseEntity<Void> backPlatformOwner2GroupTask(String taskId){
+    public MyResponseEntity<Void> backPlatformOwner2GroupTask(String taskId){
         platformApplyService.backPlanOwner2GroupTask(taskId);
-        return ResponseEntity.ok().build();
+        return MyResponseEntity.ok().build();
     }
 
     /**
@@ -175,11 +174,11 @@ public class PlatformApplyController {
      */
     @ApiOperation("获取所有用户的任务列表")
     @PostMapping("/getAllDeptUserTaskList")
-    public ResponseEntity<List<Map<String, Object>>> getAllDeptUserTaskList(@RequestBody ActivityQueryParam param) {
+    public MyResponseEntity<List<Map<String, Object>>> getAllDeptUserTaskList(@RequestBody ActivityQueryParam param) {
 
         //获取待条件的审核列表
         List<Map<String, Object>> approvalList = platformApplyService.getApprovalList(param);
-        return ResponseEntity.ok(approvalList);
+        return MyResponseEntity.ok(approvalList);
     }
 
     /**
@@ -189,9 +188,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("获取用户的任务列表")
     @PostMapping("/getDeptUserTaskList")
-    public ResponseEntity<List<Map<String, Object>>> getDeptUserTaskList(@RequestBody ActivityQueryParam param) {
+    public MyResponseEntity<List<Map<String, Object>>> getDeptUserTaskList(@RequestBody ActivityQueryParam param) {
         List<Map<String, Object>> list = platformApplyService.getDeptUserTaskList(param);
-        return ResponseEntity.ok(list);
+        return MyResponseEntity.ok(list);
     }
 
     /**
@@ -201,10 +200,10 @@ public class PlatformApplyController {
      */
     @ApiOperation("获取用户的历史任务")
     @PostMapping("/getUserHistoryTaskList")
-    public ResponseEntity<List<HistoricTaskInstance>> getUserHistoryTaskList(@RequestBody ActivityQueryParam param) {
+    public MyResponseEntity<List<HistoricTaskInstance>> getUserHistoryTaskList(@RequestBody ActivityQueryParam param) {
 
         List<HistoricTaskInstance> list = platformApplyService.getUserHistoryTaskList(param);
-        return ResponseEntity.ok(list);
+        return MyResponseEntity.ok(list);
     }
 
     /**
@@ -213,7 +212,7 @@ public class PlatformApplyController {
      */
     @ApiOperation("获得可编制的任务")
     @GetMapping("/getOrganizationTasks")
-    public ResponseEntity<Map<String,Object>> getOrganizationTasks(){
+    public MyResponseEntity<Map<String,Object>> getOrganizationTasks(){
         Map<String, Object> map = new HashMap<>(2);
         //获得空闲的车辆
         List<Car> carList = carService.getFreeCarList();
@@ -221,20 +220,19 @@ public class PlatformApplyController {
         List<PlatformApply> organizationList = platformApplyService.getPlatformOrganizationTasks();
         map.put("freeCars",carList);
         map.put("organizationTasks",organizationList);
-        return ResponseEntity.ok(map);
+        return MyResponseEntity.ok(map);
     }
 
     /**
      * 车辆与任务做绑定 多车与一个任务作为绑定
-     * @param carId
-     * @param taskId
+     * @param carPlatformApply
      * @return
      */
     @ApiOperation("车辆与任务做一个绑定")
-    @GetMapping("/saveOrBindTaskWithCar")
-    public ResponseEntity<Void> saveOrBindTaskWithCar(List<String> carId, String taskId){
-        carService.saveOrBindTaskWithCar(carId,taskId);
-        return ResponseEntity.ok().build();
+    @PostMapping("/saveOrBindTaskWithCar")
+    public MyResponseEntity<Boolean> saveOrBindTaskWithCar(@RequestBody List<CarPlatformApply> carPlatformApply){
+        Boolean result = carService.saveOrBindTaskWithCar(carPlatformApply);
+        return MyResponseEntity.ok(result);
     }
 
     /**
@@ -244,9 +242,21 @@ public class PlatformApplyController {
      */
     @ApiOperation("用户车辆绑定")
     @PostMapping("/userBindCar")
-    public ResponseEntity<DeptUserCar> userBindCar(@RequestBody DeptUserCar deptUserCar){
-        DeptUserCar userBindCar = deptUserService.userBindCar(deptUserCar);
-        return ResponseEntity.ok(userBindCar);
+    public MyResponseEntity<Boolean> userBindCar(@RequestBody List<DeptUserCar> deptUserCar){
+        Boolean bindCar = deptUserService.userBindCar(deptUserCar);
+        return MyResponseEntity.ok(bindCar);
+    }
+
+    /**
+     * 用户车辆解绑
+     * @param ids
+     * @return
+     */
+    @ApiOperation("用户车辆解绑")
+    @DeleteMapping
+    public MyResponseEntity<Boolean> userNnBindCar(@RequestBody List<Integer> ids){
+        Boolean result = deptUserService.userNnBindCar(ids);
+        return MyResponseEntity.ok(result);
     }
 
     /**
@@ -256,9 +266,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("查询用户是否有取消权限")
     @GetMapping("/startCancelApplyTask/{businessKey}")
-    public ResponseEntity<Map<String, String>> startCancelApplyTask (@PathVariable("businessKey") Integer businessKey) {
+    public MyResponseEntity<Map<String, String>> startCancelApplyTask (@PathVariable("businessKey") Integer businessKey) {
         Map<String, String> map = platformApplyService.startCancelApplyTask(businessKey);
-        return ResponseEntity.ok(map);
+        return MyResponseEntity.ok(map);
     }
 
     /**
@@ -268,9 +278,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("开始一个取消任务申请")
     @PostMapping("/cancelApplyTaskStart")
-    public ResponseEntity<Map<String, String>> cancelApplyTaskStart (@RequestBody FlatCarCancelParam param) {
+    public MyResponseEntity<Map<String, String>> cancelApplyTaskStart (@RequestBody FlatCarCancelParam param) {
         Map<String, String> map = platformReasonService.cancelApplyTaskStart(param);
-        return ResponseEntity.ok(map);
+        return MyResponseEntity.ok(map);
     }
 
     /**
@@ -280,9 +290,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("取消任务完成取消任务审批")
     @PostMapping("/completeCancelApplyTask")
-    public ResponseEntity<String> completeCancelApplyTask (@RequestBody FlatCarCancelParam param) {
-        String taskId = platformReasonService.completeCancelApplyTask(param);
-        return ResponseEntity.ok(taskId);
+    public MyResponseEntity<Boolean> completeCancelApplyTask (@RequestBody FlatCarCancelParam param) {
+        Boolean result = platformReasonService.completeCancelApplyTask(param);
+        return MyResponseEntity.ok(result);
     }
 
     /**
@@ -292,9 +302,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("取消任务司机接单和执行")
     @PostMapping("/cancelApplyTaskDriverWorking")
-    public ResponseEntity<String> cancelApplyTaskDriverWorking (@RequestBody FlatCarCancelParam param) {
+    public MyResponseEntity<String> cancelApplyTaskDriverWorking (@RequestBody FlatCarCancelParam param) {
         platformReasonService.cancelApplyTaskDriverWorking(param);
-        return ResponseEntity.ok(null);
+        return MyResponseEntity.ok(null);
     }
 
     /**
@@ -304,9 +314,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("司机取消任务完成任务的执行")
     @PostMapping("/flatcarCancelDriverCompleteTask")
-    public ResponseEntity<String> flatcarCancelDriverCompleteTask (@RequestBody FlatCarCancelParam param) {
+    public MyResponseEntity<String> flatcarCancelDriverCompleteTask (@RequestBody FlatCarCancelParam param) {
         String newTaskId = platformApplyService.flatcarCancelDriverCompleteTask(param);
-        return ResponseEntity.ok(newTaskId);
+        return MyResponseEntity.ok(newTaskId);
     }
 
     /**
@@ -316,9 +326,9 @@ public class PlatformApplyController {
      */
     @ApiOperation("取消任务部门评价人员进行评价")
     @PostMapping("/flatcarCancelDepartmentEvaluate")
-    public ResponseEntity<Boolean> flatcarCancelDepartmentEvaluate (@RequestBody FlatCarCancelParam param) {
+    public MyResponseEntity<Boolean> flatcarCancelDepartmentEvaluate (@RequestBody FlatCarCancelParam param) {
         boolean evaluate = platformApplyService.flatcarCancelDepartmentEvaluate(param);
-        return ResponseEntity.ok(evaluate);
+        return MyResponseEntity.ok(evaluate);
     }
 
     /**
@@ -327,10 +337,10 @@ public class PlatformApplyController {
      * @return
      */
     @ApiOperation("未开始执行的平板车任务调整")
-    @PostMapping("/flatcarUpdateWithNoStart")
-    public ResponseEntity<Boolean> flatcarUpdateWithNoStart (@RequestBody FlatCarCancelParam param) {
-        boolean evaluate = platformApplyService.flatcarCancelDepartmentEvaluate(param);
-        return ResponseEntity.ok(evaluate);
+    @PostMapping("/flatcarAdjustmentWithNoStart")
+    public MyResponseEntity<Boolean> flatcarAdjustmentWithNoStart (@RequestBody FlatCarAdjustmentParam param) {
+        boolean evaluate = platformReasonService.flatcarAdjustmentWithNoStart(param);
+        return MyResponseEntity.ok(evaluate);
     }
 
     /**
@@ -339,10 +349,10 @@ public class PlatformApplyController {
      * @return
      */
     @ApiOperation("已开始执行的平板车任务调整")
-    @PostMapping("/flatcarUpdateWithStart")
-    public ResponseEntity<Boolean> flatcarUpdateWithStart (@RequestBody FlatCarCancelParam param) {
-        boolean evaluate = platformApplyService.flatcarCancelDepartmentEvaluate(param);
-        return ResponseEntity.ok(evaluate);
+    @PostMapping("/flatcarAdjustmentWithStart")
+    public MyResponseEntity<Boolean> flatcarAdjustmentWithStart (@RequestBody FlatCarAdjustmentParam param) {
+        boolean evaluate = platformReasonService.flatcarAdjustmentWithStart(param);
+        return MyResponseEntity.ok(evaluate);
     }
 
 }

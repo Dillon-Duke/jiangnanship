@@ -24,6 +24,9 @@ public class FlatCarCancelParam {
     @ApiModelProperty("取消业务Id")
     private String cancelBusinessKey;
 
+    @ApiModelProperty("取消车辆Ids")
+    private String[] cancelCarIds;
+
     @ApiModelProperty("取消的原因")
     private String cancelReason;
 

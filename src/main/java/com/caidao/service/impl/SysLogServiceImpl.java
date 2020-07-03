@@ -8,6 +8,7 @@ import com.caidao.mapper.SysLogMapper;
 import com.caidao.pojo.SysLog;
 import com.caidao.service.SysLogService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -32,7 +33,8 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLog> impleme
 	 */
 	@Override
 	public IPage<SysLog> findPage(Page<SysLog> page, SysLog logs) {
-		log.info("角色分页 页大小{},第几页{}",page.getCurrent(),page.getSize());
+		Assert.notNull(page,"日志页面属性不能为空");
+		log.info("日志获取当前页{}，页大小{}",page.getCurrent(),page.getSize());
 		IPage<SysLog> selectPage = sysLogMapper.selectPage(page, new LambdaQueryWrapper<SysLog>()
 				.like(StringUtils.hasText(logs.getUsername()), SysLog::getUsername,logs.getUsername())
 				.like(StringUtils.hasText(logs.getOperation()), SysLog::getOperation,logs.getOperation()));

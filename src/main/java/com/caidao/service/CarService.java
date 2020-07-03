@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.pojo.Car;
+import com.caidao.pojo.CarPlatformApply;
 
 import java.util.List;
 import java.util.Map;
@@ -50,11 +51,10 @@ public interface CarService extends IService<Car> {
 
     /**
      * 车辆与任务做绑定 多太车与一个任务作为绑定
-     * @param carId
-     * @param taskId
+     * @param carPlatformApply
      * @return
      */
-    void saveOrBindTaskWithCar(List<String> carId, String taskId);
+    Boolean saveOrBindTaskWithCar(List<CarPlatformApply> carPlatformApply);
 
     /**
      * 获得空闲的、在使用的车辆已经对应的司机信息

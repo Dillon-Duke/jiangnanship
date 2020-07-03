@@ -49,14 +49,10 @@ public class PlatformGoodsController {
      * @return
      */
     @ApiOperation("新增一个分段信息")
-    @PostMapping()
-    public ResponseEntity<String> saveAppTransGoods(@RequestBody PlatformGoods platformGoods){
-
-        boolean save = platformGoodsService.save(platformGoods);
-        if (save){
-            return ResponseEntity.ok("新增成功");
-        }
-        return ResponseEntity.ok("新增失败");
+    @PostMapping("save")
+    public ResponseEntity<Boolean> saveAppTransGoods(@RequestBody PlatformGoods platformGoods){
+        Boolean save = platformGoodsService.save(platformGoods);
+        return ResponseEntity.ok(save);
     }
 
     /**
@@ -79,13 +75,9 @@ public class PlatformGoodsController {
     @PutMapping
     @ApiOperation("更新运输分段信息")
     @RequiresPermissions("car:goods:update")
-    public ResponseEntity<String> updateGoods(@RequestBody PlatformGoods platformGoods){
-
-        boolean updateCar = platformGoodsService.updateById(platformGoods);
-        if (updateCar){
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.ok("更新失败");
+    public ResponseEntity<Boolean> updateGoods(@RequestBody PlatformGoods platformGoods){
+        Boolean updateCar = platformGoodsService.updateById(platformGoods);
+        return ResponseEntity.ok(updateCar);
     }
 
     /**
@@ -97,14 +89,9 @@ public class PlatformGoodsController {
     @DeleteMapping
     @ApiOperation("删除运输分段信息")
     @RequiresPermissions("car:goods:delete")
-    public ResponseEntity<String> deleteByIds(@RequestBody List<PlatformGoods> platformGoods){
-
-        boolean removeByIds = platformGoodsService.removeByGoods(platformGoods);
-        if (removeByIds){
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.ok("删除失败");
+    public ResponseEntity<Boolean> deleteByIds(@RequestBody List<PlatformGoods> platformGoods){
+        Boolean removeByIds = platformGoodsService.removeByGoods(platformGoods);
+        return ResponseEntity.ok(removeByIds);
     }
-
 
 }

@@ -1,17 +1,12 @@
 package com.caidao.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.caidao.pojo.Dept;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caidao.pojo.Dept;
 import com.caidao.pojo.DeptRole;
 
 import java.util.List;
 
 /**
- * <p>
- *  服务类
- * </p>
- *
  * @author Dillon
  * @since 2020-05-21
  */
@@ -31,10 +26,8 @@ public interface DeptService extends IService<Dept> {
     List<DeptRole> getDeptRoles(Integer deptId);
 
     /**
-     * 获取所有的部门信息
-     * @param iPage
-     * @param dept
+     * 获得部门列表信息
      * @return
      */
-    IPage<Dept> selectPage(IPage<Dept> iPage, Dept dept);
+    List<Dept> selectList();
 }

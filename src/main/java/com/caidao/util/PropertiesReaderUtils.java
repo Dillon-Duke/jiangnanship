@@ -16,15 +16,11 @@ import java.util.Properties;
 public class PropertiesReaderUtils {
 
     private static Map<String, String> map = new HashMap();
-
     public static Map<String, String> getMap(){
-
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-
         //处理映射配置信息
         Properties mappingProperties = new Properties();
         InputStream mappingPropertiesInStream = loader.getResourceAsStream("activiti.properties");
-
         //使用inputstreamreder 解决属性类从数据流中加载中文乱码的问题
         InputStreamReader inputStreamReader = new InputStreamReader(mappingPropertiesInStream);
         try {
@@ -38,7 +34,6 @@ public class PropertiesReaderUtils {
                 e.printStackTrace();
             }
         }
-
         Enumeration mappingPropertiesEenumeration = mappingProperties.propertyNames();
         while (mappingPropertiesEenumeration.hasMoreElements()) {
             String key = (String) mappingPropertiesEenumeration.nextElement();

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.caidao.config.AppUserRealmConfig;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.AppMassageMapper;
 import com.caidao.mapper.DeptUserCarMapper;
@@ -12,9 +13,7 @@ import com.caidao.mapper.DeptUserRoleMapper;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.*;
 import com.caidao.service.DeptUserService;
-import com.caidao.util.DateUtils;
-import com.caidao.util.Md5Utils;
-import com.caidao.util.PropertyUtils;
+import com.caidao.util.*;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
@@ -22,14 +21,13 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import redis.clients.jedis.Jedis;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -53,7 +51,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     private DeptUserCarMapper deptUserCarMapper;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private Jedis jedis;
 
     @Autowired
     private DeptUserRoleMapper deptUserRoleMapper;
@@ -109,8 +107,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         deptUser.setState(1);
         //设置加盐密码
         String password = deptUser.getPassword();
-        ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
-        String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+        String saltPass = Md5Utils.getHashAndSaltAndTime(password, salt, 1024);
         deptUser.setPassword(saltPass);
         deptUser.setCreateDate(LocalDateTime.now());
         List<Integer> roleIdList = deptUser.getRoleIdList();
@@ -137,10 +134,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         Integer userId = deptUser.getUserId();
         List<DeptUserRole> deptUserRoles = new ArrayList<>(roleIdList.size());
         for (Integer integer : roleIdList) {
-            DeptUserRole userRole = new DeptUserRole();
-            userRole.setUserId(userId);
-            userRole.setRoleId(integer);
-            deptUserRoles.add(userRole);
+            deptUserRoles.add(EntityUtils.getDeptUserRole(userId,integer));
         }
         Boolean result = deptUserRoleMapper.insertBatches(deptUserRoles);
         //判断是否插入成功
@@ -201,8 +195,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         String password = deptUser.getPassword();
         if (password != null && password != ""){
             //设置加盐密码
-            ByteSource bytes = ByteSource.Util.bytes(deptUser.getUserSalt().getBytes());
-            String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+            String saltPass = Md5Utils.getHashAndSaltAndTime(password, deptUser.getUserSalt(), 1024);
             deptUser.setPassword(saltPass);
         } else {
             deptUser.setPassword(user.getPassword());
@@ -221,7 +214,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
         //判断为空 则直接返回
         List<Integer> roleIdList = deptUser.getRoleIdList();
-        Boolean batches = true;
+        boolean batches = true;
         if (roleIdList == null || roleIdList.isEmpty()){
             deptUser.setUserRoleName("无");
             deptUser.setUserDeptName("无");
@@ -229,10 +222,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             //批量新增用户角色中间表
             ArrayList<DeptUserRole> deptUserRoles1 = new ArrayList<>(roleIdList.size());
             for (Integer integer : roleIdList) {
-                DeptUserRole userRole = new DeptUserRole();
-                userRole.setUserId(deptUser.getUserId());
-                userRole.setRoleId(integer);
-                deptUserRoles1.add(userRole);
+                deptUserRoles1.add(EntityUtils.getDeptUserRole(deptUser.getUserId(),integer));
             }
             batches = deptUserRoleMapper.insertBatches(deptUserRoles1);
             //从其他三张表中查询对应的角色部门信息，填到用户字段里面
@@ -245,15 +235,16 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             }
         }
         //获取被删除用户的token
-        Object token = redisTemplate.opsForHash().get(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
+        Object token = jedis.hget(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
         //判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
         if (token != null) {
-            redisTemplate.delete(PropertyUtils.USER_SESSION+token);
+            //删除用户对应的session个人信息 删除用户储存的aes密钥
+            jedis.del(PropertyUtils.USER_SESSION+token,PropertyUtils.AES_PREFIX + token);
+            //删除用户的缓存
+            new AppUserRealmConfig().getAppClearAllCache(token);
+
         }
-        if (batches) {
-            return super.updateById(deptUser);
-        }
-        return false;
+        return batches;
     }
 
     /**
@@ -313,8 +304,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
                 .eq(DeptUser::getPhone, userParam.getPhone()));
         //设置更新盐值
         String password = userParam.getNewCredentials();
-        ByteSource bytes = ByteSource.Util.bytes(deptUser.getUserSalt().getBytes());
-        String saltPass = Md5Utils.getHashAndSaltAndTime(password, bytes, 1024);
+        String saltPass = Md5Utils.getHashAndSaltAndTime(password, deptUser.getUserSalt(), 1024);
         deptUser.setPassword(saltPass);
         //更新用户密码
         Integer update = deptUserMapper.updatePassById(deptUser);
@@ -329,32 +319,29 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      * @return
      */
     @Override
-    public HashMap<String, Object> getFreeDrivers() {
+    public Map<String, Object> getFreeDrivers() {
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         Assert.notNull(deptUser,"用户登录超时，请重新登录");
         //查询用户车辆表当天所有有任务的人
         List<DeptUserCar> deptUserCarList = deptUserCarMapper.selectList(null);
-        List<String> integers = new ArrayList<>();
+        List<Integer> integers = new ArrayList<>();
         for (DeptUserCar deptUserCar : deptUserCarList) {
             Integer driverId = deptUserCar.getDriverId();
-            String operatorId = deptUserCar.getOperatorId();
+            Integer operatorId = deptUserCar.getOperatorId();
             if (!integers.contains(driverId)) {
-                integers.add(String.valueOf(driverId));
+                integers.add(driverId);
             }
             if (!integers.contains(operatorId)) {
                 integers.add(operatorId);
             }
         }
         //TODO 获取所有的空闲人员 后来可能会需要加条件，比如说部门条件
-        List<DeptUser> freeUsers = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+        List<DeptUser> freeDriver = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
                 .notIn(DeptUser::getUserId, integers));
         //TODO 获取所有的不空闲人员 后来可能会需要加条件，比如说部门条件
         List<DeptUser> taskDriver = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
                 .in(DeptUser::getUserId, integers));
-        HashMap<String, Object> map = new HashMap<>(2);
-        map.put("freeDriver",freeUsers);
-        map.put("taskDriver",taskDriver);
-        return map;
+        return MapUtils.getMap("freeDriver",freeDriver,"taskDriver",taskDriver);
     }
 
     /**
@@ -385,51 +372,35 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
     /**
      * 用户车辆绑定
-     * @param deptUserCar
+     * @param deptUserCars
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public DeptUserCar userBindCar(DeptUserCar deptUserCar) {
-        Assert.notNull(deptUserCar,"绑定数据不能为空");
-        log.info("用户绑定车辆",deptUserCar);
-        //自定义工号
-        deptUserCar.setWorkNum(PropertyUtils.USER_BIND_CAR_TASK_PREFIX + DateUtils.getYyyyMm() + deptUserCar.getCarPlant());
-        //司机车辆绑定
-        int insert = deptUserCarMapper.insert(deptUserCar);
-        if (insert == 0) {
-            throw new MyException("车辆司机绑定失败，请重试");
+    public Boolean userBindCar(List<DeptUserCar> deptUserCars) {
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        Assert.notNull(deptUserCars,"绑定数据不能为空");
+        log.info("用户绑定车辆",deptUserCars);
+        List<DeptUserCar> userCars = new ArrayList<>(deptUserCars.size());
+        List<String> username = new ArrayList<>(deptUserCars.size() + 1);
+        List<AppMassage> massages = new ArrayList<>(username.size());
+        Integer taskId = null;
+        for (DeptUserCar deptUserCar : deptUserCars) {
+            //自定义工号
+            deptUserCar.setWorkNum(PropertyUtils.USER_BIND_CAR_TASK_PREFIX + DateUtils.getYyyyMm() + deptUserCar.getCarPlant());
+            userCars.add(deptUserCar);
+            //将姓名收集到姓名列表中
+            if (!username.contains(deptUserCar.getDriverName())) {
+                username.add(deptUserCar.getDriverName());
+            }
+            username.add(deptUserCar.getOperatorName());
+            taskId = deptUserCar.getTaskId();
         }
-        //推送消息到消息表
-        String[] operatorNames = deptUserCar.getOperatorName().split(",");
-        List<AppMassage> massages = new ArrayList<>(operatorNames.length + 1);
-        for (String operatorName : operatorNames) {
-            AppMassage appMassage = addAppDriverAndOperatorMassage(deptUserCar.getTaskId(), operatorName);
-            massages.add(appMassage);
+        deptUserCarMapper.insertBatches(userCars);
+        for (String name : username) {
+            massages.add(EntityUtils.getAppMassage(name, taskId, "平板车操作任务"));
         }
-        AppMassage appMassage = addAppDriverAndOperatorMassage(deptUserCar.getTaskId(), deptUserCar.getDriverName());
-        massages.add(appMassage);
-        Boolean batches = appMassageMapper.insertBatches(massages);
-        if (!batches) {
-            throw new MyException("绑定失败，请联系管理员");
-        }
-        return deptUserCar;
-    }
-
-    /**
-     * 增加绑定信息
-     * @param taskId
-     * @param driverName
-     * @return
-     */
-    private AppMassage addAppDriverAndOperatorMassage(Integer taskId, String driverName) {
-        AppMassage appMassage = new AppMassage();
-        appMassage.setCreateTime(LocalDateTime.now());
-        appMassage.setDeptUsername(driverName);
-        appMassage.setIsRead(1);
-        appMassage.setMassageName("操作员任务");
-        appMassage.setTaskId(taskId);
-        return appMassage;
+        return appMassageMapper.insertBatches(massages);
     }
 
     /**
@@ -439,11 +410,10 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      */
     @Override
     public Map<String, String> getDeptUserMassage(DeptUser deptUser) {
-        HashMap<String, String> map = new HashMap<>(3);
-        map.put("realName",deptUser.getRealName());
-        map.put("jobNum",deptUser.getJobNum());
-        map.put("sourceImage",deptUser.getSourceImage());
-        return map;
+        String realName = deptUser.getRealName();
+        String jobNum = deptUser.getJobNum();
+        String sourceImage = deptUser.getSourceImage();
+        return MapUtils.getMap("realName",realName,"jobNum",jobNum,"sourceImage",sourceImage);
     }
 
     /**
@@ -477,6 +447,45 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     }
 
     /**
+     * 用户车辆解绑
+     * @param ids 主键Id
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public Boolean userNnBindCar(List<Integer> ids) {
+        Assert.notNull(ids,"主键Id不能为空");
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        if (deptUser == null) {
+            throw new MyException("用户登录超时，请重新登录");
+        }
+        log.info("用户{}解绑了用户车辆绑定id为{}的绑定",deptUser.getUsername(),ids);
+        //获取需要解绑的信息
+        List<DeptUserCar> deptUserCars = deptUserCarMapper.selectBatchIds(ids);
+        //获取对应的业务Id以及司机和操作员
+        Integer businessKey = null;
+        List<String> username = new LinkedList<>();
+        for (DeptUserCar deptUserCar : deptUserCars) {
+            businessKey = deptUserCar.getBusinessKey();
+            if (!username.contains(deptUserCar.getDriverName())) {
+                username.add(deptUserCar.getDriverName());
+            }
+            username.add(deptUserCar.getOperatorName());
+        }
+        //通过业务主键获取对应的任务Id
+        String taskId = deptUserCarMapper.selectTaskIdByBusinessKey(businessKey);
+        List<AppMassage> appMassages = appMassageMapper.selectList(new LambdaQueryWrapper<AppMassage>()
+                .eq(AppMassage::getTaskId, taskId)
+                .in(AppMassage::getDeptUsername, username));
+        //获取对应的id
+        List<AppMassage> list = new LinkedList<>();
+        for (AppMassage appMassage : appMassages) {
+            list.add(EntityUtils.getAppMassage(appMassage.getMassageName(),Integer.parseInt(taskId),appMassage.getDeptUsername()));
+        }
+        return appMassageMapper.updateBatches(list);
+    }
+
+    /**
      * 将汉语字符转成拼音
      * @param chineseName
      * @return
@@ -495,7 +504,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
                 try {
                     String[] hanYuPinyinStringArray = PinyinHelper.toHanyuPinyinStringArray(charArray[i],outputFormat);
                     String string =hanYuPinyinStringArray[0];
-                    pinyin.append(string.substring(0,1));
+                    pinyin.append(string, 0, 1);
                 } catch (BadHanyuPinyinOutputFormatCombination e) {
                     throw new MyException("中文转拼音出错，请联系管理员");
                 }

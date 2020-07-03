@@ -5,10 +5,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.anno.SysLogs;
 import com.caidao.pojo.Car;
-import com.caidao.pojo.SysUser;
 import com.caidao.service.CarService;
 import io.swagger.annotations.ApiOperation;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,12 +55,9 @@ public class CarController {
     @PostMapping
     @ApiOperation("新增车辆信息")
     @RequiresPermissions("car:car:save")
-    public ResponseEntity<String> addCar(@RequestBody Car car){
-        boolean save = carService.save(car);
-        if (save){
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.ok("新增车辆失败");
+    public ResponseEntity<Boolean> addCar(@RequestBody Car car){
+        Boolean save = carService.save(car);
+        return ResponseEntity.ok(save);
 
     }
 
@@ -87,15 +82,9 @@ public class CarController {
     @PutMapping
     @ApiOperation("更新车辆信息")
     @RequiresPermissions("car:car:update")
-    public ResponseEntity<String> updateCar(@RequestBody Car car){
-        SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
-        car.setUpdateId(principal.getUserId());
-
-        boolean updateCar = carService.updateById(car);
-        if (updateCar){
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.ok("更新失败");
+    public ResponseEntity<Boolean> updateCar(@RequestBody Car car){
+        Boolean updateCar = carService.updateById(car);
+        return ResponseEntity.ok(updateCar);
     }
 
     /**
@@ -107,12 +96,9 @@ public class CarController {
     @DeleteMapping
     @ApiOperation("删除车辆信息")
     @RequiresPermissions("car:car:delete")
-    public ResponseEntity<String> deleteByIds(@RequestBody List<Car> cars){
-        boolean removeByIds = carService.batchRemoveByIds(cars);
-        if (removeByIds){
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.ok("删除失败");
+    public ResponseEntity<Boolean> deleteByIds(@RequestBody List<Car> cars){
+        Boolean removeByIds = carService.batchRemoveByIds(cars);
+        return ResponseEntity.ok(removeByIds);
     }
 
 }

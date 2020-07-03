@@ -15,8 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dillon
@@ -116,8 +116,8 @@ public class DeptUserController {
      */
     @ApiOperation("获取有空余时间的司机")
     @GetMapping("/getFreeDrivers")
-    public ResponseEntity<HashMap<String, Object>> getFreeDrivers(){
-        HashMap<String, Object> driver = deptUserService.getFreeDrivers();
+    public ResponseEntity<Map<String, Object>> getFreeDrivers(){
+        Map<String, Object> driver = deptUserService.getFreeDrivers();
         return ResponseEntity.ok(driver);
     }
 
@@ -140,8 +140,8 @@ public class DeptUserController {
      */
     @ApiOperation("用户车辆绑定")
     @PostMapping("/userBindCar")
-    public com.caidao.common.ResponseEntity<DeptUserCar> userBindCar(@RequestBody DeptUserCar deptUserCar){
-        DeptUserCar userBindCar = deptUserService.userBindCar(deptUserCar);
-        return com.caidao.common.ResponseEntity.ok(userBindCar);
+    public ResponseEntity<Boolean> userBindCar(@RequestBody List<DeptUserCar> deptUserCar){
+        Boolean bindCar = deptUserService.userBindCar(deptUserCar);
+        return ResponseEntity.ok(bindCar);
     }
 }

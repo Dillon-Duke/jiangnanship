@@ -12,10 +12,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * <p>
- * 
- * </p>
- *
  * @author Dillon
  * @since 2020-05-18
  */
@@ -63,9 +59,6 @@ public class Car implements Serializable {
 
     @ApiModelProperty(value = "荷载重量 ：单位千克")
     private Integer fullWeight;
-
-    @ApiModelProperty(value = "绑定的任务id 默认为未绑定 默认值0")
-    private Integer bindTaskId;
 
     @ApiModelProperty(value = "1：正常，2：占用，3：维修，4：报废")
     private Integer carState;

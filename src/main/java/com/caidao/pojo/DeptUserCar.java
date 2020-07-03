@@ -42,7 +42,7 @@ public class DeptUserCar implements Serializable {
     private String driverName;
 
     @ApiModelProperty(value = "操作员Id")
-    private String operatorId;
+    private Integer operatorId;
 
     @ApiModelProperty(value = "操作员名称")
     private String operatorName;

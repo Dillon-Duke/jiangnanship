@@ -1,6 +1,7 @@
 package com.caidao.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -35,6 +36,7 @@ public class PlatformReason implements Serializable {
     private String taskId;
 
     @ApiModelProperty(value = "是否同意 1：同意 0：不同意")
+    @TableField(exist = false)
     private Integer opinion;
 
     @ApiModelProperty(value = "原因")

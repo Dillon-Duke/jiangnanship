@@ -39,6 +39,36 @@ public class PropertyUtils {
 	public static final String APP_USER_PRIVATE_KEY = "appUserPrivateKey:";
 
 	/**
+	 * aes密文前缀
+	 */
+	public static final String AES_PREFIX = "aes_prefix:";
+
+	/**
+	 * aes加密密钥长度
+	 */
+	public static final Integer AES_KEY_LENGTH = 16;
+
+	/**
+	 * 编码格式
+	 */
+	public static final String ENCODING = "UTF-8";
+
+	/**
+	 * 声明使用aes加密
+	 */
+	public static final String AES_KEY_ALGORITHM = "AES";
+
+	/**
+	 * 加解密算法/工作模式/填充方式
+	 */
+	public static final String DEFAULT_CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding";
+
+	/**
+	 * 字符串分割符号
+	 */
+	public static final String STRING_SPILT_WITH_SEMICOLON = ";";
+
+	/**
 	 * 用户后台登录后的session凭证
 	 */
 	public static final String USER_SESSION = "shiro:session:";
@@ -54,7 +84,7 @@ public class PropertyUtils {
 	public static final String TOKEN_HEADER = "TOKEN";
 
 	/**
-	 * 多太nginx时取到最初的机器的真是IP
+	 * 多台nginx时取到最初的机器的真是IP
 	 */
 	public static final String X_FORDARDED_FOR = "X-Forwarded-For";
 

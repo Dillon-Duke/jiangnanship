@@ -6,12 +6,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.CarMapper;
+import com.caidao.mapper.CarPlatformApplyMapper;
 import com.caidao.mapper.DeptUserCarMapper;
-import com.caidao.pojo.Car;
-import com.caidao.pojo.DeptUserCar;
-import com.caidao.pojo.SysUser;
+import com.caidao.pojo.*;
 import com.caidao.service.CarService;
 import com.caidao.util.FastDfsClientUtils;
+import com.caidao.util.MapUtils;
+import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.Assert;
@@ -39,6 +40,9 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
     @Autowired
     private CarMapper carMapper;
+
+    @Autowired
+    private CarPlatformApplyMapper carPlatformApplyMapper;
 
     @Autowired
     private DeptUserCarMapper deptUserCarMapper;
@@ -89,7 +93,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
         //删除图片
         for (Car car : cars) {
-            for (String string : car.getSourceImage().split(";")) {
+            for (String string : car.getSourceImage().split(PropertyUtils.STRING_SPILT_WITH_SEMICOLON)) {
                 if (string.contains(imgUploadPrifax + File.separator + "group")){
                     fastDfsClientUtils.deleteFile(string);
                 }
@@ -193,11 +197,11 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean updateById(Car car) {
-
         Assert.notNull(car,"更新车辆信息 不能为空");
         log.info("更新车辆id为{}的车辆信息",car.getCarId());
+        SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
+        car.setUpdateId(principal.getUserId());
         car.setUpdateDate(LocalDateTime.now());
-
         //判断给那些新增的没有前缀的条目加上前缀
         String[] sourcePhoto = car.getSourceImage().split(";");
         List<Object> arrayList = new ArrayList<>();
@@ -216,34 +220,44 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
      */
     @Override
     public List<Car> getFreeCarList() {
-        List<Car> carList = carMapper.selectList(new LambdaQueryWrapper<Car>()
-                .in(Car::getBindTaskId, 0)
-                .orderByDesc(Car::getCarId));
+        //获得所有的车辆信息
+        List<Car> carLists = carMapper.selectAllCarList();
+        //获取所有当前时间点有任务的车辆id
+        List<Integer> carIds = carPlatformApplyMapper.selectTaskCarList(LocalDateTime.now());
+        //去除当前时间有任务的车辆
+        List<Car> carList = new ArrayList<>(carLists.size());
+        for (Car car : carLists) {
+            if (!carIds.contains(car.getCarId())) {
+                carList.add(car);
+            }
+        }
         return carList;
     }
 
     /**
      * 车辆与任务做绑定 多太车与一个任务作为绑定
-     * @param carId
-     * @param taskId
+     * @param carPlatformApples
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public void saveOrBindTaskWithCar(List<String> carId, String taskId) {
-        Assert.notNull(carId,"车辆Id不能未空");
-        Assert.notNull(taskId,"任务ID不能为空");
-
-        log.info("车辆id为{}的车辆们绑定任务id为{}的任务",carId,taskId);
-
-        //处理一下数据格式
-        String string = carId.toString();
-        String substring = string.substring(1, string.length() - 1);
-
-        Integer integer = carMapper.saveOrBindTaskWithCar(substring, taskId);
-        if (integer <= 0) {
-            throw new MyException("绑定失败，请重试");
+    public Boolean saveOrBindTaskWithCar(List<CarPlatformApply> carPlatformApples) {
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        if (deptUser == null) {
+            throw new MyException("用户登录超时，请重新登录");
         }
+        Assert.notNull(carPlatformApples,"车辆绑定信息不能未空");
+        for (CarPlatformApply carPlatformApple : carPlatformApples) {
+            log.info("车辆id为{}的车辆们绑定任务id为{}的任务",carPlatformApple.getCarId(),carPlatformApple.getPrsId());
+        }
+        //车辆与任务进行绑定 车辆为原子单位
+        List<CarPlatformApply> platformApplies = new ArrayList<>(carPlatformApples.size());
+        Integer userId = deptUser.getUserId();
+        for (CarPlatformApply carPlatformApple : carPlatformApples) {
+            carPlatformApple.setBindUserId(userId);
+        }
+        Boolean result = carPlatformApplyMapper.insertBatches(platformApplies);
+        return result;
     }
 
     /**
@@ -264,7 +278,6 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
      */
     @Override
     public Map<String, Object> getAllAndFreeCarWithDrivers() {
-        Map<String, Object> map = new HashMap<>(3);
         //获取所有车辆列表
         List<Car> carList = carMapper.selectList(null);
         //获取所有的部门用户车辆中间表
@@ -298,17 +311,15 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         }
         List<Map<String, Object>> list = new ArrayList<>();
         for (Car car : carList) {
-            Map<String, Object> map1 = new HashMap<>(4);
-            map1.put("car",car);
-            map1.put("catTaskCount",bindCarCount.get(car.getCarId()));
-            map1.put("carDriver",carDriver.get(car.getCarId()).getDriverName());
-            map1.put("carOperate",carOperate.get(car.getCarId()).getOperatorName());
-            list.add(map1);
+            Integer catTaskCount = bindCarCount.get(car.getCarId());
+            String carDrivers = carDriver.get(car.getCarId()).getDriverName();
+            String carOperates = carOperate.get(car.getCarId()).getOperatorName();
+            list.add(MapUtils.getMap("car",car,"catTaskCount",catTaskCount,"carDrivers",carDrivers,"carOperates",carOperates));
         }
         Integer carCount = bindCarCount.size();
-        map.put("freeCarCount",carList.size() - carCount);
-        map.put("useCarCount",carCount);
-        map.put("carDetails",list);
-        return map;
+        Integer useCarCount = carCount;
+        Integer freeCarCount = carList.size() - carCount;
+        List<Map<String, Object>> carDetails = list;
+        return MapUtils.getMap("useCarCount",useCarCount,"freeCarCount",freeCarCount,"carDetails",carDetails);
     }
 }

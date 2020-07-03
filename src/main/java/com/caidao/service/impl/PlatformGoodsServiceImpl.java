@@ -11,6 +11,7 @@ import com.caidao.pojo.PlatformGoods;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.PlatformGoodsService;
 import com.caidao.util.FastDfsClientUtils;
+import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.StringUtils;
@@ -93,7 +94,7 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
         log.info("删除分段为{}的分段", platformGoods);
         //删除图片
         for (PlatformGoods tranGood : platformGoods) {
-            for (String string : tranGood.getSourceImage().split(";")) {
+            for (String string : tranGood.getSourceImage().split(PropertyUtils.STRING_SPILT_WITH_SEMICOLON)) {
                 if (string.contains(imgUploadPrifax + File.separator + "group")){
                     fastDfsClientUtils.deleteFile(string);
                 }

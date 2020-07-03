@@ -7,7 +7,6 @@ import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCar;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +50,7 @@ public interface DeptUserService extends IService<DeptUser> {
      * 获取有空余时间的司机
      * @return
      */
-    HashMap<String, Object> getFreeDrivers();
+    Map<String, Object> getFreeDrivers();
 
     /**
      * 获取司机的任务
@@ -65,7 +64,7 @@ public interface DeptUserService extends IService<DeptUser> {
      * @param deptUserCar
      * @return
      */
-    DeptUserCar userBindCar(DeptUserCar deptUserCar);
+    Boolean userBindCar(List<DeptUserCar> deptUserCar);
 
     /**
      * 获得用户的app首页个人信息
@@ -87,4 +86,11 @@ public interface DeptUserService extends IService<DeptUser> {
      * @return
      */
     List<DeptUser> getUsersByRoleAndDept(DeptUser deptUser);
+
+    /**
+     * 用户车辆解绑
+     * @param ids 主键Id
+     * @return
+     */
+    Boolean userNnBindCar(List<Integer> ids);
 }

@@ -6,18 +6,21 @@ import org.springframework.http.*;
 import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
-import reactor.util.annotation.Nullable;
 
+import javax.annotation.Nullable;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
  * @author tom
  */
-public class ResponseEntity<T> extends HttpEntity<T> {
+public class MyResponseEntity<T> extends HttpEntity<T> {
 
     private final Object status;
 
@@ -26,7 +29,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * Create a new {@code ResponseEntity} with the given status code, and no body nor headers.
      * @param status the status code
      */
-    public ResponseEntity(HttpStatus status) {
+    public MyResponseEntity(HttpStatus status) {
         this(null, null, status);
     }
 
@@ -35,7 +38,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @param body the entity body
      * @param status the status code
      */
-    public ResponseEntity(@Nullable T body, HttpStatus status) {
+    public MyResponseEntity(@Nullable T body, HttpStatus status) {
         this(body, null, status);
     }
 
@@ -44,7 +47,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @param headers the entity headers
      * @param status the status code
      */
-    public ResponseEntity(MultiValueMap<String, String> headers, HttpStatus status) {
+    public MyResponseEntity(MultiValueMap<String, String> headers, HttpStatus status) {
         this(null, headers, status);
     }
 
@@ -54,7 +57,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @param headers the entity headers
      * @param status the status code
      */
-    public ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, HttpStatus status) {
+    public MyResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, HttpStatus status) {
         super(body, headers);
         Assert.notNull(status, "HttpStatus must not be null");
         this.status = status;
@@ -67,7 +70,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @param headers the entity headers
      * @param status the status code (as {@code HttpStatus} or as {@code Integer} value)
      */
-    private ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, Object status) {
+    private MyResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, Object status) {
         super(body, headers);
         Assert.notNull(status, "HttpStatus must not be null");
         this.status = status;
@@ -110,7 +113,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
         if (!super.equals(other)) {
             return false;
         }
-        ResponseEntity<?> otherEntity = (ResponseEntity<?>) other;
+        MyResponseEntity<?> otherEntity = (MyResponseEntity<?>) other;
         return ObjectUtils.nullSafeEquals(this.status, otherEntity.status);
     }
 
@@ -168,9 +171,9 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @return the created {@code ResponseEntity}
      * @since 5.1
      */
-    public static <T> ResponseEntity<T> of(Optional<T> body) {
+    public static <T> MyResponseEntity<T> of(Optional<T> body) {
         Assert.notNull(body, "Body must not be null");
-        return body.map(ResponseEntity::ok).orElse(notFound().build());
+        return body.map(MyResponseEntity::ok).orElse(notFound().build());
     }
 
     /**
@@ -178,7 +181,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @return the created builder
      * @since 4.1
      */
-    public static ResponseEntity.BodyBuilder ok() {
+    public static MyResponseEntity.BodyBuilder ok() {
         return status(HttpStatus.OK);
     }
 
@@ -188,7 +191,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @return the created {@code ResponseEntity}
      * @since 4.1
      */
-    public static <T> ResponseEntity<T> ok(T body) {
+    public static <T> MyResponseEntity<T> ok(T body) {
         JSONObject object = new JSONObject();
         object.put("successCode",HttpStatus.OK);
         object.put("successDescription","success");
@@ -213,7 +216,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
      * @return the created {@code ResponseEntity}
      * @since 4.1
      */
-    public static <T> ResponseEntity<T> error(T body) {
+    public static <T> MyResponseEntity<T> error(T body) {
         JSONObject object = new JSONObject();
         object.put("errorCode",HttpStatus.BAD_REQUEST);
         object.put("errorDescription","error");
@@ -404,7 +407,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
          * @return the response entity
          * @see org.springframework.http.ResponseEntity.BodyBuilder#body(Object)
          */
-        <T> ResponseEntity<T> build();
+        <T> MyResponseEntity<T> build();
     }
 
 
@@ -438,7 +441,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
          * @param body the body of the response entity
          * @return the built response entity
          */
-        <T> ResponseEntity<T> body(@Nullable T body);
+        <T> MyResponseEntity<T> body(@Nullable T body);
     }
 
 
@@ -541,13 +544,13 @@ public class ResponseEntity<T> extends HttpEntity<T> {
         }
 
         @Override
-        public <T> ResponseEntity<T> build() {
+        public <T> MyResponseEntity<T> build() {
             return body(null);
         }
 
         @Override
-        public <T> ResponseEntity<T> body(@Nullable T body) {
-            return new ResponseEntity<>(body, this.headers, this.statusCode);
+        public <T> MyResponseEntity<T> body(@Nullable T body) {
+            return new MyResponseEntity<>(body, this.headers, this.statusCode);
         }
     }
 

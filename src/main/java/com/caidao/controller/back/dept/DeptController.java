@@ -1,14 +1,10 @@
 package com.caidao.controller.back.dept;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.caidao.pojo.Dept;
-import com.caidao.pojo.SysUser;
 import com.caidao.service.DeptService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.apache.shiro.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,16 +33,14 @@ public class DeptController {
 
     /**
      * 获取所有的部门信息
-     * @param iPage
-     * @param dept
      * @return
      */
     @GetMapping("/page")
     @ApiOperation("查询所有的部门信息")
     @RequiresPermissions("dept:dept:page")
-    public ResponseEntity<IPage<Dept>> selectPage(IPage<Dept> iPage, Dept dept){
-        IPage<Dept> page = deptService.selectPage(iPage, dept);
-        return ResponseEntity.ok(page);
+    public ResponseEntity<List<Dept>> selectList(){
+        List<Dept> pages = deptService.selectList();
+        return ResponseEntity.ok(pages);
     }
 
     /**
@@ -56,7 +50,7 @@ public class DeptController {
     @GetMapping("/list")
     @ApiOperation("查询菜单")
     @RequiresPermissions("dept:dept:list")
-    public ResponseEntity<List<Dept>> addSysmenu(){
+    public ResponseEntity<List<Dept>> selectDeptList(){
         List<Dept> findDept = deptService.getListDept();
         return ResponseEntity.ok(findDept);
     }
@@ -68,20 +62,9 @@ public class DeptController {
     @ApiOperation("新增部门列表")
     @PostMapping
     @RequiresPermissions("dept:dept:save")
-    public ResponseEntity<String> addDept(@RequestBody Dept dept){
-
-        SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-        //如果部门为空，则抛异常
-        Assert.notNull(dept,"新增部门信息为空");
-        log.info("新增名为{}的部门", dept.getDeptName());
-
-        dept.setCreateId(sysUser.getUserId());
-        boolean save = deptService.save(dept);
-
-        if (save){
-            return ResponseEntity.ok("新增部门成功");
-        }
-        return ResponseEntity.ok("新增部门失败");
+    public ResponseEntity<Boolean> addDept(@RequestBody Dept dept){
+        Boolean save = deptService.save(dept);
+        return ResponseEntity.ok(save);
     }
 
     /**
@@ -93,10 +76,6 @@ public class DeptController {
     @ApiOperation("通过id获取部门")
     @RequiresPermissions("dept:dept:info")
     public ResponseEntity<Dept> getDeptById(@PathVariable("id") Integer id){
-
-        Assert.notNull(id,"部门id不能为空");
-        log.info("获取id为{}的不们信息",id);
-
         Dept dept = deptService.getById(id);
         return ResponseEntity.ok(dept);
     }
@@ -109,19 +88,9 @@ public class DeptController {
     @ApiOperation("更新部门信息")
     @PutMapping
     @RequiresPermissions("dept:dept:update")
-    public ResponseEntity<String> updateDept(@RequestBody Dept dept){
-
-        Assert.notNull(dept,"部门不能为空");
-        log.info("获取id为{}的不们信息", dept.getDeptId());
-
-        SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
-        dept.setUpdateId(sysUser.getUserId());
-        boolean update = deptService.updateById(dept);
-
-        if (update){
-            return ResponseEntity.ok("部门更新成功");
-        }
-        return ResponseEntity.ok("部门更新失败");
+    public ResponseEntity<Boolean> updateDept(@RequestBody Dept dept){
+        Boolean update = deptService.updateById(dept);
+        return ResponseEntity.ok(update);
     }
 
     /**
@@ -132,16 +101,9 @@ public class DeptController {
     @ApiOperation("删除系统部门")
     @DeleteMapping("{id}")
     @RequiresPermissions("dept:dept:delete")
-    public ResponseEntity<String> deleteDept(@PathVariable("id") Integer id){
-
-        Assert.notNull(id,"删除部门id为空");
-        log.info("删除id为{}的部门",id);
-
-        boolean remove = deptService.removeById(id);
-        if (remove){
-            return ResponseEntity.ok("部门删除成功");
-        }
-        return ResponseEntity.ok("部门删除失败");
+    public ResponseEntity<Boolean> deleteDept(@PathVariable("id") Integer id){
+        Boolean remove = deptService.removeById(id);
+        return ResponseEntity.ok(remove);
 
     }
 
