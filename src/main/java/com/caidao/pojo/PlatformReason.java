@@ -51,4 +51,16 @@ public class PlatformReason implements Serializable {
     @ApiModelProperty(value = "创建人")
     private Integer createId;
 
+    @ApiModelProperty(value = "申请起始时间")
+    @TableField(exist = false)
+    private LocalDateTime applyStartTime;
+
+    @ApiModelProperty(value = "申请结束时间")
+    @TableField(exist = false)
+    private LocalDateTime applyEndTime;
+
+    @ApiModelProperty(value = "申请重要程度")
+    @TableField(exist = false)
+    private Integer applyIsImportant;
+
 }

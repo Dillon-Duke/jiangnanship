@@ -3,8 +3,8 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.ActivityQueryParam;
 import com.caidao.param.FlatCarCancelParam;
-import com.caidao.pojo.CarPlatformApply;
 import com.caidao.pojo.PlatformApply;
+import com.caidao.pojo.PlatformReason;
 import org.activiti.engine.history.HistoricTaskInstance;
 
 import java.util.List;
@@ -32,25 +32,19 @@ public interface PlatformApplyService extends IService<PlatformApply> {
 
     /**
      * 获取用户的所有任务列表
-     * @param param
+     * @param username
+     * @param taskState
      * @return
      */
-    List<Map<String, Object>> getApprovalList(ActivityQueryParam param);
+    List<Map<String, Object>> getApprovalList(String username, String taskState);
 
     /**
      * 删除保存的平板车计划任务流程
-     * @param id
-     * @param reason
+     * @param platformReason
      * @return 流程实例Id
      */
-    Boolean removePlanById(String id, String reason);
+    Boolean removePlanById(PlatformReason platformReason);
 
-    /**
-     * 获取用户的任务列表
-     * @param param
-     * @return
-     */
-    List<Map<String, Object>> getDeptUserTaskList(ActivityQueryParam param);
 
     /**
      * 获取用户的历史任务
@@ -71,7 +65,6 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * @param taskId
      * @param username
      * taskService.deleteCandidateUser(taskId,"原用户ID");
-     * taskService.addCandidateUser(taskId,"新用户ID");
      */
     void flatCarPlan2OtherUser(String taskId, String username);
 
@@ -105,10 +98,9 @@ public interface PlatformApplyService extends IService<PlatformApply> {
     /**
      * 司机完成任务的执行
      * @param taskId
-     * @param carPlatformApples
      * @return
      */
-    String driverCompleteTask(List<CarPlatformApply> carPlatformApples, String taskId);
+    boolean driverCompleteTask(String taskId);
 
     /**
      * 取消任务司机完成任务的执行
@@ -124,4 +116,10 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      */
     boolean flatcarCancelDepartmentEvaluate(FlatCarCancelParam param);
 
+    /**
+     * 通过申请Id获取详细的申请信息
+     * @param businessKey
+     * @return
+     */
+    Map<String, Object> getApplyDetailInfoByApplyId(Integer businessKey);
 }

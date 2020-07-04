@@ -18,7 +18,7 @@ public interface PlatformReasonService extends IService<PlatformReason> {
      * @param platformReason
      * @return
      */
-    String completeApprovalWithOpinion(PlatformReason platformReason);
+    boolean completeApprovalWithOpinion(PlatformReason platformReason);
 
     /**
      * 完成取消任务的审批
@@ -32,7 +32,7 @@ public interface PlatformReasonService extends IService<PlatformReason> {
      * @param taskId
      * @return
      */
-    String completeApprovalWithNoOpinion(String taskId);
+    boolean completeApprovalWithNoOpinion(String taskId);
 
     /**
      * 开始一个取消任务申请

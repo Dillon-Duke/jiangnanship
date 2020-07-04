@@ -64,6 +64,9 @@ public class PlatformApply implements Serializable {
     @ApiModelProperty(value = "对象ID")
     private Integer objectId;
 
+    @ApiModelProperty(value = "对象重量")
+    private Integer objectWight;
+
     @ApiModelProperty(value = "工作内容")
     private String jobContent;
 

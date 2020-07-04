@@ -16,11 +16,11 @@ import java.util.List;
 public interface DeptConfigMapper extends BaseMapper<DeptAuthorisation> {
 
     /**
-     * 获取用户的权限
+     * 通过用户Id获取用户的权限
      * @param userId
      * @return
      */
     @Select("SELECT config_id from dept_role_authorisation WHERE dept_id = (SELECT user_dept_id FROM dept_user WHERE user_id = #{userId}) AND role_id = (SELECT role_id FROM dept_user_role WHERE user_id = #{userId})")
-    List<Integer> getPowerIds(@Param("userId") Integer userId);
+    List<Integer> getUserPowerIdsWithUserId(@Param("userId") Integer userId);
 }
 

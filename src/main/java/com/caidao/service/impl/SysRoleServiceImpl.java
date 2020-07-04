@@ -163,7 +163,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		for (Serializable roleId : idList) {
 			list.add(roleId);
 		}
-		return sysRoleMenuMapper.deleteBatchRoleIds(list);
+		return sysRoleMenuMapper.deleteBatchWithRoleIds(list);
 	}
 
 }

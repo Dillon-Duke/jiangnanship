@@ -1,11 +1,11 @@
 package com.caidao.controller.front.app;
 
 
-import com.caidao.common.MyResponseEntity;
-import com.caidao.pojo.AppMassage;
-import com.caidao.service.AppMassageService;
+import com.caidao.pojo.AppTasksMassage;
+import com.caidao.service.AppTasksMassageService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,10 +19,10 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/app/massage")
-public class AppMassageController {
+public class AppTasksMassageController {
 
     @Autowired
-    private AppMassageService appMassageService;
+    private AppTasksMassageService appTasksMassageService;
 
     /**
      * 获得用户未读信息列表
@@ -31,9 +31,9 @@ public class AppMassageController {
      */
     @GetMapping("/getUserNotReadMassage/{username}")
     @ApiOperation("获得用户未读信息")
-    public MyResponseEntity<List<AppMassage>> getUserNotReadMassage(@PathVariable("username") String username){
-        List<AppMassage> appMassageList = appMassageService.getUserNotReadMassage(username);
-        return MyResponseEntity.ok(appMassageList);
+    public ResponseEntity<List<AppTasksMassage>> getUserNotReadMassage(@PathVariable("username") String username){
+        List<AppTasksMassage> appTasksMassageList = appTasksMassageService.getUserNotReadMassage(username);
+        return ResponseEntity.ok(appTasksMassageList);
     }
 
     /**
@@ -43,8 +43,8 @@ public class AppMassageController {
      */
     @GetMapping("/getUserReadMassage/{username}")
     @ApiOperation("获得用已未读信息")
-    public MyResponseEntity<List<AppMassage>> getUserReadMassage(@PathVariable("username") String username){
-        List<AppMassage> appMassageList = appMassageService.getUserReadMassage(username);
-        return MyResponseEntity.ok(appMassageList);
+    public ResponseEntity<List<AppTasksMassage>> getUserReadMassage(@PathVariable("username") String username){
+        List<AppTasksMassage> appTasksMassageList = appTasksMassageService.getUserReadMassage(username);
+        return ResponseEntity.ok(appTasksMassageList);
     }
 }

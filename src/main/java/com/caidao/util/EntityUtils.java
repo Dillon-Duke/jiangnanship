@@ -16,14 +16,14 @@ public class EntityUtils {
      * @param deptUsername
      * @return
      */
-    public static AppMassage getAppMassage(String massageName, Integer taskId, String deptUsername) {
-        AppMassage appMassage = new AppMassage();
-        appMassage.setIsRead(1);
-        appMassage.setMassageName(massageName);
-        appMassage.setTaskId(taskId);
-        appMassage.setCreateTime(LocalDateTime.now());
-        appMassage.setDeptUsername(deptUsername);
-        return appMassage;
+    public static AppTasksMassage getAppMassage(String massageName, Integer taskId, String deptUsername) {
+        AppTasksMassage appTasksMassage = new AppTasksMassage();
+        appTasksMassage.setIsRead(1);
+        appTasksMassage.setMassageName(massageName);
+        appTasksMassage.setTaskId(taskId);
+        appTasksMassage.setCreateTime(LocalDateTime.now());
+        appTasksMassage.setDeptUsername(deptUsername);
+        return appTasksMassage;
     }
 
     /**
@@ -114,26 +114,6 @@ public class EntityUtils {
 
     /**
      * 将内容封装到实体类中返回
-     * @param bindUserId
-     * @param carId
-     * @param startTime
-     * @param endTime
-     * @param prsId
-     * @return
-     */
-    public static CarPlatformApply getCarPlatformApply(Integer bindUserId, Integer carId, LocalDateTime startTime,
-                                                       LocalDateTime endTime, Integer prsId){
-        CarPlatformApply apply = new CarPlatformApply();
-        apply.setBindUserId(bindUserId);
-        apply.setCarId(carId);
-        apply.setStartTime(startTime);
-        apply.setEndTime(endTime);
-        apply.setPrsId(prsId);
-        return apply;
-    }
-
-    /**
-     * 将内容封装到实体类中返回
      * @param businessKey
      * @param carId
      * @param startTime
@@ -147,23 +127,23 @@ public class EntityUtils {
      * @param operatorName
      * @return
      */
-    public static DeptUserCar getDeptUserCar(Integer businessKey, Integer carId, LocalDateTime startTime,
-                                             String workNum, String workShift, LocalDateTime endTime,
-                                             Integer carPlant, Integer driverId, String driverName,
-                                             Integer operatorId, String operatorName){
-        DeptUserCar deptUserCar = new DeptUserCar();
-        deptUserCar.setBusinessKey(businessKey);
-        deptUserCar.setCarId(carId);
-        deptUserCar.setCarPlant(carPlant);
-        deptUserCar.setDriverId(driverId);
-        deptUserCar.setDriverName(driverName);
-        deptUserCar.setEndTime(endTime);
-        deptUserCar.setOperatorId(operatorId);
-        deptUserCar.setOperatorName(operatorName);
-        deptUserCar.setStartTime(startTime);
-        deptUserCar.setWorkNum(workNum);
-        deptUserCar.setWorkShift(workShift);
-        return deptUserCar;
+    public static DeptUserCarApply getDeptUserCar(Integer businessKey, Integer carId, LocalDateTime startTime,
+                                                  String workNum, String workShift, LocalDateTime endTime,
+                                                  Integer carPlant, Integer driverId, String driverName,
+                                                  Integer operatorId, String operatorName){
+        DeptUserCarApply deptUserCarApply = new DeptUserCarApply();
+        deptUserCarApply.setBusinessKey(businessKey);
+        deptUserCarApply.setCarId(carId);
+        deptUserCarApply.setCarPlant(carPlant);
+        deptUserCarApply.setDriverId(driverId);
+        deptUserCarApply.setDriverName(driverName);
+        deptUserCarApply.setEndTime(endTime);
+        deptUserCarApply.setOperatorId(operatorId);
+        deptUserCarApply.setOperatorName(operatorName);
+        deptUserCarApply.setStartTime(startTime);
+        deptUserCarApply.setWorkNum(workNum);
+        deptUserCarApply.setWorkShift(workShift);
+        return deptUserCarApply;
     }
 
 }

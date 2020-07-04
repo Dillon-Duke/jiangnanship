@@ -27,5 +27,5 @@ public interface SysRoleMenuMapper extends BaseMapper<SysRoleMenu> {
      * @param list
      * @return
      */
-    Boolean deleteBatchRoleIds(List<Serializable> list);
+    Boolean deleteBatchWithRoleIds(List<Serializable> list);
 }

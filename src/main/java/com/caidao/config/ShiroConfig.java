@@ -154,6 +154,7 @@ public class ShiroConfig {
 		redisSessionDAO.setRedisManager(getRedisManager());
 		//session在redis中的保存时间,最好大于session会话超时时间
 		redisSessionDAO.setExpire(1801);
+		System.out.println(redisSessionDAO);
 		return redisSessionDAO;
 	}
 

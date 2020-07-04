@@ -41,6 +41,8 @@ import java.util.UUID;
 @Slf4j
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
+	private static final String IS_CREATE_DEPARTMENT_USER = "true";
+
 	@Autowired
 	private SysUserMapper sysUserMapper;
 
@@ -108,7 +110,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		boolean save = super.save(sysUser);
 		//判断是否需要创建部门角色
 		String userAdd = sysUser.getDeptUserAdd();
-		if ("true".equals(userAdd)){
+		if (IS_CREATE_DEPARTMENT_USER.equals(userAdd)){
 			//判断是否昵称已被注册
 			DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
 					.eq(DeptUser::getUsername, sysUser.getUsername()));

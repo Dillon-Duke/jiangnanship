@@ -4,7 +4,7 @@ package com.caidao.controller.back.dept;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.pojo.DeptUser;
-import com.caidao.pojo.DeptUserCar;
+import com.caidao.pojo.DeptUserCarApply;
 import com.caidao.service.DeptUserService;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -128,20 +128,20 @@ public class DeptUserController {
      */
     @ApiOperation("获取司机的任务")
     @GetMapping("/getFreeDriverById/{id}")
-    public ResponseEntity<List<DeptUserCar>> getFreeDriverById(@PathVariable("id") Integer id){
-        List<DeptUserCar> driverById = deptUserService.getFreeDriverById(id);
+    public ResponseEntity<List<DeptUserCarApply>> getFreeDriverById(@PathVariable("id") Integer id){
+        List<DeptUserCarApply> driverById = deptUserService.getFreeDriverById(id);
         return ResponseEntity.ok(driverById);
     }
 
     /**
      * 用户车辆绑定
-     * @param deptUserCar
+     * @param deptUserCarApply
      * @return
      */
     @ApiOperation("用户车辆绑定")
     @PostMapping("/userBindCar")
-    public ResponseEntity<Boolean> userBindCar(@RequestBody List<DeptUserCar> deptUserCar){
-        Boolean bindCar = deptUserService.userBindCar(deptUserCar);
+    public ResponseEntity<Boolean> userBindCar(@RequestBody List<DeptUserCarApply> deptUserCarApply){
+        Boolean bindCar = deptUserService.userBindCar(deptUserCarApply);
         return ResponseEntity.ok(bindCar);
     }
 }

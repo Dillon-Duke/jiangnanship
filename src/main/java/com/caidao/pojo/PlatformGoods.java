@@ -58,6 +58,12 @@ public class PlatformGoods implements Serializable {
     @ApiModelProperty(value = "物品图片真实路径")
     private String sourceImage;
 
+    @ApiModelProperty(value = "物品目前所在位置ID")
+    private String goodsPositionId;
+
+    @ApiModelProperty(value = "物品目前所在地的GPS位置")
+    private String goodsPositionGps;
+
     @ApiModelProperty(value = "是否为大型分段设备1：是 0 否")
     private Integer isBigGoods;
 

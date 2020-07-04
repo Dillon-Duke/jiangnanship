@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.config.AppUserRealmConfig;
 import com.caidao.exception.MyException;
-import com.caidao.mapper.AppMassageMapper;
-import com.caidao.mapper.DeptUserCarMapper;
-import com.caidao.mapper.DeptUserMapper;
-import com.caidao.mapper.DeptUserRoleMapper;
+import com.caidao.mapper.*;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.*;
 import com.caidao.service.DeptUserService;
@@ -42,13 +39,16 @@ import java.util.*;
 public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> implements DeptUserService {
 
     @Autowired
-    private AppMassageMapper appMassageMapper;
+    private AppTasksMassageMapper appTasksMassageMapper;
 
     @Autowired
     private DeptUserMapper deptUserMapper;
 
     @Autowired
-    private DeptUserCarMapper deptUserCarMapper;
+    private DeptUserCarApplyMapper deptUserCarApplyMapper;
+
+    @Autowired
+    private CustomActivitiMapper customActivitiMapper;
 
     @Autowired
     private Jedis jedis;
@@ -298,8 +298,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class, propagation= Propagation.REQUIRES_NEW)
-    public boolean updatePassByPhone(UserParam userParam) {
-
+    public Integer updatePassByPhone(UserParam userParam) {
         DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
                 .eq(DeptUser::getPhone, userParam.getPhone()));
         //设置更新盐值
@@ -307,11 +306,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         String saltPass = Md5Utils.getHashAndSaltAndTime(password, deptUser.getUserSalt(), 1024);
         deptUser.setPassword(saltPass);
         //更新用户密码
-        Integer update = deptUserMapper.updatePassById(deptUser);
-        if (update == 0){
-            return false;
-        }
-        return true;
+        return deptUserMapper.updateUserPasswordByUserId(deptUser.getUserId(),saltPass);
     }
 
     /**
@@ -323,11 +318,11 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         Assert.notNull(deptUser,"用户登录超时，请重新登录");
         //查询用户车辆表当天所有有任务的人
-        List<DeptUserCar> deptUserCarList = deptUserCarMapper.selectList(null);
+        List<DeptUserCarApply> deptUserCarApplyList = deptUserCarApplyMapper.selectList(null);
         List<Integer> integers = new ArrayList<>();
-        for (DeptUserCar deptUserCar : deptUserCarList) {
-            Integer driverId = deptUserCar.getDriverId();
-            Integer operatorId = deptUserCar.getOperatorId();
+        for (DeptUserCarApply deptUserCarApply : deptUserCarApplyList) {
+            Integer driverId = deptUserCarApply.getDriverId();
+            Integer operatorId = deptUserCarApply.getOperatorId();
             if (!integers.contains(driverId)) {
                 integers.add(driverId);
             }
@@ -350,70 +345,72 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      * @return
      */
     @Override
-    public List<DeptUserCar> getFreeDriverById(Integer id) {
+    public List<DeptUserCarApply> getFreeDriverById(Integer id) {
         Assert.notNull(id,"部门用户Id不能为空");
         log.info("查询部门用户id为{}的空闲时间",id);
         //获得该司机的所有任务 包括司机和操作员的
-        List<DeptUserCar> deptUserCars = deptUserCarMapper.selectList(new LambdaQueryWrapper<DeptUserCar>()
-                .eq(DeptUserCar::getDriverId, id)
+        List<DeptUserCarApply> deptUserCarApplies = deptUserCarApplyMapper.selectList(new LambdaQueryWrapper<DeptUserCarApply>()
+                .eq(DeptUserCarApply::getDriverId, id)
                 .or(true)
-                .eq(DeptUserCar::getOperatorId,id));
+                .eq(DeptUserCarApply::getOperatorId,id));
         //获得对应的车辆ID 去重
         List<Integer> integers = new ArrayList<>();
-        for (DeptUserCar deptUserCar : deptUserCars) {
-            Integer carId = deptUserCar.getCarId();
+        for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
+            Integer carId = deptUserCarApply.getCarId();
             if (!integers.contains(carId)) {
                 integers.add(carId);
             }
         }
         //TODO 获得对应的车辆任务 之后逻辑确定是否是获取对应的申请任务，再写逻辑
-        return deptUserCars;
+        return deptUserCarApplies;
     }
 
     /**
      * 用户车辆绑定
-     * @param deptUserCars
+     * @param deptUserCarApplies
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Boolean userBindCar(List<DeptUserCar> deptUserCars) {
+    public Boolean userBindCar(List<DeptUserCarApply> deptUserCarApplies) {
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-        Assert.notNull(deptUserCars,"绑定数据不能为空");
-        log.info("用户绑定车辆",deptUserCars);
-        List<DeptUserCar> userCars = new ArrayList<>(deptUserCars.size());
-        List<String> username = new ArrayList<>(deptUserCars.size() + 1);
-        List<AppMassage> massages = new ArrayList<>(username.size());
+        Assert.notNull(deptUserCarApplies,"绑定数据不能为空");
+        log.info("用户绑定车辆", deptUserCarApplies);
+        List<DeptUserCarApply> userCars = new ArrayList<>(deptUserCarApplies.size());
+        List<String> username = new ArrayList<>(deptUserCarApplies.size() + 1);
+        List<AppTasksMassage> massages = new ArrayList<>(username.size());
         Integer taskId = null;
-        for (DeptUserCar deptUserCar : deptUserCars) {
+        for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
             //自定义工号
-            deptUserCar.setWorkNum(PropertyUtils.USER_BIND_CAR_TASK_PREFIX + DateUtils.getYyyyMm() + deptUserCar.getCarPlant());
-            userCars.add(deptUserCar);
+            deptUserCarApply.setWorkNum(PropertyUtils.USER_BIND_CAR_TASK_PREFIX + DateUtils.getYyyyMm() + deptUserCarApply.getCarPlant());
+            userCars.add(deptUserCarApply);
             //将姓名收集到姓名列表中
-            if (!username.contains(deptUserCar.getDriverName())) {
-                username.add(deptUserCar.getDriverName());
+            if (!username.contains(deptUserCarApply.getDriverName())) {
+                username.add(deptUserCarApply.getDriverName());
             }
-            username.add(deptUserCar.getOperatorName());
-            taskId = deptUserCar.getTaskId();
+            username.add(deptUserCarApply.getOperatorName());
+            taskId = deptUserCarApply.getTaskId();
         }
-        deptUserCarMapper.insertBatches(userCars);
+        deptUserCarApplyMapper.insertBatches(userCars);
         for (String name : username) {
             massages.add(EntityUtils.getAppMassage(name, taskId, "平板车操作任务"));
         }
-        return appMassageMapper.insertBatches(massages);
+        return appTasksMassageMapper.insertBatches(massages);
     }
 
     /**
      * 获得用户的app首页个人信息
-     * @param deptUser
+     * @param userId
      * @return
      */
     @Override
-    public Map<String, String> getDeptUserMassage(DeptUser deptUser) {
-        String realName = deptUser.getRealName();
-        String jobNum = deptUser.getJobNum();
-        String sourceImage = deptUser.getSourceImage();
-        return MapUtils.getMap("realName",realName,"jobNum",jobNum,"sourceImage",sourceImage);
+    public Map<String, String> getDeptUserMassage(Integer userId) {
+        DeptUser user = deptUserMapper.selectById(userId);
+        String realName = user.getRealName();
+        String jobNum = user.getJobNum();
+        String sourceImage = user.getSourceImage();
+        String username = user.getUsername();
+        return MapUtils.getMap("username",username,"realName",realName,"jobNum",jobNum,"sourceImage",sourceImage);
     }
 
     /**
@@ -461,28 +458,28 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
         log.info("用户{}解绑了用户车辆绑定id为{}的绑定",deptUser.getUsername(),ids);
         //获取需要解绑的信息
-        List<DeptUserCar> deptUserCars = deptUserCarMapper.selectBatchIds(ids);
+        List<DeptUserCarApply> deptUserCarApplies = deptUserCarApplyMapper.selectBatchIds(ids);
         //获取对应的业务Id以及司机和操作员
         Integer businessKey = null;
         List<String> username = new LinkedList<>();
-        for (DeptUserCar deptUserCar : deptUserCars) {
-            businessKey = deptUserCar.getBusinessKey();
-            if (!username.contains(deptUserCar.getDriverName())) {
-                username.add(deptUserCar.getDriverName());
+        for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
+            businessKey = deptUserCarApply.getBusinessKey();
+            if (!username.contains(deptUserCarApply.getDriverName())) {
+                username.add(deptUserCarApply.getDriverName());
             }
-            username.add(deptUserCar.getOperatorName());
+            username.add(deptUserCarApply.getOperatorName());
         }
         //通过业务主键获取对应的任务Id
-        String taskId = deptUserCarMapper.selectTaskIdByBusinessKey(businessKey);
-        List<AppMassage> appMassages = appMassageMapper.selectList(new LambdaQueryWrapper<AppMassage>()
-                .eq(AppMassage::getTaskId, taskId)
-                .in(AppMassage::getDeptUsername, username));
+        String taskId = customActivitiMapper.selectTaskIdWithBusinessKey(businessKey);
+        List<AppTasksMassage> appTasksMassages = appTasksMassageMapper.selectList(new LambdaQueryWrapper<AppTasksMassage>()
+                .eq(AppTasksMassage::getTaskId, taskId)
+                .in(AppTasksMassage::getDeptUsername, username));
         //获取对应的id
-        List<AppMassage> list = new LinkedList<>();
-        for (AppMassage appMassage : appMassages) {
-            list.add(EntityUtils.getAppMassage(appMassage.getMassageName(),Integer.parseInt(taskId),appMassage.getDeptUsername()));
+        List<AppTasksMassage> list = new LinkedList<>();
+        for (AppTasksMassage appTasksMassage : appTasksMassages) {
+            list.add(EntityUtils.getAppMassage(appTasksMassage.getMassageName(),Integer.parseInt(taskId), appTasksMassage.getDeptUsername()));
         }
-        return appMassageMapper.updateBatches(list);
+        return appTasksMassageMapper.updateBatches(list);
     }
 
     /**

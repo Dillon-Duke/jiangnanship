@@ -18,5 +18,5 @@ public interface PlatformGoodsMapper extends BaseMapper<PlatformGoods> {
      * @return
      */
     @Update("UPDATE tran_goods SET pro_code = 0 WHERE goods_id = #{objectId}")
-    int updateGoodsBindState(Integer objectId);
+    int updateGoodsBindStateWithGoodsId(Integer objectId);
 }

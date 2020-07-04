@@ -1,10 +1,10 @@
 package com.caidao.controller.front.app;
 
-import com.caidao.common.MyResponseEntity;
 import com.caidao.pojo.PlatformGoods;
 import com.caidao.service.PlatformGoodsService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -24,9 +24,9 @@ public class AppTransGoodsController {
      */
     @GetMapping("/chooseById/{id}")
     @ApiOperation("通过id查询运输分段信息")
-    public MyResponseEntity<PlatformGoods> chooseById(@PathVariable("id") Integer id){
+    public ResponseEntity<PlatformGoods> chooseById(@PathVariable("id") Integer id){
         PlatformGoods platformGoods = platformGoodsService.getById(id);
-        return MyResponseEntity.ok(platformGoods);
+        return ResponseEntity.ok(platformGoods);
     }
 
     /**
@@ -35,8 +35,8 @@ public class AppTransGoodsController {
      */
     @PostMapping("/chooseByType")
     @ApiOperation("按照类型选择运输分段信息")
-    public MyResponseEntity<PlatformGoods> chooseByType(@RequestBody PlatformGoods platformGoods){
-        return MyResponseEntity.ok().build();
+    public ResponseEntity<PlatformGoods> chooseByType(@RequestBody PlatformGoods platformGoods){
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -45,8 +45,8 @@ public class AppTransGoodsController {
      */
     @PostMapping("/chooseByInput")
     @ApiOperation("通过手动输入名称选择运输分段信息")
-    public MyResponseEntity<PlatformGoods> chooseByInput(@RequestBody PlatformGoods platformGoods){
-        return MyResponseEntity.ok().build();
+    public ResponseEntity<PlatformGoods> chooseByInput(@RequestBody PlatformGoods platformGoods){
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -55,8 +55,8 @@ public class AppTransGoodsController {
      */
     @PostMapping("/chooseByMap")
     @ApiOperation("通过id查询运输分段信息")
-    public MyResponseEntity<PlatformGoods> chooseByMap(@RequestBody PlatformGoods platformGoods){
-        return MyResponseEntity.ok().build();
+    public ResponseEntity<PlatformGoods> chooseByMap(@RequestBody PlatformGoods platformGoods){
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -65,8 +65,8 @@ public class AppTransGoodsController {
      */
     @PostMapping("/chooseByMapQrCode")
     @ApiOperation("通过id查询运输分段信息")
-    public MyResponseEntity<PlatformGoods> chooseByMapQrCode(@RequestBody PlatformGoods platformGoods){
-        return MyResponseEntity.ok().build();
+    public ResponseEntity<PlatformGoods> chooseByMapQrCode(@RequestBody PlatformGoods platformGoods){
+        return ResponseEntity.ok().build();
     }
 
 }

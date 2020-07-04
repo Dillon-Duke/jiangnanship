@@ -2,7 +2,6 @@ package com.caidao.controller.front.app;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.caidao.common.MyResponseEntity;
 import com.caidao.pojo.Car;
 import com.caidao.pojo.CarConfig;
 import com.caidao.service.CarConfigService;
@@ -11,6 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,9 +39,9 @@ public class AppCar {
      */
     @PostMapping("/getCarPage")
     @ApiOperation("获取分页车辆信息")
-    public MyResponseEntity getCarPage(Page<Car> page , Car car){
+    public ResponseEntity getCarPage(Page<Car> page , Car car){
         IPage<Car> sysRoles = carService.findSysCarPage(page, car);
-        return MyResponseEntity.ok(sysRoles);
+        return ResponseEntity.ok(sysRoles);
     }
 
     /**
@@ -50,9 +50,9 @@ public class AppCar {
      */
     @ApiOperation("查询数据库可用车辆")
     @GetMapping("/getCarCount")
-    public MyResponseEntity getCarCount(){
+    public ResponseEntity getCarCount(){
         Integer count = carService.getCarCount();
-        return MyResponseEntity.ok(count);
+        return ResponseEntity.ok(count);
     }
 
     /**
@@ -61,9 +61,9 @@ public class AppCar {
      */
     @ApiOperation("根据条件查询可用车辆信息")
     @PostMapping("/selectConditionCar")
-    public MyResponseEntity<List<Car>> selectConditionCar(@RequestBody Car car){
+    public ResponseEntity<List<Car>> selectConditionCar(@RequestBody Car car){
         List<Car> carList = carService.selectConditionCar(car);
-        return MyResponseEntity.ok(carList);
+        return ResponseEntity.ok(carList);
     }
 
     /**
@@ -73,9 +73,9 @@ public class AppCar {
      */
     @GetMapping("getCarInfo/{id}")
     @ApiOperation("通过id查询车辆信息")
-    public MyResponseEntity<Car> getCarInfoById(@PathVariable("id") Integer id){
+    public ResponseEntity<Car> getCarInfoById(@PathVariable("id") Integer id){
         Car car = carService.getById(id);
-        return MyResponseEntity.ok(car);
+        return ResponseEntity.ok(car);
     }
 
     /**
@@ -85,9 +85,9 @@ public class AppCar {
      */
     @GetMapping("getCarContent/{configKey}")
     @ApiOperation("获得不同类型车辆的工作内容")
-    public MyResponseEntity<List<CarConfig>> getCarContent(@PathVariable("configKey") String configKey){
+    public ResponseEntity<List<CarConfig>> getCarContent(@PathVariable("configKey") String configKey){
         List<CarConfig> carConfigList = carConfigService.getCarContent(configKey);
-        return MyResponseEntity.ok(carConfigList);
+        return ResponseEntity.ok(carConfigList);
     }
 
     /**
@@ -96,9 +96,9 @@ public class AppCar {
      */
     @GetMapping("getAllAndFreeCarWithDrivers")
     @ApiOperation("获得空闲的、在使用的车辆已经对应的司机信息")
-    public MyResponseEntity<Map<String, Object>> getAllAndFreeCarWithDrivers(){
+    public ResponseEntity<Map<String, Object>> getAllAndFreeCarWithDrivers(){
         Map<String, Object> map = carService.getAllAndFreeCarWithDrivers();
-        return MyResponseEntity.ok(map);
+        return ResponseEntity.ok(map);
     }
 
 }

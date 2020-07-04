@@ -1,7 +1,7 @@
 package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.caidao.pojo.PlatformApplyComment;
+import com.caidao.pojo.PlatformComment;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -13,6 +13,6 @@ import org.springframework.stereotype.Repository;
  * @since 2020-06-30
  */
 @Repository
-public interface PlatformApplyCommentMapper extends BaseMapper<PlatformApplyComment> {
+public interface PlatformApplyCommentMapper extends BaseMapper<PlatformComment> {
 
 }

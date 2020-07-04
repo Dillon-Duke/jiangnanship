@@ -12,33 +12,34 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
+ * <p>
+ * 
+ * </p>
+ *
  * @author Dillon
- * @since 2020-06-30
+ * @since 2020-07-04
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@ApiModel(value="CarPlatformApply对象", description="")
-public class CarPlatformApply implements Serializable {
+@ApiModel(value="LunchImage对象", description="")
+public class LunchImage implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @ApiModelProperty(value = "主键自增Id")
+    @ApiModelProperty(value = "主键自增id")
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    @ApiModelProperty(value = "车辆Id")
-    private Integer carId;
+    private String fileImage;
 
-    @ApiModelProperty(value = "平板车申请Id")
-    private Integer prsId;
+    private String sourceImage;
 
-    @ApiModelProperty(value = "绑定开始时间")
-    private LocalDateTime startTime;
+    private Integer createId;
 
-    @ApiModelProperty(value = "绑定结束时间")
-    private LocalDateTime endTime;
+    private LocalDateTime createDate;
 
-    @ApiModelProperty(value = "绑定人Id")
-    private Integer bindUserId;
+    private String isUse;
+
+
 }

@@ -48,11 +48,9 @@ public class SaveAppBaseMsgFilter implements Filter {
         this.setJedis(ctx.getBean(Jedis.class));
         this.setAppBaseMsgService(ctx.getBean(AppBaseMsgService.class));
     }
-
     private synchronized void setJedis(Jedis jedis) {
         SaveAppBaseMsgFilter.jedis = jedis;
     }
-
     private synchronized void setAppBaseMsgService(AppBaseMsgService appBaseMsgService) {
         SaveAppBaseMsgFilter.appBaseMsgService = appBaseMsgService;
     }
@@ -72,7 +70,6 @@ public class SaveAppBaseMsgFilter implements Filter {
     @Transactional(rollbackFor = RuntimeException.class)
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest servletRequest = (HttpServletRequest) req;
-
         // 获取请求地址
         String url = (servletRequest).getRequestURI().substring((servletRequest).getContextPath().length());
         if (isPast(url)) {
@@ -88,7 +85,6 @@ public class SaveAppBaseMsgFilter implements Filter {
             }
             // 将json字符串转换为json对象
             JSONObject jsonObject = JSONObject.parseObject(sb.toString());
-
             //将字段设置到基础表字段中
             AppBaseMsg appBaseMsg = new AppBaseMsg();
             appBaseMsg.setInterfaceVersion(jsonObject.getString("interfaceVersion"));
@@ -102,7 +98,6 @@ public class SaveAppBaseMsgFilter implements Filter {
             String userId = jsonObject.getString("userId");
             appBaseMsg.setUserId(Integer.parseInt(userId));
             appBaseMsg.setSubmitTime(jsonObject.getLong("submitTime"));
-
             //解密一下加密内容
             String encryption = jsonObject.getString("encryption");
             String decrypt ;
@@ -113,7 +108,7 @@ public class SaveAppBaseMsgFilter implements Filter {
                 //替换解密内容
                 String primaryKey = jedis.get(PropertyUtils.APP_USER_PRIVATE_KEY + uuid);
                 try {
-                    decrypt = RsaUtils.decrypt(encryption, primaryKey);
+                    decrypt = RsaUtils.decryptByPrivateKey(primaryKey, encryption);
                 } catch (Exception e) {
                     throw new MyException("登录解密错误，请联系管理员");
                 }

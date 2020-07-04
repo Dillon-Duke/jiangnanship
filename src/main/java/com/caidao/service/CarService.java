@@ -4,8 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.pojo.Car;
-import com.caidao.pojo.CarPlatformApply;
+import com.caidao.pojo.DeptUserCarApply;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -44,21 +45,34 @@ public interface CarService extends IService<Car> {
     List<Car> selectConditionCar(Car car);
 
     /**
-     * 获得空闲的车辆
-     * @return
-     */
-    List<Car> getFreeCarList();
-
-    /**
      * 车辆与任务做绑定 多太车与一个任务作为绑定
-     * @param carPlatformApply
+     * @param deptUserCarApplies
      * @return
      */
-    Boolean saveOrBindTaskWithCar(List<CarPlatformApply> carPlatformApply);
+    Boolean saveOrBindTaskWithCar(List<DeptUserCarApply> deptUserCarApplies);
 
     /**
      * 获得空闲的、在使用的车辆已经对应的司机信息
      * @return
      */
     Map<String, Object> getAllAndFreeCarWithDrivers();
+
+    /**
+     * 获得所有的车辆信息，有车辆任务的显示车辆的任务，没有车辆任务的显示为空闲车辆
+     * @param date
+     * @return
+     */
+    Map<String, Object> getAllCarsWithHaveTasksAndNoTasks(LocalDateTime date);
+
+    /**
+     * 将已经绑定车辆的任务进行排序
+     * @return
+     */
+    void sortBindApplyTasks(Integer businessKey);
+
+    /**
+     * 自动绑定车辆与申请的关系
+     * @return
+     */
+    void autoCompareCarWithApply();
 }

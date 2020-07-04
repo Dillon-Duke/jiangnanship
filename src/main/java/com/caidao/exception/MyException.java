@@ -1,8 +1,8 @@
 package com.caidao.exception;
 
-import com.caidao.common.MyResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -45,8 +45,8 @@ public class MyException extends RuntimeException {
     /** 自定义异常抛出显示 */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(MyException.class)
-    public MyResponseEntity<String> myException(MyException myException){
+    public ResponseEntity<String> myException(MyException myException){
         log.info("自定义异常",myException);
-        return MyResponseEntity.error(myException.getMessage());
+        return ResponseEntity.badRequest().body(myException.getMessage());
     }
 }

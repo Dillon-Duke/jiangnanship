@@ -7,6 +7,7 @@ import com.caidao.mapper.*;
 import com.caidao.param.ActivityQueryParam;
 import com.caidao.param.FlatCarCancelParam;
 import com.caidao.pojo.*;
+import com.caidao.service.CarService;
 import com.caidao.service.PlatformApplyService;
 import com.caidao.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,9 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
     private TaskService taskService;
 
     @Autowired
+    private CarService carService;
+
+    @Autowired
     private HistoryService historyService;
 
     @Autowired
@@ -68,13 +72,13 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
     private DeptUserMapper deptUserMapper;
 
     @Autowired
-    private AppMassageMapper appMassageMapper;
+    private AppTasksMassageMapper appTasksMassageMapper;
 
     @Autowired
-    private DeptUserCarMapper deptUserCarMapper;
+    private DeptUserCarApplyMapper deptUserCarApplyMapper;
 
     @Autowired
-    private CarPlatformApplyMapper carPlatformApplyMapper;
+    private CustomActivitiMapper customActivitiMapper;
 
     /**
      * 保存一个平板车计划任务流程
@@ -159,14 +163,16 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
 
     /**
      * 删除保存的平板车计划任务流程
-     * @param id
+     * @param platformReason
      * @return 流程实例Id
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Boolean removePlanById(String id,String reason) {
+    public Boolean removePlanById(PlatformReason platformReason) {
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("用户{}删除未申请的任务",deptUser.getUsername());
+        String id = platformReason.getTaskId();
+        String reason = platformReason.getReason();
         PlatformApply platformApply = platformApplyMapper.selectById(id);
         //获取任务的申请状态，已提交状态的任务不能被删除
         Integer state = platformApply.getApplyState();
@@ -179,7 +185,7 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
             throw new MyException("删除操作失败，请重试");
         }
         //更改分段绑定信息状态
-        int update = platformGoodsMapper.updateGoodsBindState(platformApply.getObjectId());
+        int update = platformGoodsMapper.updateGoodsBindStateWithGoodsId(platformApply.getObjectId());
         if(update <= 0) {
             throw new MyException("删除操作失败，请重试");
         }
@@ -246,38 +252,6 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         } catch (RuntimeException e) {
             throw new MyException("任务申请失败，请联系管理员确认");
         }
-    }
-
-    /**
-     * 获取用户的任务列表
-     * @return
-     */
-    @Override
-    public List<Map<String, Object>> getDeptUserTaskList(ActivityQueryParam param) {
-        //默认查询的当前用户的需要审批的列表
-        Assert.notNull(param,"参数不能为空");
-        //判断是查询自己的正在审批的任务还是别人正在审批的任务
-        String username;
-        if (param.getUserName() == null || param.getUserName() == ""){
-            DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-            username = deptUser.getUsername();
-        } else {
-            username = param.getUserName();
-        }
-        log.info("查询用户名为{}的任务列表",username);
-        //activity中获取需要审批的任务列表
-        TaskQuery taskQuery = taskService.createTaskQuery();
-        //判断是否查询某一个任务审批列表
-        String deploymentId = param.getDeploymentId();
-        String string = StringUtils.hasText(deploymentId) ? deploymentId : null;
-        List<Task> taskList = taskQuery.processDefinitionKey(string).taskAssignee(username).orderByTaskId().desc().list();
-        String[] ps = {"id", "name", "processInstanceId", "owner", "assignee"};
-        List<Map<String, Object>> listMap = new ArrayList<>();
-        for (Task task : taskList) {
-            Map<String, Object> map = ActivitiObj2MapUtils.obj2map(task, ps);
-            listMap.add(map);
-        }
-        return listMap;
     }
 
     /**
@@ -350,23 +324,23 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         Integer updateId = deptUser.getUserId();
         log.info("拾取用户名为{}的组任务列表", username);
         try {
-            AppMassage massage = appMassageMapper.selectOne(new LambdaQueryWrapper<AppMassage>()
-                    .eq(AppMassage::getTaskId, taskId)
-                    .eq(AppMassage::getDeptUsername,username));
+            AppTasksMassage massage = appTasksMassageMapper.selectOne(new LambdaQueryWrapper<AppTasksMassage>()
+                    .eq(AppTasksMassage::getTaskId, taskId)
+                    .eq(AppTasksMassage::getDeptUsername,username));
             //判断别人是否拾取
             if (massage == null || (massage.getIsRead() == -1)) {
                 throw new MyException("任务已被拾取");
             }
             taskService.claim(taskId, username);
             //更新该任务id的消息
-            Integer massages = appMassageMapper.updateReanState(taskId);
+            Integer massages = appTasksMassageMapper.updateReadStateToReadied(taskId);
             if (massages == 0) {
                 throw new MyException("任务拾取失败，请联系管理员");
             }
             //获取流程的业务主键
             String businessKey = toTaskIdGetBusinessKey(taskId);
-            //增加数据库中审批人
-            Integer update = platformApplyMapper.updateApplyName(Integer.parseInt(businessKey), username,updateId);
+            //更新数据库中审批人
+            Integer update = platformApplyMapper.updateTaskApprovalName(Integer.parseInt(businessKey), username,updateId);
             if (update <= 0){
                 throw new MyException("任务拾取失败，请重试");
             }
@@ -389,14 +363,14 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         log.info("任务id为{}交给{}",taskId,username);
         //用户转交之前查询
-        AppMassage massage = appMassageMapper.selectOne(new LambdaQueryWrapper<AppMassage>()
-                .eq(AppMassage::getTaskId, taskId));
+        AppTasksMassage massage = appTasksMassageMapper.selectOne(new LambdaQueryWrapper<AppTasksMassage>()
+                .eq(AppTasksMassage::getTaskId, taskId));
         if (massage == null ) {
             throw new MyException("任务已被拾取");
         }
         massage.setMassageName(username);
         massage.setIsRead(1);
-        int update1 = appMassageMapper.updateById(massage);
+        int update1 = appTasksMassageMapper.updateById(massage);
         if (update1 == 0) {
             throw new MyException("任务转交失败，请联系管理员");
         }
@@ -406,7 +380,7 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
             //获取流程的业务主键
             String businessKey = toTaskIdGetBusinessKey(taskId);
             //增加数据库中审批人
-            Integer update = platformApplyMapper.updateApplyName(Integer.parseInt(businessKey),username,deptUser.getUserId());
+            Integer update = platformApplyMapper.updateTaskApprovalName(Integer.parseInt(businessKey),username,deptUser.getUserId());
             if (update <= 0){
                 throw new MyException("任务指派失败，请重试");
             }
@@ -427,8 +401,8 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         Integer updateId = deptUser.getUserId();
         log.info("拾取用户名为{}的组任务列表",deptUser.getUsername());
-        //用户归还任务
-        Integer massage = appMassageMapper.backTasks(taskId);
+        //用户归还任务 更新信息状态为未阅读
+        Integer massage = appTasksMassageMapper.backTasksWithReadStateToUnRead(taskId);
         if (massage == 0 ) {
             throw new MyException("任务归还失败，请联系管理员");
         }
@@ -437,7 +411,7 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
             //获取流程的业务主键
             String businessKey = toTaskIdGetBusinessKey(taskId);
             //增加数据库中审批人
-            Integer update = platformApplyMapper.updateApplyName(Integer.parseInt(businessKey),null,updateId);
+            Integer update = platformApplyMapper.updateTaskApprovalName(Integer.parseInt(businessKey),null,updateId);
             if (update <= 0){
                 throw new MyException("任务指派失败，请重试");
             }
@@ -448,28 +422,28 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
 
     /**
      * 获取用户的所有任务列表
-     * @param param
+     * @param username
+     * @param taskState
      * @return
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public List<Map<String, Object>> getApprovalList(ActivityQueryParam param) {
+    public List<Map<String, Object>> getApprovalList(String username, String taskState) {
         //默认查询的当前用户的所有审批的列表
-        Assert.notNull(param,"参数不能为空");
+        Assert.notNull(username,"参数不能为空");
         //判断是查询自己的正在审批的任务还是别人正在审批的任务
-        String username;
-        if (param.getUserName() == null || param.getUserName() == ""){
+        String usernames;
+        if (username == null || username == ""){
             DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-            username = deptUser.getUsername();
+            usernames = deptUser.getUsername();
         } else {
-            username = param.getUserName();
+            usernames = username;
         }
         log.info("查询用户名为{}的任务列表",username);
         //获取所有满足条件的任务列表
         List<PlatformApply> submitList = platformApplyMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
-                .eq(StringUtils.hasText(param.getTaskName()), PlatformApply::getRequestType, param.getTaskName())
-                .eq(StringUtils.hasText(param.getTaskState()), PlatformApply::getApplyState, param.getTaskState())
-                .eq(PlatformApply::getApplyName, username)
+                .eq(StringUtils.hasText(taskState), PlatformApply::getApplyState, taskState)
+                .eq(PlatformApply::getApplyName, usernames)
                 .orderByAsc(PlatformApply::getObjectId));
         //判断如果没有任何任务，直接返回空值
         if(submitList.size() == 0){
@@ -559,7 +533,7 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         }
         String instanceId = singleResult.getProcessInstanceId();
         //查询所有的可以取消的审批人 包括司机
-        List<String> nameList = platformApplyMapper.getPlatCarApplyAndApprovalUsers(instanceId);
+        List<String> nameList = customActivitiMapper.getPlatCarApplyAndApprovalUsers(instanceId);
         List<String> list = new ArrayList<>();
         for (int i = 0; i < nameList.size(); i++) {
             String names = nameList.get(i);
@@ -623,7 +597,7 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         //3、更改申请流程状态为完成
         //获取对应的业务Id
         String businessKey = toTaskIdGetBusinessKey(taskId);
-        Integer integer = platformApplyMapper.successEndFlatCarPlanTask(Integer.parseInt(businessKey));
+        Integer integer = platformApplyMapper.updatePlatformApplyStateToSuccess(Integer.parseInt(businessKey));
 
         //4、删除推送消息中信息
         deleteCompleteMassage(taskId);
@@ -637,46 +611,36 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
     /**
      * 司机完成任务的执行
      * @param taskId
-     * @param carPlatformApples
      * @return
      */
     @Override
-    public String driverCompleteTask(List<CarPlatformApply> carPlatformApples, String taskId) {
+    public boolean driverCompleteTask(String taskId) {
         Assert.notNull(taskId,"任务id不能为空");
         DeptUser deptuser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         if (deptuser == null) {
             throw new MyException("用户登录超时，请重新登录");
         }
         log.info("司机{}完成任务的执行",deptuser.getUsername());
-
         //获取对应的业务Id
         String businessKey = toTaskIdGetBusinessKey(taskId);
-
-        //1、解除司机与车辆的绑定
-        deptUserCarMapper.delete(new LambdaQueryWrapper<DeptUserCar>()
-        .eq(DeptUserCar::getBusinessKey,businessKey));
-
-        //2、解绑驳运完成的物件信息
-        platformApplyMapper.updateGoodsBindState(businessKey);
-
-        //3、解除车辆与申请的绑定
-        List<Integer> list = new ArrayList<>(carPlatformApples.size());
-        for (CarPlatformApply carPlatformApple : carPlatformApples) {
-            list.add(carPlatformApple.getId());
-        }
-        carPlatformApplyMapper.deleteBatchIds(list);
-        //3、删除推送消息中信息
+        //解除司机与车辆的绑定
+        deptUserCarApplyMapper.delete(new LambdaQueryWrapper<DeptUserCarApply>()
+        .eq(DeptUserCarApply::getBusinessKey,businessKey));
+        //解绑驳运完成的物件信息
+        platformApplyMapper.updateGoodsBindStateToUnbind(businessKey);
+        //删除推送消息中信息
         deleteCompleteMassage(taskId);
-
-        //4、给部门评价人员推送消息
+        //给部门评价人员推送消息
         //获得对应的实例Id
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
         String instanceId = task.getProcessInstanceId();
-
-        //5、司机完成任务执行
+        //司机完成任务执行
         taskService.complete(taskId);
         String newTaskId = addNextCandidateMassage(task,instanceId, null);
-        return newTaskId;
+        if (newTaskId != null) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -697,14 +661,14 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         String cancelBusinessKey = param.getCancelBusinessKey();
         String taskId = param.getTaskId();
         //1、解除司机与车辆的绑定
-        deptUserCarMapper.delete(new LambdaQueryWrapper<DeptUserCar>()
-                .eq(DeptUserCar::getBusinessKey, cancelBusinessKey));
+        deptUserCarApplyMapper.delete(new LambdaQueryWrapper<DeptUserCarApply>()
+                .eq(DeptUserCarApply::getBusinessKey, cancelBusinessKey));
 
         //2、解绑驳运完成的物件信息
         //获取对应的业务Id
         String businessKey = toTaskIdGetBusinessKey(taskId);
         //更新对应的物件信息为未绑定
-        platformApplyMapper.updateGoodsBindState(businessKey);
+        platformApplyMapper.updateGoodsBindStateToUnbind(businessKey);
 
         //3、获得对应的实例Id
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -751,6 +715,26 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
             return false;
         }
         return true;
+    }
+
+    /**
+     * 通过申请Id获取详细的申请信息
+     * @param businessKey
+     * @return
+     */
+    @Override
+    public Map<String, Object> getApplyDetailInfoByApplyId(Integer businessKey) {
+        //TODO 之后看一下可以前端直接带参数过来，后台只需要查询必要的参数即可
+        //获取所有的分段信息，作为之后地图展示坐标使用
+        List<PlatformGoods> goods = platformGoodsMapper.selectList(null);
+        //获取申请单详情
+        PlatformApply platformApply = platformApplyMapper.selectById(businessKey);
+        //获取申请单绑定的车辆以及时间信息
+        DeptUserCarApply userCarApply = deptUserCarApplyMapper.selectOne(new LambdaQueryWrapper<DeptUserCarApply>()
+                .eq(DeptUserCarApply::getBusinessKey, businessKey));
+        //获取对应的车辆信息
+        Car car = carService.getById(userCarApply.getCarId());
+        return MapUtils.getMap("goodsMassage",goods,"platformApplyDetails",platformApply,"bindTimeMassage",userCarApply,"car",car);
     }
 
     /**
@@ -884,7 +868,7 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
         // 输出连线
         List<SequenceFlow> outFlows = flowNode.getOutgoingFlows();
         String name = loopNextPoint(bpmnModel, outFlows, opinion);
-        String candidateUsers = platformApplyMapper.getCandidate(name, instanceId);
+        String candidateUsers = customActivitiMapper.getCandidateUsersInActivitiTables(name, instanceId);
         //将用户批量放在信息表中 ,获取流程ID
         String taskId = taskService.createTaskQuery().processInstanceId(instanceId).singleResult().getId();
         String taskName = task.getName();
@@ -939,11 +923,11 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
      */
     private Boolean insertAppMassage(String taskId, String taskName, String candidateUser) {
         String[] candidateUse = candidateUser.split(",");
-        List<AppMassage> massages = new ArrayList<>(candidateUse.length);
+        List<AppTasksMassage> massages = new ArrayList<>(candidateUse.length);
         for (String string : candidateUse) {
             massages.add(EntityUtils.getAppMassage(taskName + "未审批任务", Integer.parseInt(taskId), string));
         }
-        return appMassageMapper.insertBatches(massages);
+        return appTasksMassageMapper.insertBatches(massages);
     }
 
     /**
@@ -971,8 +955,8 @@ public class PlatformApplyApplyServiceImpl extends ServiceImpl<PlatformApplyMapp
      * @param taskId
      */
     private void deleteCompleteMassage(String taskId) {
-        int delete = appMassageMapper.delete(new LambdaQueryWrapper<AppMassage>()
-                .eq(AppMassage::getTaskId, taskId));
+        int delete = appTasksMassageMapper.delete(new LambdaQueryWrapper<AppTasksMassage>()
+                .eq(AppTasksMassage::getTaskId, taskId));
         if (delete == 0) {
             throw new MyException("删除消息失败，请联系管理员");
         }

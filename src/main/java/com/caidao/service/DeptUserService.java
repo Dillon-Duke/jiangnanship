@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
-import com.caidao.pojo.DeptUserCar;
+import com.caidao.pojo.DeptUserCarApply;
 
 import java.util.List;
 import java.util.Map;
@@ -44,7 +44,7 @@ public interface DeptUserService extends IService<DeptUser> {
      * @param userParam
      * @return
      */
-    boolean updatePassByPhone(UserParam userParam);
+    Integer updatePassByPhone(UserParam userParam);
 
     /**
      * 获取有空余时间的司机
@@ -57,21 +57,21 @@ public interface DeptUserService extends IService<DeptUser> {
      * @param id
      * @return
      */
-    List<DeptUserCar> getFreeDriverById(Integer id);
+    List<DeptUserCarApply> getFreeDriverById(Integer id);
 
     /**
      * 用户车辆绑定
-     * @param deptUserCar
+     * @param deptUserCarApply
      * @return
      */
-    Boolean userBindCar(List<DeptUserCar> deptUserCar);
+    Boolean userBindCar(List<DeptUserCarApply> deptUserCarApply);
 
     /**
      * 获得用户的app首页个人信息
-     * @param deptUser
+     * @param userId
      * @return
      */
-    Map<String, String> getDeptUserMassage(DeptUser deptUser);
+    Map<String, String> getDeptUserMassage(Integer userId);
 
     /**
      * 根据用户名和部门模糊查找

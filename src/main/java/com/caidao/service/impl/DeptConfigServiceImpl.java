@@ -72,7 +72,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
     @Override
     public List<String> getPowerByUserId(Integer userId) {
         //获取权限ID
-        List<Integer> list = deptConfigMapper.getPowerIds(userId);
+        List<Integer> list = deptConfigMapper.getUserPowerIdsWithUserId(userId);
         if (list == null || list.isEmpty()){
             return null;
         }
