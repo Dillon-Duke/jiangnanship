@@ -3,10 +3,8 @@ package com.caidao.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.pojo.SysUser;
 import com.caidao.param.UserParam;
-
-import java.util.List;
+import com.caidao.pojo.SysUser;
 
 /**
  * @author jinpeng
@@ -28,12 +26,6 @@ public interface SysUserService extends IService<SysUser> {
 	 * @return
 	 */
 	IPage<SysUser> getUserPage(Page<SysUser> page, SysUser sysUser);
-
-	/**
-	 * 批量删除用户
-	 * @param ids
-	 */
-    void deleteByIds(List<Integer> ids);
 
 	/**
 	 * 更新自己的密码

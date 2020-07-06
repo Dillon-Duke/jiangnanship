@@ -16,13 +16,15 @@ public class EntityUtils {
      * @param deptUsername
      * @return
      */
-    public static AppTasksMassage getAppMassage(String massageName, Integer taskId, String deptUsername) {
+    public static AppTasksMassage getAppMassage(String massageName, Integer taskId, Integer userId, String deptUsername) {
         AppTasksMassage appTasksMassage = new AppTasksMassage();
         appTasksMassage.setIsRead(1);
         appTasksMassage.setMassageName(massageName);
         appTasksMassage.setTaskId(taskId);
         appTasksMassage.setCreateTime(LocalDateTime.now());
-        appTasksMassage.setDeptUsername(deptUsername);
+        appTasksMassage.setUserId(userId);
+        appTasksMassage.setUsername(deptUsername);
+        appTasksMassage.setState(1);
         return appTasksMassage;
     }
 

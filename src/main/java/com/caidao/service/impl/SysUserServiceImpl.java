@@ -77,6 +77,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		Assert.notNull(page,"用户属性不能为空");
 		log.info("查询用户页面当前页{}，页大小{}",page.getCurrent(),page.getSize());
 		IPage<SysUser> usersPage = sysUserMapper.selectPage(page, new LambdaQueryWrapper<SysUser>()
+				.eq(SysUser::getState,1)
 				.like(StringUtils.hasText(sysUser.getUsername()),SysUser::getUsername,sysUser.getUsername())
 				.like(StringUtils.hasText(sysUser.getPhone()),SysUser::getPhone,sysUser.getPhone())
 		.ne(SysUser::getUsername,"admin")
@@ -146,32 +147,19 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 	/**
 	 * 批量移除用户
-	 * 真删除
+	 * @param idList
+	 * @return
 	 */
 	@Override
 	@Transactional(rollbackFor = NullPointerException.class)
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 		Assert.notNull(idList,"用户IDs不能为空");
 		log.info("删除用户ID为{}的用户",idList);
-		boolean removeByIds = super.removeByIds(idList);
-		if (idList==null || idList.isEmpty()) {
-			throw new MyException("批量删除用户不能为空");
+		Integer result = sysUserMapper.updateBatchesState(idList);
+		if (result == 0) {
+			return false;
 		}
-		return removeByIds;
-	}
-
-	/**
-	 * 批量删除用户
-	 * 假删除
-	 * @param ids
-	 */
-	@Override
-	@Transactional(rollbackFor = RuntimeException.class)
-	public void deleteByIds(List<Integer> ids) {
-		Integer integer = sysUserMapper.batchDelete(ids);
-		if (integer == 0){
-			throw new MyException("用户删除失败");
-		}
+		return true;
 	}
 
 	/**
@@ -182,7 +170,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 	 */
 	@Override
 	public int updatePass(SysUser sysUser, UserParam userParam) {
-
 		//获得加盐密码
 		String saltPass = Md5Utils.getHashAndSaltAndTime(userParam.getCredentials(), sysUser.getUserSalt(), 1024);
 		String oldPassword = sysUser.getPassword();

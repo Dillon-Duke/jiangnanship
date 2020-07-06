@@ -13,7 +13,6 @@ import com.caidao.service.CarService;
 import com.caidao.util.DateUtils;
 import com.caidao.util.FastDfsClientUtils;
 import com.caidao.util.MapUtils;
-import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.Assert;
@@ -23,11 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.io.File;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dillon
@@ -62,7 +61,8 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     public IPage<Car> findSysCarPage(Page<Car> page, Car car) {
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<Car> carPage = carMapper.selectPage(page, new LambdaQueryWrapper<Car>()
-                .eq(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName()));
+                .eq(Car::getState,1)
+                .like(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName()));
         //处理展示第一张图片
         List<Car> cars = carPage.getRecords();
         List<Car> arrayList = new ArrayList<>(cars.size());
@@ -79,7 +79,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     }
 
     /**
-     * 删除信息 真删除
+     * 批量删除对应车辆信息 假删除
      * @param cars
      * @return
      */
@@ -87,24 +87,9 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     public boolean batchRemoveByIds(List<Car> cars) {
         Assert.notNull(cars,"批量删除车辆信息，车辆信息不能为空");
         log.info("批量删除车辆信息",cars);
-        //删除图片
-        for (Car car : cars) {
-            for (String string : car.getSourceImage().split(PropertyUtils.STRING_SPILT_WITH_SEMICOLON)) {
-                if (string.contains(imgUploadPrifax + File.separator + "group")){
-                    fastDfsClientUtils.deleteFile(string);
-                }
-            }
-        }
-        //便利变量，将id放到数组中，批量删除
-        List<Integer> list = new ArrayList<>(cars.size());
-        for (Car car : cars) {
-            list.add(car.getCarId());
-        }
-        boolean remove = this.removeByIds(list);
-        if (remove){
-            return true;
-        }
-        return false;
+        List<Integer> collect = cars.stream().map(Car::getCarId).collect(Collectors.toList());
+        boolean result = carMapper.updateBatchesState(collect);
+        return result;
     }
 
     /**
@@ -150,7 +135,8 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
                 //查询车辆宽为多少的车
                 .eq(StringUtils.hasText(carWight), Car::getCarWight, car.getCarWight())
                 //查询车辆高为多少的车
-                .eq(StringUtils.hasText(carHeight), Car::getCarHeight, car.getCarHeight()));
+                .eq(StringUtils.hasText(carHeight), Car::getCarHeight, car.getCarHeight())
+                .eq(Car::getState,1));
         return carList;
     }
 
@@ -168,7 +154,6 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         car.setCreateId(principal.getUserId());
         car.setCreateDate(LocalDateTime.now());
         car.setState(1);
-
         //将多个图片真实资源路径隔开
         String sourcePhoto = car.getSourceImage();
         if (sourcePhoto != "" && sourcePhoto != null){
@@ -389,9 +374,4 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         deptUserCarApplyMapper.insertBatches(applies);
     }
 
-    public static void main(String[] args) {
-        Long a = 3000L;
-        Long b = 3000L;
-        System.out.println(((double)(a  + b))/60000);
-    }
 }

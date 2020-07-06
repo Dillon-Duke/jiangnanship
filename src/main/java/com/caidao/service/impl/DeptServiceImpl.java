@@ -51,7 +51,8 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
      */
     @Override
     public List<Dept> selectList() {
-        List<Dept> deptList = deptMapper.selectList(null);
+        List<Dept> deptList = deptMapper.selectList(new LambdaQueryWrapper<Dept>()
+        .eq(Dept::getState,1));
         return deptList;
     }
 
@@ -62,7 +63,8 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
     @Override
     public List<Dept> getListDept() {
         log.info("获取所有的部门列表");
-        List<Dept> deptList = deptMapper.selectList(null);
+        List<Dept> deptList = deptMapper.selectList(new LambdaQueryWrapper<Dept>()
+                .eq(Dept::getState,1));
         return deptList;
     }
 
@@ -117,6 +119,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean updateById(Dept dept) {
         Assert.notNull(dept,"部门不能为空");
         log.info("获取id为{}的不们信息", dept.getDeptId());
@@ -162,7 +165,11 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
         if (depts.size() != 0){
             throw new MyException("部门还有子部门，不能删除");
         }
-        return super.removeById(id);
+        Integer count = deptMapper.updateState(id);
+        if (count == 0) {
+            return false;
+        }
+        return true;
     }
 
     /**

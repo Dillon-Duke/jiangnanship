@@ -38,7 +38,7 @@ spring:
         max-idle: 15
         min-idle: 5
         max-active: 200
-        max-wait: 1000ms
+        max-wait: 0ms
 
   #公司数据库地址
   datasource:

@@ -50,7 +50,8 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
         Assert.notNull(deptAuthorisation, "sysConfig must not be null");
         log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
         IPage<DeptAuthorisation> selectPage = deptConfigMapper.selectPage(page, new LambdaQueryWrapper<DeptAuthorisation>()
-                .eq(StringUtils.hasText(deptAuthorisation.getParamKey()), DeptAuthorisation::getParamKey, deptAuthorisation.getParamKey()));
+                .eq(DeptAuthorisation::getState,1)
+                .like(StringUtils.hasText(deptAuthorisation.getParamKey()), DeptAuthorisation::getParamKey, deptAuthorisation.getParamKey()));
         return selectPage;
     }
 
@@ -65,7 +66,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
     }
 
     /**
-     * 获取用户的所有权限
+     * 获取用户的权限信息
      * @param userId
      * @return
      */
@@ -79,6 +80,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
         //获得对应的权限信息
         List<Object> deptConfigs = deptConfigMapper.selectObjs(new LambdaQueryWrapper<DeptAuthorisation>()
                 .select(DeptAuthorisation::getParamValue)
+                .eq(DeptAuthorisation::getState,1)
                 .in(DeptAuthorisation::getConfId, list));
         List<String> result = new ArrayList<String>();
         for (Object object : deptConfigs) {
@@ -97,6 +99,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean save(DeptAuthorisation deptAuthorisation) {
         Assert.notNull(deptAuthorisation,"新增数据字典参数不能为空");
         log.info("新增参数名为{}的数据", deptAuthorisation.getParamKey());
@@ -123,7 +126,8 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
         if (deptRoleAuthorisations.size() != 0 || (!deptRoleAuthorisations.isEmpty())){
             throw new MyException("还有角色在使用该权限，删除失败");
         }
-        return super.removeByIds(idList);
+        boolean result = deptConfigMapper.updateBatchesState(idList);
+        return result;
     }
 
     /**
@@ -144,6 +148,7 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
      * @return
      */
     @Override
+    @Transactional(rollbackFor = RuntimeException.class)
     public boolean updateById(DeptAuthorisation deptAuthorisation) {
         Assert.notNull(deptAuthorisation,"更新数据字典参数不能为空");
         log.info("更新参数名为{}的数据", deptAuthorisation.getParamKey());

@@ -9,11 +9,6 @@ package com.caidao.util;
 public class PropertyUtils {
 
 	/**
-	 * 密钥长度 于原文长度对应 以及越长速度越慢
-	 */
-	public static final int KEY_SIZE = 1024;
-
-	/**
 	 * 前台用户授权前缀
 	 */
 	public static final String APP_USER_REALM = "appUserRealm";
@@ -41,7 +36,7 @@ public class PropertyUtils {
 	/**
 	 * aes密文前缀
 	 */
-	public static final String AES_PREFIX = "aes_prefix:";
+	public static final String MD5_PREFIX = "aes_prefix:";
 
 	/**
 	 * aes加密密钥长度

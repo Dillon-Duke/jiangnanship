@@ -28,7 +28,7 @@ public class EncryptAspectj {
             proceed = joinPoint.proceed(joinPoint.getArgs());
             //给数据加密
             String token = SecurityUtils.getSubject().getSession().getId().toString();
-            String sKey = jedis.get(PropertyUtils.AES_PREFIX + token);
+            String sKey = jedis.get(PropertyUtils.MD5_PREFIX + token);
             //数据加密
             proceed = AesUtils.encrypt(proceed.toString(), sKey);
         } catch (Throwable e) {

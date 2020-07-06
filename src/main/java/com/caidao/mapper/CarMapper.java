@@ -2,6 +2,7 @@ package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.Car;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Repository;
 
@@ -22,9 +23,9 @@ public interface CarMapper extends BaseMapper<Car> {
     Integer getCarCount();
 
     /**
-     * 获得所有的车辆信息
+     * 批量删除对应车辆信息 假删除
+     * @param collect
      * @return
      */
-    @Select("SELECT * FROM car")
-    List<Car> selectAllCarList();
+    boolean updateBatchesState(@Param("idList") List<Integer> collect);
 }

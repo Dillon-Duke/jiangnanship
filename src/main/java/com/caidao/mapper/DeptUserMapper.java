@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -37,7 +39,14 @@ public interface DeptUserMapper extends BaseMapper<DeptUser> {
      * @param businessKey
      * @return
      */
-    @Select("SELECT D.username FROM dept_user D LEFT JOIN platform_apply P ON P.create_id = D.user_id WHERE P.prs_id = #{businessKey}")
-    String selectApplyNameWithApplyId(@Param("businessKey") String businessKey);
+    @Select("SELECT D.username, D.userId FROM dept_user D LEFT JOIN platform_apply P ON P.create_id = D.user_id WHERE P.prs_id = #{businessKey}")
+    DeptUser selectApplyNameWithApplyId(@Param("businessKey") String businessKey);
+
+    /**
+     * 批量假删除部门用户
+     * @param ids
+     * @return
+     */
+    Integer updateBatchesState(@Param("idList") Collection<? extends Serializable> ids);
 }
 

@@ -1,6 +1,7 @@
 package com.caidao.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -12,10 +13,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * <p>
- * 
- * </p>
- *
  * @author Dillon
  * @since 2020-06-11
  */
@@ -34,14 +31,14 @@ public class PlatformApply implements Serializable {
     @ApiModelProperty(value = "申请部门ID")
     private Integer requestDepartmentId;
 
-    @ApiModelProperty(value = "申请部门")
-    private String requestDepartment;
+    @ApiModelProperty(value = "申请部门名称")
+    private String requestDepartmentName;
 
     @ApiModelProperty(value = "驳运部门ID")
     private Integer lighteningDepartmentId;
 
-    @ApiModelProperty(value = "驳动部门")
-    private String lighteningDepartment;
+    @ApiModelProperty(value = "驳动部门名称")
+    private String lighteningDepartmentName;
 
     @ApiModelProperty(value = "起始点定位ID")
     private Long startPositionId;
@@ -108,4 +105,8 @@ public class PlatformApply implements Serializable {
 
     @ApiModelProperty(value = "状态 1：可用 0 禁用")
     private Integer state;
+
+    @ApiModelProperty(value = "按钮状态 保存任务:save 提交任务:submit")
+    @TableField(exist = false)
+    private String operateState;
 }

@@ -10,6 +10,7 @@ import com.caidao.service.CarConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -40,6 +41,7 @@ public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig
 		Assert.notNull(config, "sysConfig must not be null");
 		log.info("查询配置类的当前页{}，页大小{}",page.getCurrent(),page.getSize());
 		IPage<CarConfig> selectPage = carConfigMapper.selectPage(page, new LambdaQueryWrapper<CarConfig>()
+				.eq(CarConfig::getState,1)
 				.like(StringUtils.hasText(config.getParamKey()), CarConfig::getParamKey, config.getParamKey()));
 		return selectPage;
 	}
@@ -54,7 +56,8 @@ public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig
 		Assert.notNull(configKey,"车辆类别名称不能为空");
 		log.info("查询车辆类别为{}的车辆工作内容",configKey);
 		List<CarConfig> configList = carConfigMapper.selectList(new LambdaQueryWrapper<CarConfig>()
-				.eq(CarConfig::getParamKey, configKey));
+				.eq(CarConfig::getParamKey, configKey)
+				.eq(CarConfig::getState,1));
 		return configList;
 	}
 
@@ -64,9 +67,11 @@ public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig
 	 * @return
 	 */
 	@Override
+	@Transactional(rollbackFor = RuntimeException.class)
 	public boolean save(CarConfig config) {
 		Assert.notNull(config,"新增数据字典参数不能为空");
 		log.info("新增参数名为{}的数据",config.getParamKey());
+		config.setState(1);
 		boolean save = super.save(config);
 		return save;
 	}
@@ -89,6 +94,7 @@ public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig
 	 * @return
 	 */
 	@Override
+	@Transactional(rollbackFor = RuntimeException.class)
 	public boolean updateById(CarConfig config) {
 		Assert.notNull(config,"更新数据字典参数不能为空");
 		log.info("更新参数名为{}的数据",config.getParamKey());
@@ -104,6 +110,7 @@ public class CarConfigServiceImpl extends ServiceImpl<CarConfigMapper, CarConfig
 	public boolean removeByIds(Collection<? extends Serializable> idList) {
 		Assert.notNull(idList, "Id不能为空");
 		log.info("新增参数ID为{}的数据",idList);
-		return super.removeByIds(idList);
+		boolean result = carConfigMapper.updateBatchesState(idList);
+		return result;
 	}
 }

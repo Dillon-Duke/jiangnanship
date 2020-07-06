@@ -31,11 +31,6 @@ public interface DeptConfigService extends IService<DeptAuthorisation> {
      */
     List<DeptAuthorisation> getListDept();
 
-    /**
-     * 获取用户的所有权限
-     * @param userId
-     * @return
-     */
-    List<String> getPowerByUserId(Integer userId);
 
+    List<String> getPowerByUserId(Integer userId);
 }

@@ -33,8 +33,11 @@ public class AppTasksMassage implements Serializable {
     @ApiModelProperty(value = "任务ID")
     private Integer taskId;
 
+    @ApiModelProperty(value = "关联的用户Id")
+    private Integer userId;
+
     @ApiModelProperty(value = "关联的用户名称")
-    private String deptUsername;
+    private String username;
 
     @ApiModelProperty(value = "是否已读 1：未读 0：已读")
     private Integer isRead;
@@ -42,5 +45,7 @@ public class AppTasksMassage implements Serializable {
     @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
 
+    @ApiModelProperty(value = "是否删除")
+    private Integer state;
 
 }

@@ -24,4 +24,11 @@ public interface AppTasksMassageService extends IService<AppTasksMassage> {
      * @return
      */
     List<AppTasksMassage> getUserReadMassage(String username);
+
+    /**
+     * 批量删除用户的待办任务
+     * @param idList
+     * @return
+     */
+    boolean deleteTaskMassages(List<Integer> idList);
 }

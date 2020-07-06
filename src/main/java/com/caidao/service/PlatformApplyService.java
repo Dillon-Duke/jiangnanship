@@ -17,18 +17,11 @@ import java.util.Map;
 public interface PlatformApplyService extends IService<PlatformApply> {
 
     /**
-     * 保存一个平板车计划任务流程
-     * @param platformApply
-     * @return 流程实例Id
-     */
-    Map<String, String> saveFlatCarPlan(PlatformApply platformApply);
-
-    /**
      * 开始一个平板车计划任务流程
      * @param platformApply
      * @return 流程实例Id
      */
-    Map<String, String> startPlanTasks(PlatformApply platformApply);
+    Map<String, String> saveOrStartPlanTasks(PlatformApply platformApply);
 
     /**
      * 获取用户的所有任务列表
@@ -54,26 +47,12 @@ public interface PlatformApplyService extends IService<PlatformApply> {
     List<HistoricTaskInstance> getUserHistoryTaskList(ActivityQueryParam param);
 
     /**
-     * 用户拾取组任务
-     * @param taskId
-     * @return
-     */
-    String getPlanOwnerGroupTask(String taskId);
-
-    /**
      * 流程任务的转办，直接给别人，别人做好之后直接推到下一个需要办理的人手里
      * @param taskId
      * @param username
      * taskService.deleteCandidateUser(taskId,"原用户ID");
      */
     void flatCarPlan2OtherUser(String taskId, String username);
-
-    /**
-     * 用户归还组任务
-     * @param taskId
-     * @return
-     */
-    void backPlanOwner2GroupTask(String taskId);
 
     /**
      * 获得可以编制的任务
@@ -122,4 +101,11 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * @return
      */
     Map<String, Object> getApplyDetailInfoByApplyId(Integer businessKey);
+
+    /**
+     * 通过id获取对应的申请单详情
+     * @param prsId
+     * @return
+     */
+    PlatformApply getPlatformById(Integer prsId);
 }

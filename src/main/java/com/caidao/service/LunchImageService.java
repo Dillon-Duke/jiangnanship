@@ -1,9 +1,7 @@
 package com.caidao.service;
 
-import com.caidao.pojo.LunchImage;
 import com.baomidou.mybatisplus.extension.service.IService;
-
-import java.util.List;
+import com.caidao.pojo.LunchImage;
 
 /**
  * @author Dillon
@@ -11,9 +9,4 @@ import java.util.List;
  */
 public interface LunchImageService extends IService<LunchImage> {
 
-    /**
-     * 获取手机首页的轮播图片
-     * @return
-     */
-    List<LunchImage> getLunchImages();
 }

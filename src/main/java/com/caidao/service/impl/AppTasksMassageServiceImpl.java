@@ -33,7 +33,8 @@ public class AppTasksMassageServiceImpl extends ServiceImpl<AppTasksMassageMappe
         Assert.notNull(username,"用户名不能未空");
         log.info("用户{}查询未读消息列表",username);
         List<AppTasksMassage> massages = appTasksMassageMapper.selectList(new LambdaQueryWrapper<AppTasksMassage>()
-                .eq(AppTasksMassage::getDeptUsername, username)
+                .eq(AppTasksMassage::getUsername, username)
+                .eq(AppTasksMassage::getState,1)
                 .eq(AppTasksMassage::getIsRead, 1)
                 .orderByDesc(AppTasksMassage::getCreateTime));
         return massages;
@@ -49,9 +50,21 @@ public class AppTasksMassageServiceImpl extends ServiceImpl<AppTasksMassageMappe
         Assert.notNull(username,"用户名不能未空");
         log.info("用户{}查询未读消息列表",username);
         List<AppTasksMassage> massages = appTasksMassageMapper.selectList(new LambdaQueryWrapper<AppTasksMassage>()
-                .eq(AppTasksMassage::getDeptUsername, username)
+                .eq(AppTasksMassage::getUsername, username)
                 .eq(AppTasksMassage::getIsRead, 0)
+                .eq(AppTasksMassage::getState,1)
                 .orderByDesc(AppTasksMassage::getCreateTime));
         return massages;
+    }
+
+    /**
+     * 批量删除用户的待办任务
+     * @param idList
+     * @return
+     */
+    @Override
+    public boolean deleteTaskMassages(List<Integer> idList) {
+        boolean result = appTasksMassageMapper.updateBatchesState(idList);
+        return result;
     }
 }

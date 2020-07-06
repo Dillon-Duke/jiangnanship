@@ -67,10 +67,9 @@ public class SysUserController {
 		SysUser sysUser = sysUserService.getById(id);
 		return ResponseEntity.ok(sysUser);
 	}
-	
+
 	/**
-	 * 批量删除用户
-	 * 真删除
+	 * 批量删除用户 假删除
 	 * @param ids
 	 * @return
 	 */
@@ -79,23 +78,11 @@ public class SysUserController {
 	@ApiOperation("批量删除用户")
 	public ResponseEntity<Boolean> beachDel(@RequestBody List<Integer> ids){
 		Boolean removeByIds = sysUserService.removeByIds(ids);
-		return ResponseEntity.ok(removeByIds);
+		if (removeByIds) {
+			return ResponseEntity.ok().build();
+		}
+		return ResponseEntity.badRequest().build();
 	}
-
-	/**
-	 * 批量删除用户
-	 * 假删除
-	 * @param ids
-	 * @return
-	 */
-//	@SysLogs("批量删除用户")
-//	@RequiresPermissions("sys:user:delete")
-//	@DeleteMapping
-//	@ApiOperation("批量删除用户，假删除")
-//	public ResponseEntity<Void> beachDel(@RequestBody List<Integer> ids){
-//		sysUserService.deleteByIds(ids);
-//		return ResponseEntity.ok().build();
-//	}
 	
 	/**
 	 * 修改用户

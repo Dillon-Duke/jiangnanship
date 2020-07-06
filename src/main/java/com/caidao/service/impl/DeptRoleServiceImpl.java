@@ -56,7 +56,8 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
     public IPage<DeptRole> getDeptRolePage(Page<DeptRole> page , DeptRole deptRole) {
         log.info("获取部门角色当前页{}，页大小{}",page.getCurrent(),page.getSize());
         IPage<DeptRole> selectPage = deptRoleMapper.selectPage(page, new LambdaQueryWrapper<DeptRole>()
-                .eq(StringUtils.hasText(deptRole.getRoleName()), DeptRole::getRoleName, deptRole.getRoleName()));
+                .eq(DeptRole::getState, 1)
+                .like(StringUtils.hasText(deptRole.getRoleName()), DeptRole::getRoleName, deptRole.getRoleName()));
         return selectPage;
     }
 
@@ -67,7 +68,8 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
     @Override
     public List<DeptRole> getDeptRoleList() {
         log.info("获取部门角色列表");
-        List<DeptRole> deptRoles = deptRoleMapper.selectList(null);
+        List<DeptRole> deptRoles = deptRoleMapper.selectList(new LambdaQueryWrapper<DeptRole>()
+        .eq(DeptRole::getState,1));
         return deptRoles;
     }
 
@@ -213,7 +215,8 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
             deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorisation>()
                     .in(DeptRoleAuthorisation::getRoleId, serializable));
         }
-        return super.removeByIds(idList);
+        boolean result = deptRoleMapper.updateBatchesState(idList);
+        return result;
     }
 
 }

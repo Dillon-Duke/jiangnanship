@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCarApply;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -32,21 +33,6 @@ public interface DeptUserService extends IService<DeptUser> {
     DeptUser getUserByUsername(String toString);
 
     /**
-     * 通过用户名和手机号判断用户是否存在
-     * @param username
-     * @param phone
-     * @return
-     */
-    DeptUser findUserByUsernameAndPhone(String username, String phone);
-
-    /**
-     * 忘记密码，更新用户的密码
-     * @param userParam
-     * @return
-     */
-    Integer updatePassByPhone(UserParam userParam);
-
-    /**
      * 获取有空余时间的司机
      * @return
      */
@@ -65,13 +51,6 @@ public interface DeptUserService extends IService<DeptUser> {
      * @return
      */
     Boolean userBindCar(List<DeptUserCarApply> deptUserCarApply);
-
-    /**
-     * 获得用户的app首页个人信息
-     * @param userId
-     * @return
-     */
-    Map<String, String> getDeptUserMassage(Integer userId);
 
     /**
      * 根据用户名和部门模糊查找
@@ -93,4 +72,43 @@ public interface DeptUserService extends IService<DeptUser> {
      * @return
      */
     Boolean userNnBindCar(List<Integer> ids);
+
+    /**
+     * 用户的登录
+     * @param userParam
+     * @return
+     */
+    ResponseEntity<Map<String, String>> login(UserParam userParam);
+
+    /**
+     * 用户登出
+     */
+    void logout();
+
+    /**
+     * 向用户发送验证码
+     * @param phone
+     */
+    void sendCheckCode(String phone);
+
+    /**
+     * 更新用户的密码
+     * @param userParam
+     * @return
+     */
+    boolean updateUserPassword(UserParam userParam);
+
+    /**
+     * 根据用户名和手机判断是否有这个人
+     * @param userParam
+     * @return
+     */
+    boolean checkNameAndPhone(UserParam userParam);
+
+    /**
+     * 登录首页
+     * @param userId
+     * @return
+     */
+    Map<String, Object> getHomePage(Integer userId);
 }

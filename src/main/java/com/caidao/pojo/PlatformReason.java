@@ -13,10 +13,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * <p>
- * 
- * </p>
- *
  * @author Dillon
  * @since 2020-06-13
  */

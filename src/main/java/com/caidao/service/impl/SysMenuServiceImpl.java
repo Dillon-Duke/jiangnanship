@@ -108,6 +108,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 
 		List<Object> selectObjs = sysMenuMapper.selectObjs(new LambdaQueryWrapper<SysMenu>()
 														.select(SysMenu::getPerms)
+														.eq(SysMenu::getState,1)
 														.in(SysMenu::getMenuId, menuIds)
 														.isNotNull(SysMenu::getPerms)
 														.ne(SysMenu::getPerms, ""));
@@ -134,6 +135,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单
 		if (userId == 1) {
 			List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+														.eq(SysMenu::getState,1)
 														.orderByAsc(SysMenu::getOrderNum));
 			return selectList;
 		}
@@ -146,6 +148,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		//查询对应的menu列表
 		 List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
 				 								.in(SysMenu::getMenuId, menuIds)
+				 								.eq(SysMenu::getState,1)
 		 										.orderByAsc(SysMenu::getOrderNum));
 		 return selectList;
 	}
@@ -158,6 +161,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单权限
 		if (userId == 1) {
 			List<Object> menuIds = sysMenuMapper.selectObjs(new LambdaQueryWrapper<SysMenu>()
+										.eq(SysMenu::getState,1)
 										.select(SysMenu::getMenuId));
 			return menuIds;
 		}
@@ -190,6 +194,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	public List<SysMenu> findSysMenu() {
 		log.info("获取所有菜单信息");
 		List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+									.eq(SysMenu::getState,1)
 									.orderByAsc(SysMenu::getOrderNum));
 		return selectList;
 	}
@@ -201,6 +206,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	public List<SysMenu> getListMenu() {
 		log.info("查询系统菜单列表");
 		List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
+												.eq(SysMenu::getState,1)
 												.ne(SysMenu::getType, 2)
 												.orderByAsc(SysMenu::getOrderNum));
 		return selectList;
@@ -266,7 +272,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 			//如果有父类，则抛出异常，删除失败
 			throw new MyException("目录下载存在子目录，无法删除");
 		}
-
 		//判断如果有角色绑定该菜单，则无法删除
 		List<SysRoleMenu> roleMenus = sysRoleMenuMapper.selectList(new LambdaQueryWrapper<SysRoleMenu>()
 				.eq(SysRoleMenu::getMenuId, id));
@@ -274,7 +279,11 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 			//如果如果有角色绑定该菜单，则抛出异常，删除失败
 			throw new MyException("有角色绑定该菜单，无法删除");
 		}
-		return super.removeById(id);
+		Integer result = sysMenuMapper.updateState(id);
+		if (result == 0) {
+			return false;
+		}
+		return true;
 
 	}
 

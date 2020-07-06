@@ -11,7 +11,6 @@ import com.caidao.pojo.PlatformGoods;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.PlatformGoodsService;
 import com.caidao.util.FastDfsClientUtils;
-import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.StringUtils;
@@ -20,11 +19,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Dillon
@@ -76,6 +75,7 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     public IPage<PlatformGoods> findSysGoodsPage(Page<PlatformGoods> page, PlatformGoods platformGoods) {
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<PlatformGoods> platformGoodsPage = platformGoodsMapper.selectPage(page, new LambdaQueryWrapper<PlatformGoods>()
+                .eq(PlatformGoods::getState,1)
                 .like(StringUtils.hasText(platformGoods.getProCode()), PlatformGoods::getProCode, platformGoods.getProCode()));
         return platformGoodsPage;
 
@@ -89,28 +89,15 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean removeByGoods(List<PlatformGoods> platformGoods) {
-
         Assert.notNull(platformGoods,"删除的分段信息不能为空");
         log.info("删除分段为{}的分段", platformGoods);
-        //删除图片
-        for (PlatformGoods tranGood : platformGoods) {
-            for (String string : tranGood.getSourceImage().split(PropertyUtils.STRING_SPILT_WITH_SEMICOLON)) {
-                if (string.contains(imgUploadPrifax + File.separator + "group")){
-                    fastDfsClientUtils.deleteFile(string);
-                }
-            }
+        //获取对应的商品Id
+        List<Integer> list = platformGoods.stream().map(PlatformGoods::getGoodsId).collect(Collectors.toList());
+        Integer remove = platformGoodsMapper.updateBatchesState(list);
+        if (remove == 0){
+            return false;
         }
-
-        //删除商品信息
-        List<Integer> list = new ArrayList<>(platformGoods.size());
-        for (PlatformGoods tranGood : platformGoods) {
-            list.add(tranGood.getGoodsId());
-        }
-        boolean remove = this.removeByIds(list);
-        if (remove){
-            return true;
-        }
-        return false;
+        return true;
     }
 
     /**

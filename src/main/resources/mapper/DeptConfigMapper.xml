@@ -2,4 +2,17 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.caidao.mapper.DeptConfigMapper">
 
+    <update id="updateBatchesState" parameterType="java.util.List">
+        UPDATE
+        dept_authorisation
+        SET
+        state = 0
+        WHERE
+        user_id
+        IN
+        <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
 </mapper>

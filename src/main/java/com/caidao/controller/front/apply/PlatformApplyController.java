@@ -43,15 +43,15 @@ public class PlatformApplyController {
     public static final Logger logger =  LoggerFactory.getLogger(PlatformApplyController.class);
 
     /**
-     * 保存一个平板车计划任务流程
-     * @param platformApply
+     * 通过Id获取申请单的详细信息
+     * @param prsId
      * @return 流程实例Id
      */
-    @ApiOperation("保存一个平板车计划流程")
-    @PostMapping("/savePlatformTasks")
-    public ResponseEntity<Map<String, String>> savePlatformTasks(@RequestBody PlatformApply platformApply){
-        Map<String, String> flatCarPlan = platformApplyService.saveFlatCarPlan(platformApply);
-        return ResponseEntity.ok(flatCarPlan);
+    @ApiOperation("通过Id获取申请单的详细信息")
+    @GetMapping("/getPlatformById/{prsId}")
+    public ResponseEntity<PlatformApply> getPlatformById(@PathVariable("prsId") Integer prsId){
+        PlatformApply platformById = platformApplyService.getPlatformById(prsId);
+        return ResponseEntity.ok(platformById);
     }
 
     /**
@@ -70,27 +70,15 @@ public class PlatformApplyController {
     }
 
     /**
-     * 开始一个平板车任务流程
+     * 保存或者开始一个平板车流程
      * @param platformApply
      * @return 流程实例Id
      */
-    @ApiOperation("开始一个平板车流程")
-    @PostMapping("/startPlatformTask")
-    public ResponseEntity<Map<String, String>> startPlatformTask(@RequestBody PlatformApply platformApply){
-        Map<String, String> flatCarPlan = platformApplyService.startPlanTasks(platformApply);
+    @ApiOperation("保存或开始一个平板车流程")
+    @PostMapping("/saveOrStartPlanTasks")
+    public ResponseEntity<Map<String, String>> saveOrStartPlanTasks(@RequestBody PlatformApply platformApply){
+        Map<String, String> flatCarPlan = platformApplyService.saveOrStartPlanTasks(platformApply);
         return ResponseEntity.ok(flatCarPlan);
-    }
-
-    /**
-     * 用户拾取组任务
-     * @param taskId
-     * @return
-     */
-    @ApiOperation("用户来拾取组任务")
-    @GetMapping("/getPlatformOwnerGroupTask/{taskId}")
-    public ResponseEntity<String> getPlatformOwnerGroupTask(@PathVariable("taskId") String taskId){
-        String massage = platformApplyService.getPlanOwnerGroupTask(taskId);
-        return ResponseEntity.ok(massage);
     }
 
     /**
@@ -203,18 +191,6 @@ public class PlatformApplyController {
     @PostMapping("/platform2OtherUser")
     public ResponseEntity<Void> platform2OtherUser(String taskId, String username){
         platformApplyService.flatCarPlan2OtherUser(taskId, username);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 用户归还组任务
-     * @param taskId
-     * @return
-     */
-    @ApiOperation("用户归还组任务")
-    @GetMapping("/backPlatformOwner2GroupTask")
-    public ResponseEntity<Void> backPlatformOwner2GroupTask(String taskId){
-        platformApplyService.backPlanOwner2GroupTask(taskId);
         return ResponseEntity.ok().build();
     }
 

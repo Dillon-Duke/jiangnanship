@@ -50,7 +50,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		Assert.notNull(page,"页面属性不能为空");
 		log.info("查询角色页面当前页{}，页大小{}",page.getCurrent(),page.getSize());
 		IPage<SysRole> selectPage = sysRoleMapper.selectPage(page, new LambdaQueryWrapper<SysRole>()
-					.eq(StringUtils.hasText(sysRole.getRoleName()),SysRole::getRoleName,sysRole.getRoleName()));
+				.eq(SysRole::getState,1)
+					.like(StringUtils.hasText(sysRole.getRoleName()),SysRole::getRoleName,sysRole.getRoleName()));
 		return selectPage;
 	}
 	
@@ -116,7 +117,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	@Override
 	public List<SysRole> list() {
 		log.info("获取所有的角色列表");
-		return super.list();
+		List<SysRole> sysRoles = sysRoleMapper.selectList(new LambdaQueryWrapper<SysRole>()
+				.eq(SysRole::getState, 1));
+		return sysRoles;
 	}
 
 	/**
@@ -142,7 +145,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 	}
 	/**
 	 * 批量删除校验
-	 * @Transactional(noRollbackFor = RuntimeException.class)  让unchecked例外不回滚
+	 *
 	 */
 	@Override
 	@Transactional(rollbackFor = RuntimeException.class)
@@ -150,12 +153,8 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		Assert.notNull(idList,"删除角色的ids不能为空 ");
 		log.info("删除角色id为{}的角色",idList);
 		//删除之前判断是否还有用户绑定角色 要是有，则删除失败，抛出异常
-		List<Serializable> arrayList = new ArrayList<>(idList.size());
-		for (Serializable serializable : idList) {
-			arrayList.add(serializable);
-		}
 		List<SysUserRole> userRoles = sysUserRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
-				.in(SysUserRole::getRoleId, arrayList));
+				.in(SysUserRole::getRoleId, idList));
 		if (userRoles.size() != 0){
 			throw new MyException("ids为" + idList + "的用户绑定该角色，删除失败");
 		}
@@ -163,7 +162,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		for (Serializable roleId : idList) {
 			list.add(roleId);
 		}
-		return sysRoleMenuMapper.deleteBatchWithRoleIds(list);
+		//批量删除用户角色中间表
+		sysRoleMenuMapper.deleteBatchWithRoleIds(list);
+		//批量假删除角色表
+		Integer result = sysRoleMapper.updateBatchesState(idList);
+		if (result == 0) {
+			return false;
+		}
+		return true;
 	}
 
 }

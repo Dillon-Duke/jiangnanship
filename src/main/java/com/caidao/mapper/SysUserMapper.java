@@ -3,9 +3,11 @@ package com.caidao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.SysUser;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.io.Serializable;
+import java.util.Collection;
 
 /**
  * @author jinpeng
@@ -15,10 +17,9 @@ import java.util.List;
 public interface SysUserMapper extends BaseMapper<SysUser> {
 
     /**
-     * 批量删除用户 使用mapper.xml 里面的语句
-     * @param ids
-     * @return 返回的是成功删除多少条数据
+     * 批量假删除用户信息
+     * @param idList
+     * @return
      */
-    Integer batchDelete(List<Integer> ids);
-
+    Integer updateBatchesState(@Param("idList") Collection<? extends Serializable> idList);
 }

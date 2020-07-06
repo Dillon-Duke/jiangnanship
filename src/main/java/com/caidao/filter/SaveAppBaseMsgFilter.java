@@ -4,9 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.caidao.exception.MyException;
 import com.caidao.filter.wrapper.SaveAppBaseMsgRequestWrapper;
-import com.caidao.pojo.AppBaseMsg;
-import com.caidao.service.AppBaseMsgService;
-import com.caidao.util.AesUtils;
+import com.caidao.util.Md5Utils;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.RsaUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -39,20 +37,15 @@ public class SaveAppBaseMsgFilter implements Filter {
 
     /** 需要注入的实体类 */
     private static Jedis jedis;
-    private static AppBaseMsgService appBaseMsgService;
 
     @Override
     public void init(FilterConfig config) {
         ServletContext servletContext = config.getServletContext();
         ApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
         this.setJedis(ctx.getBean(Jedis.class));
-        this.setAppBaseMsgService(ctx.getBean(AppBaseMsgService.class));
     }
     private synchronized void setJedis(Jedis jedis) {
         SaveAppBaseMsgFilter.jedis = jedis;
-    }
-    private synchronized void setAppBaseMsgService(AppBaseMsgService appBaseMsgService) {
-        SaveAppBaseMsgFilter.appBaseMsgService = appBaseMsgService;
     }
 
     /** 是否需要过滤 */
@@ -85,66 +78,44 @@ public class SaveAppBaseMsgFilter implements Filter {
             }
             // 将json字符串转换为json对象
             JSONObject jsonObject = JSONObject.parseObject(sb.toString());
-            //将字段设置到基础表字段中
-            AppBaseMsg appBaseMsg = new AppBaseMsg();
-            appBaseMsg.setInterfaceVersion(jsonObject.getString("interfaceVersion"));
-            appBaseMsg.setAppVersion(jsonObject.getString("appVersion"));
-            appBaseMsg.setClientBrand(jsonObject.getString("clientBrand"));
-            appBaseMsg.setClientModel(jsonObject.getString("clientModel"));
-            appBaseMsg.setClientOs(jsonObject.getString("clientOs"));
-            appBaseMsg.setClientOsVersion(jsonObject.getString("clientOsVersion"));
-            appBaseMsg.setClientScreenSize(jsonObject.getDouble("clientScreenSize"));
-            appBaseMsg.setData(jsonObject.getString("data"));
+            //获取传入用户Id
             String userId = jsonObject.getString("userId");
-            appBaseMsg.setUserId(Integer.parseInt(userId));
-            appBaseMsg.setSubmitTime(jsonObject.getLong("submitTime"));
-            //解密一下加密内容
+            //获取加签内容
             String encryption = jsonObject.getString("encryption");
-            String decrypt ;
+            //获取date内容
+            String date = jsonObject.getString("date");
             String json ;
-            if ("".equals(userId) || LOGIN_USER_ID_VOUCHER.equals(userId)){
+            if (LOGIN_USER_ID_VOUCHER.equals(userId)){
+                String decrypt;
                 //获得用户登录的uuid
                 String uuid = jsonObject.getString("uuid");
                 //替换解密内容
                 String primaryKey = jedis.get(PropertyUtils.APP_USER_PRIVATE_KEY + uuid);
                 try {
-                    decrypt = RsaUtils.decryptByPrivateKey(primaryKey, encryption);
+                    decrypt = RsaUtils.decryptByPrivateKey(primaryKey, date);
                 } catch (Exception e) {
                     throw new MyException("登录解密错误，请联系管理员");
                 }
-                appBaseMsg.setEncryption(decrypt);
                 // 把参数转换之后放到我们的body里面
                 JSONObject parseObject = JSONObject.parseObject(decrypt);
                 json = parseObject.toJSONString();
             } else {
                 if (encryption == null || encryption.isEmpty()){
-                    throw new MyException("数据中加密数据没有传值");
+                    throw new MyException("加签内容为空");
                 }
                 //获得用户token
                 String token = SecurityUtils.getSubject().getSession().getId().toString();
-                if (isJson(encryption)) {
-                    //将未加密的字符串放在基础表中
-                    appBaseMsg.setEncryption(encryption);
-                    //将字符串传到后端
-                    JSONObject parseObject = JSONObject.parseObject(encryption);
-                    json = parseObject.toJSONString();
-                } else {
-                    //解析字符串转为json对象
-                    try {
-                        decrypt = AesUtils.decrypt(encryption,jedis.get(PropertyUtils.AES_PREFIX + token));
-                    } catch (Exception e) {
-                        throw new MyException("信息解密错误，请联系管理员");
+                if (!isJson(date)) {
+                    String salt = jedis.get(PropertyUtils.MD5_PREFIX + token);
+                    String encrypt = Md5Utils.getMd5EncryptWithSalt(date, salt);
+                    if (!encryption.equals(encrypt)) {
+                        throw new MyException("加签验证失败");
                     }
-                    //将未加密的字符串放在基础表中
-                    appBaseMsg.setEncryption(decrypt);
-                    //将字符串传到后端
-                    JSONObject parseObject = JSONObject.parseObject(decrypt);
-                    json = parseObject.toJSONString();
                 }
+                //将字符串传到后端
+                JSONObject parseObject = JSONObject.parseObject(date);
+                json = parseObject.toJSONString();
             }
-
-            //将信息保存再基本表中
-            appBaseMsgService.save(appBaseMsg);
             //设置json参数格式
             requestWrapper.setBody(json.getBytes("UTF-8"));
             // 放行

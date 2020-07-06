@@ -16,6 +16,12 @@ public class Md5Utils {
 	 */
 	private Md5Utils() {}
 
+	public static String getMd5EncryptWithSalt(String content, String salt) {
+		ByteSource bytes = ByteSource.Util.bytes(salt.getBytes());
+		Md5Hash md5Hash = new Md5Hash(content, bytes);
+		return md5Hash.toString();
+	}
+
 	/**
 	 * 哈希+加盐+次数
 	 * @param password
@@ -30,7 +36,6 @@ public class Md5Utils {
 	}
 
 	public static void main(String[] args) {
-		System.out.println(getHashAndSaltAndTime("123", "111", 1024));
 	}
 
 }

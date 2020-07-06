@@ -5,10 +5,6 @@ import com.caidao.pojo.PlatformComment;
 import org.springframework.stereotype.Repository;
 
 /**
- * <p>
- *  Mapper 接口
- * </p>
- *
  * @author Dillon
  * @since 2020-06-30
  */

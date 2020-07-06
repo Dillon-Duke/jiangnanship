@@ -23,7 +23,7 @@ public class DecryptAspectj {
         Object proceed;
         try {
             proceed = joinPoint.proceed(joinPoint.getArgs());
-            String sKey = jedis.get(PropertyUtils.AES_PREFIX + token);
+            String sKey = jedis.get(PropertyUtils.MD5_PREFIX + token);
             proceed = AesUtils.decrypt(String.valueOf(proceed), sKey);
         } catch (Throwable throwable) {
             throw new MyException("后台解签失败，请联系管理员");

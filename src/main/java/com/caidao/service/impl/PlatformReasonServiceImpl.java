@@ -84,6 +84,8 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
             throw new MyException("用户登录超时，请重新登录");
         }
         log.info("用户{}完成了任务的审批",deptUser.getUsername());
+        //用户审批前拾取任务
+        applyUserPickUpTask(platformReason.getTaskId(),deptUser.getUsername());
         //驳回时将审批意见存入数据库
         if (platformReason.getOpinion() == 2 && platformReason.getReason() != null) {
             platformReason.setCreateId(deptUser.getCreateId());
@@ -166,6 +168,8 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
             throw new MyException("用户登录超时，请重新登录");
         }
         log.info("用户{}完成了任务的审批",deptUser.getUsername());
+        //用户审批前拾取任务
+        applyUserPickUpTask(taskId,deptUser.getUsername());
         //将消息中的内容删掉
         deleteCompleteMassage(taskId);
         //获取对应的业务流程
@@ -277,8 +281,8 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         deptUserCarApplyMapper.delete(new LambdaQueryWrapper<DeptUserCarApply>()
         .eq(DeptUserCarApply::getBusinessKey,param.getCancelBusinessKey()));
         //通知申请人取消信息
-        String username = deptUserMapper.selectApplyNameWithApplyId(param.getCancelBusinessKey());
-        AppTasksMassage appTasksMassage = EntityUtils.getAppMassage(param.getCancelReason(),null , username);
+        DeptUser username = deptUserMapper.selectApplyNameWithApplyId(param.getCancelBusinessKey());
+        AppTasksMassage appTasksMassage = EntityUtils.getAppMassage(param.getCancelReason(),null , username.getUserId(),username.getUsername());
         int insert = appTasksMassageMapper.insert(appTasksMassage);
         if (insert == 0) {
             return false;
@@ -405,6 +409,21 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         //4、判断是否司机和操作员更换，如果是，修改
         //5、判断是否是时间调整，如果是，修改
         return false;
+    }
+
+    private void applyUserPickUpTask(String taskId, String username){
+        try {
+            AppTasksMassage massage = appTasksMassageMapper.selectOne(new LambdaQueryWrapper<AppTasksMassage>()
+                    .eq(AppTasksMassage::getTaskId, taskId)
+                    .eq(AppTasksMassage::getUsername,username));
+            //判断别人是否拾取
+            if (massage == null || (massage.getIsRead() == -1)) {
+                throw new MyException("任务已被拾取");
+            }
+            taskService.claim(taskId, username);
+        } catch (RuntimeException e) {
+            throw new MyException("拾取任务失败，请重试");
+        }
     }
 
     /**
@@ -563,8 +582,13 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
     private Boolean insertAppMassage(String taskId, String taskName, String candidateUser) {
         String[] candidateUse = candidateUser.split(",");
         List<AppTasksMassage> massages = new ArrayList<>(candidateUse.length);
-        for (String string : candidateUse) {
-            massages.add(EntityUtils.getAppMassage(taskName + "任务", Integer.parseInt(taskId), string));
+        //数组转列表
+        List<String> asList = Arrays.asList(candidateUse);
+        //批量查询对应的人员
+        List<DeptUser> userList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .in(DeptUser::getUsername, asList));
+        for (DeptUser deptUser : userList) {
+            massages.add(EntityUtils.getAppMassage(taskName + "任务", Integer.parseInt(taskId), deptUser.getUserId(),deptUser.getUsername()));
         }
         return appTasksMassageMapper.insertBatches(massages);
     }

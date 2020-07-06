@@ -18,7 +18,9 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +40,17 @@ import java.util.*;
 @Slf4j
 public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> implements DeptUserService {
 
+    /** 轮播图最大的返回数量 */
+    private static final int MAX_IMAGE_COUNT = 3;
+
+    /** 轮播图最大的返回数量 */
+    private static final Integer APP_USED_COUNT = 4;
+
     @Autowired
     private AppTasksMassageMapper appTasksMassageMapper;
+
+    @Autowired
+    private AppOperateMapper appOperateMapper;
 
     @Autowired
     private DeptUserMapper deptUserMapper;
@@ -54,7 +65,13 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     private Jedis jedis;
 
     @Autowired
+    private LunchImageMapper lunchImageMapper;
+
+    @Autowired
     private DeptUserRoleMapper deptUserRoleMapper;
+
+    @Autowired
+    private DeptConfigMapper deptConfigMapper;
 
     /**
      * 获取部门用户的分页数据
@@ -67,7 +84,8 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         Assert.notNull(page != null,"分页数据不能为空");
         log.info("查询部门分页数据，当前页{}，页大小{}",page.getCurrent(),page.getSize());
         IPage<DeptUser> selectPage = deptUserMapper.selectPage(page, new LambdaQueryWrapper<DeptUser>()
-                .eq(StringUtils.hasText(deptUser.getUsername()), DeptUser::getUsername, deptUser.getUsername()));
+                .eq(DeptUser::getState,1)
+                .like(StringUtils.hasText(deptUser.getUsername()), DeptUser::getUsername, deptUser.getUsername()));
         return selectPage;
     }
 
@@ -79,6 +97,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     @Override
     public DeptUser getUserByUsername(String deptUser) {
         DeptUser user = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getState,1)
                 .eq(DeptUser::getUsername, deptUser));
         return user;
     }
@@ -238,8 +257,8 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         Object token = jedis.hget(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
         //判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
         if (token != null) {
-            //删除用户对应的session个人信息 删除用户储存的aes密钥
-            jedis.del(PropertyUtils.USER_SESSION+token,PropertyUtils.AES_PREFIX + token);
+            //删除用户对应的session个人信息 删除用户储存的密钥
+            jedis.del(PropertyUtils.USER_SESSION+token,PropertyUtils.MD5_PREFIX + token);
             //删除用户的缓存
             new AppUserRealmConfig().getAppClearAllCache(token);
 
@@ -258,55 +277,14 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
     public boolean removeByIds(Collection<? extends Serializable> ids) {
         Assert.notNull(ids,"删除id不能为空");
         log.info("删除id为{}的用户",ids);
-        //判断中间表是否删除
-        int count = 0;
-        for (Serializable serializable : ids) {
-            int delete = deptUserRoleMapper.delete(new LambdaQueryWrapper<DeptUserRole>()
-                    .eq(DeptUserRole::getUserId, serializable));
-            count+=delete;
-        }
-        if (count == 0){
-            throw new MyException("用户角色删除失败");
-        }
-        //判断部门用户表是否删除
-        Integer batchIds = deptUserMapper.deleteBatchIds(ids);
-        if (batchIds == 0){
-            throw new MyException("用户删除失败");
+        //删除用户角色中间表
+        deptUserRoleMapper.deleteBatchIds(ids);
+        //假删除用户
+        Integer result = deptUserMapper.updateBatchesState(ids);
+        if (result == 0){
+            return false;
         }
         return true;
-    }
-
-    /**
-     * 通过用户名和手机号判断用户是否存在
-     * @param username
-     * @param phone
-     * @return
-     */
-    @Override
-    public DeptUser findUserByUsernameAndPhone(String username, String phone) {
-        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
-                .eq(DeptUser::getUsername, username)
-                .or(false)
-                .eq(DeptUser::getPhone, phone));
-        return deptUser;
-    }
-
-    /**
-     * 忘记密码，更新用户的密码
-     * @param userParam
-     * @return
-     */
-    @Override
-    @Transactional(rollbackFor = RuntimeException.class, propagation= Propagation.REQUIRES_NEW)
-    public Integer updatePassByPhone(UserParam userParam) {
-        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
-                .eq(DeptUser::getPhone, userParam.getPhone()));
-        //设置更新盐值
-        String password = userParam.getNewCredentials();
-        String saltPass = Md5Utils.getHashAndSaltAndTime(password, deptUser.getUserSalt(), 1024);
-        deptUser.setPassword(saltPass);
-        //更新用户密码
-        return deptUserMapper.updateUserPasswordByUserId(deptUser.getUserId(),saltPass);
     }
 
     /**
@@ -393,24 +371,9 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
         deptUserCarApplyMapper.insertBatches(userCars);
         for (String name : username) {
-            massages.add(EntityUtils.getAppMassage(name, taskId, "平板车操作任务"));
+            massages.add(EntityUtils.getAppMassage(name, taskId,null, "平板车操作任务"));
         }
         return appTasksMassageMapper.insertBatches(massages);
-    }
-
-    /**
-     * 获得用户的app首页个人信息
-     * @param userId
-     * @return
-     */
-    @Override
-    public Map<String, String> getDeptUserMassage(Integer userId) {
-        DeptUser user = deptUserMapper.selectById(userId);
-        String realName = user.getRealName();
-        String jobNum = user.getJobNum();
-        String sourceImage = user.getSourceImage();
-        String username = user.getUsername();
-        return MapUtils.getMap("username",username,"realName",realName,"jobNum",jobNum,"sourceImage",sourceImage);
     }
 
     /**
@@ -423,6 +386,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         Assert.notNull(deptUser,"部门用户不能为空");
         log.info("手机端模糊插叙部门用户");
         List<DeptUser> userList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getState,1)
                 .like(StringUtils.hasText(deptUser.getUsername()), DeptUser::getUsername, deptUser.getUsername())
                 .like(StringUtils.hasText(deptUser.getUserDeptName()), DeptUser::getUserDeptName, deptUser.getUserDeptName()));
         return userList;
@@ -438,6 +402,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         Assert.notNull(deptUser,"部门用户不能为空");
         log.info("手机端根据部门和角色查询用户插叙部门用户");
         List<DeptUser> userList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getState,1)
                 .eq(DeptUser::getUserDeptName,deptUser.getUserDeptName())
                 .eq(DeptUser::getUserRoleName,deptUser.getUserRoleName()));
         return userList;
@@ -473,13 +438,247 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         String taskId = customActivitiMapper.selectTaskIdWithBusinessKey(businessKey);
         List<AppTasksMassage> appTasksMassages = appTasksMassageMapper.selectList(new LambdaQueryWrapper<AppTasksMassage>()
                 .eq(AppTasksMassage::getTaskId, taskId)
-                .in(AppTasksMassage::getDeptUsername, username));
+                .in(AppTasksMassage::getUsername, username));
         //获取对应的id
         List<AppTasksMassage> list = new LinkedList<>();
         for (AppTasksMassage appTasksMassage : appTasksMassages) {
-            list.add(EntityUtils.getAppMassage(appTasksMassage.getMassageName(),Integer.parseInt(taskId), appTasksMassage.getDeptUsername()));
+            list.add(EntityUtils.getAppMassage(appTasksMassage.getMassageName(),Integer.parseInt(taskId), appTasksMassage.getUserId(), appTasksMassage.getUsername()));
         }
         return appTasksMassageMapper.updateBatches(list);
+    }
+
+    /**
+     * 用户登录
+     * @param userParam
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public ResponseEntity<Map<String, String>> login(UserParam userParam) {
+        org.apache.shiro.util.Assert.notNull(userParam.getPrincipal(),"用户名不能为空");
+        log.info("用户名为{}请求登录",userParam.getPrincipal());
+        try {
+            Subject subject = SecurityUtils.getSubject();
+            UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.APP_USER_REALM);
+            //校验登录信息
+            subject.login(userLoginTokenUtils);
+            String token = subject.getSession().getId().toString();
+            DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+            String userSalt = deptUser.getUserSalt();
+            //将密钥放到redis中
+            jedis.set(PropertyUtils.MD5_PREFIX + token,userSalt);
+            //将之前的公钥密钥删除
+            jedis.del(PropertyUtils.APP_USER_PRIVATE_KEY + userParam.getSessionUuid(),PropertyUtils.APP_USER_PUBLIC_KEY + userParam.getSessionUuid());
+            //将个人信息放在hashSet中，后来修改密码的时候抹掉个人的缓存信息以及session信息;
+            jedis.hset(PropertyUtils.ALL_USER_TOKEN,userSalt,token);
+            return ResponseEntity.ok(MapUtils.getMap("salt",userSalt,"token",token));
+        } catch (Exception e){
+            throw new MyException("账号或者密码错误，登录失败");
+        }
+    }
+
+    /**
+     * 用户登出
+     */
+    @Override
+    public void logout() {
+        //删除用户在redis 里面的token
+        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
+        jedis.hdel(PropertyUtils.ALL_USER_TOKEN,deptUser.getUserSalt());
+        //获取对应的登录用户session
+        String token = SecurityUtils.getSubject().getSession().getId().toString();
+        //删除用户在redis 里面的token
+        jedis.del(PropertyUtils.USER_SESSION + token,PropertyUtils.MD5_PREFIX + token);
+        //清空缓存中的信息
+        new AppUserRealmConfig().getAppClearAllCache(token);
+    }
+
+    /**
+     * 向用户发送验证码
+     * @param phone
+     */
+    @Override
+    public void sendCheckCode(String phone) {
+       org.apache.shiro.util.Assert.notNull(phone,"手机号不能为空");
+        //TODO 是否要使用短信业务 使用哪个短信业务系统 ，或者是只能是后台工作人员改密码
+        //生成随机6位数字
+        int code = (int)((Math.random()*9+1)*100000);
+        //向redis 里面存6位的随机数组 redis储存时间为60S
+        jedis.setex(PropertyUtils.MASSAGE_CODE + phone,60,String.valueOf(code));
+    }
+
+    /**
+     * 更新用户的密码
+     * @param userParam
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public boolean updateUserPassword(UserParam userParam) {
+        Assert.notNull(userParam,"参数不能为空");
+        log.info("用户手机号为{}的用户更新了密码",userParam.getPhone());
+        //校验验证码是否正确
+        String phone = PropertyUtils.MASSAGE_CODE + userParam.getPhone();
+        String code = userParam.getImageCode();
+        if (!org.apache.shiro.util.StringUtils.hasText(code) || !org.apache.shiro.util.StringUtils.hasText(phone)) {
+            throw new MyException("验证码校验失败");
+        }
+        //获取redis里面的验证码并校验
+        String redisImageCode = jedis.get(PropertyUtils.VALCODE_PRIFAX + phone);
+        if (!org.apache.shiro.util.StringUtils.hasText(redisImageCode)) {
+            throw new MyException("验证码超时，请重新验证");
+        }
+        if (!code.equals(redisImageCode)) {
+            throw new MyException("验证码错误，请重新输入");
+        }
+        Integer integer = this.updatePassByPhone(userParam);
+        if (integer == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 根据用户名和手机判断是否有这个人
+     * @param userParam
+     * @return
+     */
+    @Override
+    public boolean checkNameAndPhone(UserParam userParam) {
+        Assert.notNull(userParam.getPrincipal(),"用户名不能为空");
+        Assert.notNull(userParam.getPhone(),"手机号不能为空");
+        log.info("查询用户名为{}，手机号为{}的用户",userParam.getPrincipal(),userParam.getPhone());
+        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getState,1)
+                .eq(DeptUser::getUsername, userParam.getPrincipal())
+                .or(false)
+                .eq(DeptUser::getPhone, userParam.getPhone()));
+        if (deptUser == null){
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public Map<String, Object> getHomePage(Integer userId) {
+        //获取用户的权限列表
+        List<String> authorities = getPowerByUserId(userId);
+        //获得用户首页个人信息列表
+        Map<String,String> userMassage = getDeptUserMassage(userId);
+        //获取用户的首页信息数量
+        List<AppTasksMassage> handledTasks = getUserNotReadMassage(userMassage.get("username"));
+        //获取手机轮播图片，默认3张
+        List<LunchImage> lunchImages = getLunchImages();
+        //获取手机的常用操作
+        List<AppOperate> usualOperate = getAppOperate(userId);
+        //获取通用消息个数
+        ArrayList<Integer> commonMsgCount = new ArrayList<>();
+        return MapUtils.getMap("authorities", authorities,"UnHandleTasks",handledTasks,"lunchImages",lunchImages,"usualOperate",usualOperate,"commonMsgCount",commonMsgCount);
+    }
+
+    /**
+     * 获得常用的操作信息
+     * @param userId
+     * @return
+     */
+    public List<AppOperate> getAppOperate(Integer userId) {
+        List<AppOperate> appOperates = appOperateMapper.selectList(new LambdaQueryWrapper<AppOperate>()
+                .eq(AppOperate::getUserId, userId)
+                .orderByDesc(AppOperate::getTimes));
+        if (appOperates.size() > APP_USED_COUNT) {
+            appOperates = appOperates.subList(0,APP_USED_COUNT);
+        }
+        return appOperates;
+    }
+
+    /**
+     * 获得用户未读信息列表
+     * @param username
+     * @return
+     */
+    private List<AppTasksMassage> getUserNotReadMassage(String username) {
+        Assert.notNull(username,"用户名不能未空");
+        log.info("用户{}查询未读消息列表",username);
+        List<AppTasksMassage> massages = appTasksMassageMapper.selectList(new LambdaQueryWrapper<AppTasksMassage>()
+                .eq(AppTasksMassage::getUsername, username)
+                .eq(AppTasksMassage::getIsRead, 1)
+                .orderByDesc(AppTasksMassage::getCreateTime));
+        return massages;
+    }
+
+    /**
+     * 获取用户的所有权限
+     * @param userId
+     * @return
+     */
+    private List<String> getPowerByUserId(Integer userId) {
+        //todo 等一下跑一下看看有问题没
+        //获取权限ID
+        List<Integer> list = deptConfigMapper.getUserPowerIdsWithUserId(userId);
+        if (list == null || list.isEmpty()){
+            return null;
+        }
+        //获得对应的权限信息
+        List<Object> deptConfigs = deptConfigMapper.selectObjs(new LambdaQueryWrapper<DeptAuthorisation>()
+                .select(DeptAuthorisation::getParamValue)
+                .in(DeptAuthorisation::getConfId, list));
+        List<String> result = new ArrayList<String>();
+        for (Object object : deptConfigs) {
+            String authorities = String.valueOf(object);
+            String[] split = authorities.split(",");
+            for (String string : split) {
+                result.add(string);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 获取手机首页的轮播图片
+     * 最多返回3张轮播图片
+     * 1  代表轮播图设置为显示状态
+     * @return
+     */
+    private List<LunchImage> getLunchImages() {
+        List<LunchImage> imageList = lunchImageMapper.selectList(new LambdaQueryWrapper<LunchImage>()
+                .eq(LunchImage::getIsUse, 1));
+        //将图片按照id进行倒排序
+        imageList.sort(Comparator.comparing(LunchImage::getId).reversed());
+        //如果设置的图片超过3张，则返回最新设置的三张图片
+        if (imageList.size() > MAX_IMAGE_COUNT) {
+            imageList = imageList.subList(0,3);
+        }
+        return imageList;
+    }
+
+    /**
+     * 获得用户的app首页个人信息
+     * @param userId
+     * @return
+     */
+    private Map<String, String> getDeptUserMassage(Integer userId) {
+        DeptUser user = deptUserMapper.selectById(userId);
+        String realName = user.getRealName();
+        String jobNum = user.getJobNum();
+        String sourceImage = user.getSourceImage();
+        String username = user.getUsername();
+        return MapUtils.getMap("username",username,"realName",realName,"jobNum",jobNum,"sourceImage",sourceImage);
+    }
+
+    /**
+     * 更新用户的密码
+     * @param userParam
+     * @return
+     */
+    private Integer updatePassByPhone(UserParam userParam) {
+        DeptUser deptUser = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
+                .eq(DeptUser::getPhone, userParam.getPhone()));
+        //设置更新盐值
+        String password = userParam.getNewCredentials();
+        String saltPass = Md5Utils.getHashAndSaltAndTime(password, deptUser.getUserSalt(), 1024);
+        deptUser.setPassword(saltPass);
+        //更新用户密码
+        return deptUserMapper.updateUserPasswordByUserId(deptUser.getUserId(),saltPass);
     }
 
     /**
