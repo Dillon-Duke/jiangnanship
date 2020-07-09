@@ -31,4 +31,11 @@ public interface AppTasksMassageService extends IService<AppTasksMassage> {
      * @return
      */
     boolean deleteTaskMassages(List<Integer> idList);
+
+    /**
+     * 通过Id获取详细的个人审批信息
+     * @param approvalId
+     * @return
+     */
+    AppTasksMassage getUserApprovalDetailInfoByApprovalId(Integer approvalId);
 }

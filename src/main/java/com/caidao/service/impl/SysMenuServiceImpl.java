@@ -131,7 +131,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	private List<SysMenu> findMenuListByUserId(Integer userId) {
 		//获取登录用户的菜单id
 		List<Object> menuIds = getMenuIds(userId);
-
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单
 		if (userId == 1) {
 			List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
@@ -139,12 +138,10 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 														.orderByAsc(SysMenu::getOrderNum));
 			return selectList;
 		}
-
 		//判断登录人员是否有页面权限，没有直接返回null;
 		if (menuIds == null){
 			return null;
 		}
-		
 		//查询对应的menu列表
 		 List<SysMenu> selectList = sysMenuMapper.selectList(new LambdaQueryWrapper<SysMenu>()
 				 								.in(SysMenu::getMenuId, menuIds)
@@ -157,7 +154,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 * 通过用户id获取用户对应的菜单id
 	 */
 	private List<Object> getMenuIds(Integer userId) {
-		
 		//判断用户如果是admin(菜单id为1) 则查询所有的菜单权限
 		if (userId == 1) {
 			List<Object> menuIds = sysMenuMapper.selectObjs(new LambdaQueryWrapper<SysMenu>()
@@ -165,21 +161,17 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 										.select(SysMenu::getMenuId));
 			return menuIds;
 		}
-		
 		//查询对应的role  id
 		List<Object> roleIds = sysUserRoleMapper.selectObjs(new LambdaQueryWrapper<SysUserRole>()
 				.select(SysUserRole::getRoleId).eq(SysUserRole::getUserId, userId)
 				);
-
 		//目录为空
 		if (roleIds == null ||roleIds.isEmpty()) {
 			return null;
 		}
-		
 		//获取对应的menu  id
 		List<Object> menuIds = sysRoleMenuMapper.selectObjs(new LambdaQueryWrapper<SysRoleMenu>()
 				.select(SysRoleMenu::getMenuId).in(SysRoleMenu::getRoleId, roleIds));
-		
 		//目录为空
 		if (menuIds == null || menuIds.isEmpty()) {
 			return null;
@@ -293,7 +285,6 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	 */
 	private void volifyDate(SysMenu sysMenu) {
 		switch (sysMenu.getType()) {
-
 		//目录条件过滤
 		case 0:
 			Assert.state(sysMenu.getName()!=null, "目录名不能为空");
@@ -306,14 +297,12 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 			Assert.state(sysMenu.getName()!=null && sysMenu.getParentId()!=0 && sysMenu.getUrl()!=null,"菜单新增信息有误");
 			sysMenu.setPerms(null);
 			break;
-
 		//按钮条件过滤
 		case 2:
 			Assert.state(sysMenu.getName() != null && sysMenu.getPerms() != null && sysMenu.getParentId() != 0,"按钮新增信息有误");
 			sysMenu.setUrl(null);
 			sysMenu.setIcon(null);
 			break;
-
 		//抛出异常
 		default:
 				throw new MyException("菜单类型不合法");

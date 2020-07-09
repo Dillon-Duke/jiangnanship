@@ -41,9 +41,8 @@ public class AppLoginController {
 	@ApiOperation("获取用户登录的公钥 获取对应的手机基本信息")
 	@PostMapping("/lunch")
 	public ResponseEntity<Map<String,String>> appLunch(@RequestBody AppBaseMsg appBaseMsg) throws NoSuchAlgorithmException {
-		ResponseEntity<Map<String, String>> appLunch = appBaseMsgService.appLunch(appBaseMsg);
-		return appLunch;
-
+		Map<String, String> appLunch = appBaseMsgService.appLunch(appBaseMsg);
+		return ResponseEntity.ok(appLunch);
 	}
 
 	/**
@@ -54,8 +53,8 @@ public class AppLoginController {
 	@ApiOperation("前台用户进行登录")
 	@PostMapping("/appLogin")
 	public ResponseEntity<Map<String,String>> login(@RequestBody UserParam userParam) {
-		ResponseEntity<Map<String, String>> login = deptUserService.login(userParam);
-		return login;
+		Map<String, String> login = deptUserService.login(userParam);
+		return ResponseEntity.ok(login);
 
 	}
 

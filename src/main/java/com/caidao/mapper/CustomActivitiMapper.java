@@ -45,4 +45,11 @@ public interface CustomActivitiMapper {
     @Select("SELECT T.ID_ FROM ACT_RU_TASK T LEFT JOIN ACT_RU_EXECUTION E ON T.PROC_INST_ID_ = E.PROC_INST_ID_ WHERE E.BUSINESS_KEY_ = #{adjustmentBusinessKey}")
     String getTaskIdByBusinessKey(@Param("adjustmentBusinessKey") Integer adjustmentBusinessKey);
 
+    /**
+     * 通过实例Ids获取对应的实例列表
+     * @param arrayList
+     * @return
+     */
+    @Select({"<script> select BUSINESS_KEY_ FROM ACT_RU_EXECUTION where BUSINESS_KEY_ IS NOT NULL AND PROC_INST_ID_ IN <foreach item = 'item' index = 'index' collection = 'arrayList' open='(' separator=',' close=')'> #{item} </foreach> </script>"})
+    List<String> getInstanceListByInstanceIds(@Param("arrayList") List<String> arrayList);
 }

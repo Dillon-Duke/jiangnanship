@@ -2,4 +2,38 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.caidao.mapper.LunchImageMapper">
 
+    <sql id="baseSql">
+        (file_image, source_image, create_id, create_date, is_use, state)
+    </sql>
+
+    <insert id="insertBatches" parameterType="java.util.List">
+        INSERT INTO
+            lunch_image
+            <include refid="baseSql" />
+        VALUES
+            <foreach collection="lunchImages" item="item" index="index" separator=",">
+                (
+                    #{item.file_image},
+                    #{item.source_image},
+                    #{item.create_id},
+                    #{item.create_date},
+                    #{item.is_use},
+                    #{item.state}
+                )
+            </foreach>
+    </insert>
+
+    <update id="beachUpdateLunchImageState" parameterType="java.util.List">
+        UPDATE
+            lunch_image
+        SET
+            state = 0
+        WHERE
+            id
+        IN
+            <foreach collection="ids" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </update>
+
 </mapper>

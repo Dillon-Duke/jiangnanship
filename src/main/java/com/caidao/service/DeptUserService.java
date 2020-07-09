@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.UserParam;
 import com.caidao.pojo.DeptUser;
 import com.caidao.pojo.DeptUserCarApply;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -78,7 +77,7 @@ public interface DeptUserService extends IService<DeptUser> {
      * @param userParam
      * @return
      */
-    ResponseEntity<Map<String, String>> login(UserParam userParam);
+    Map<String, String> login(UserParam userParam);
 
     /**
      * 用户登出

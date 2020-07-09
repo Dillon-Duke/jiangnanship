@@ -10,7 +10,6 @@ import com.caidao.mapper.PlatformGoodsMapper;
 import com.caidao.pojo.PlatformGoods;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.PlatformGoodsService;
-import com.caidao.util.FastDfsClientUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.util.StringUtils;
@@ -21,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,9 +35,6 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     @Autowired
     private PlatformGoodsMapper platformGoodsMapper;
 
-    @Autowired
-    private FastDfsClientUtils fastDfsClientUtils;
-
     @Value("${fdfs-imgUpload-prifax}")
     private String imgUploadPrifax;
 
@@ -50,10 +46,8 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public boolean save(PlatformGoods platformGoods) {
-
         Assert.notNull(platformGoods,"新增分段信息不能为空");
         log.info("新增分段号为{}的分段", platformGoods.getGoodsCode());
-
         SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
         platformGoods.setCreateId(sysUser.getUserId());
         if (sysUser == null ) {
@@ -108,21 +102,14 @@ public class PlatformGoodsServiceImpl extends ServiceImpl<PlatformGoodsMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateById(PlatformGoods platformGoods) {
-
         Assert.notNull(platformGoods,"更新运输分段信息 不能为空");
         log.info("更新车辆id为{}的运输分段信息", platformGoods.getGoodsId());
         SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
         platformGoods.setUpdateId(principal.getUserId());
         platformGoods.setUpdateDate(LocalDateTime.now());
-
         //判断给那些新增的没有前缀的条目加上前缀
         String[] strings = platformGoods.getSourceImage().split(";");
-        List<Object> list = new ArrayList<>();
-        for (String string : strings) {
-            if (!string.contains(imgUploadPrifax + "group")){
-                list.add(imgUploadPrifax + string);
-            }
-        }
+        List<Object> list = Arrays.stream(strings).filter((x) -> !x.contains(imgUploadPrifax + "group")).map((y) -> imgUploadPrifax + y).collect(Collectors.toList());
         platformGoods.setSourceImage(list.toString());
         return super.updateById(platformGoods);
     }

@@ -12,15 +12,24 @@
     </resultMap>
 
     <sql id="baseSql">
-        ( massage_name, task_id, dept_username, is_read, create_time )
+        ( massage_name, massage_type, task_id, user_id, username, is_read, create_time, state )
     </sql>
     
     <insert id="insertBatches" parameterType="java.util.List">
-        insert into app_tasks_massage
+        insert into
+            app_tasks_massage
             <include refid="baseSql" />
         values
-            <foreach collection="list" item="item" index="index" separator=",">
-                    ( #{item.massageName}, #{item.taskId}, #{item.deptUsername}, #{item.isRead}, #{item.createTime} )
+            <foreach collection="appTasksMassages" item="item" index="index" separator=",">
+                    (   #{item.massageName},
+                        #{item.massageType},
+                        #{item.taskId},
+                        #{item.userId},
+                        #{item.username},
+                        #{item.isRead},
+                        #{item.createTime},
+                        #{item.state}
+                    )
             </foreach>
     </insert>
 

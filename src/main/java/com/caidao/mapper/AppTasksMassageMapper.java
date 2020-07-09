@@ -19,7 +19,7 @@ public interface AppTasksMassageMapper extends BaseMapper<AppTasksMassage> {
      * @param appTasksMassages
      * @return
      */
-    Boolean insertBatches(@Param("appTasksMassages") List<AppTasksMassage> appTasksMassages);
+    Integer insertBatches(@Param("appTasksMassages") List<AppTasksMassage> appTasksMassages);
 
     /**
      * 批量更新消息

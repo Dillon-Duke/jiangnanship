@@ -67,4 +67,17 @@ public class AppTasksMassageServiceImpl extends ServiceImpl<AppTasksMassageMappe
         boolean result = appTasksMassageMapper.updateBatchesState(idList);
         return result;
     }
+
+    /**
+     * 通过Id获取详细的个人审批信息
+     * @param approvalId
+     * @return
+     */
+    @Override
+    public AppTasksMassage getUserApprovalDetailInfoByApprovalId(Integer approvalId) {
+        AppTasksMassage tasksMassage = appTasksMassageMapper.selectOne(new LambdaQueryWrapper<AppTasksMassage>()
+                .eq(AppTasksMassage::getId, approvalId)
+                .eq(AppTasksMassage::getState, 1));
+        return tasksMassage;
+    }
 }

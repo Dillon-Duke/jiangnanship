@@ -18,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -82,10 +82,7 @@ public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements De
                 .select(DeptDeptRole::getRoleId)
                 .eq(DeptDeptRole::getDeptId, deptId));
         //将所有的角色Id放到list中
-        List<Integer> list = new ArrayList<>(roles.size());
-        for (DeptDeptRole role : roles) {
-            list.add(role.getRoleId());
-        }
+        List<Integer> list = roles.stream().map((x) -> x.getRoleId()).collect(Collectors.toList());;
         if (list.size() == 0) {
             return null;
         }

@@ -21,9 +21,10 @@ import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Dillon
@@ -82,13 +83,9 @@ public class DeptConfigServiceImpl extends ServiceImpl<DeptConfigMapper, DeptAut
                 .select(DeptAuthorisation::getParamValue)
                 .eq(DeptAuthorisation::getState,1)
                 .in(DeptAuthorisation::getConfId, list));
-        List<String> result = new ArrayList<String>();
+        List<String> result = null;
         for (Object object : deptConfigs) {
-            String authorities = String.valueOf(object);
-            String[] split = authorities.split(",");
-            for (String string : split) {
-                result.add(string);
-            }
+            result = Arrays.stream(String.valueOf(object).split(",")).collect(Collectors.toList());
         }
         return result;
     }

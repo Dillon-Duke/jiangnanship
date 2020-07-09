@@ -2,7 +2,6 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.pojo.AppBaseMsg;
-import org.springframework.http.ResponseEntity;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -19,6 +18,6 @@ public interface AppBaseMsgService extends IService<AppBaseMsg> {
      * @return
      * @throws NoSuchAlgorithmException
      */
-    ResponseEntity<Map<String, String>> appLunch(AppBaseMsg appBaseMsg) throws NoSuchAlgorithmException;
+    Map<String, String> appLunch(AppBaseMsg appBaseMsg) throws NoSuchAlgorithmException;
 
 }

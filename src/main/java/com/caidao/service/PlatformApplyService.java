@@ -2,9 +2,8 @@ package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.param.ActivityQueryParam;
-import com.caidao.param.FlatCarCancelParam;
+import com.caidao.param.PlatformCancelParam;
 import com.caidao.pojo.PlatformApply;
-import com.caidao.pojo.PlatformReason;
 import org.activiti.engine.history.HistoricTaskInstance;
 
 import java.util.List;
@@ -17,27 +16,43 @@ import java.util.Map;
 public interface PlatformApplyService extends IService<PlatformApply> {
 
     /**
-     * 开始一个平板车计划任务流程
+     * 通过id获取对应的申请单详情
+     * @param prsId
+     * @return
+     */
+    PlatformApply getPlatformById(Integer prsId);
+
+    /**
+     * 保存或开始一个平板车流程
      * @param platformApply
      * @return 流程实例Id
      */
     Map<String, String> saveOrStartPlanTasks(PlatformApply platformApply);
 
     /**
-     * 获取用户的所有任务列表
-     * @param username
-     * @param taskState
-     * @return
+     * 删除保存的平板车计划任务流程
+     * @param platformApplyId
      */
-    List<Map<String, Object>> getApprovalList(String username, String taskState);
+    void deletePlatformTaskByPlatformApplyId(Integer platformApplyId);
 
     /**
-     * 删除保存的平板车计划任务流程
-     * @param platformReason
-     * @return 流程实例Id
+     * 获取用户的所有任务列表
+     * @return
      */
-    Boolean removePlanById(PlatformReason platformReason);
+    Map<String, Object> getApprovalList();
 
+    /**
+     * 通过申请Id获取详细的申请信息
+     * @param platformApplyId
+     * @return
+     */
+    Map<String, Object> getPlatformApplyDetailInfoByApplyId(Integer platformApplyId);
+
+    /**
+     * 获得可以编制的任务
+     * @return
+     */
+    List<PlatformApply> getPlatformOrganizationTasks();
 
     /**
      * 获取用户的历史任务
@@ -53,12 +68,6 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * taskService.deleteCandidateUser(taskId,"原用户ID");
      */
     void flatCarPlan2OtherUser(String taskId, String username);
-
-    /**
-     * 获得可以编制的任务
-     * @return
-     */
-    List<PlatformApply> getPlatformOrganizationTasks();
 
     /**
      * 开始一个取消任务申请
@@ -86,26 +95,13 @@ public interface PlatformApplyService extends IService<PlatformApply> {
      * @param param
      * @return
      */
-    String flatcarCancelDriverCompleteTask(FlatCarCancelParam param);
+    String flatcarCancelDriverCompleteTask(PlatformCancelParam param);
 
     /**
      * 取消任务部门评价人员进行评价
      * @param param
      * @return
      */
-    boolean flatcarCancelDepartmentEvaluate(FlatCarCancelParam param);
+    boolean flatcarCancelDepartmentEvaluate(PlatformCancelParam param);
 
-    /**
-     * 通过申请Id获取详细的申请信息
-     * @param businessKey
-     * @return
-     */
-    Map<String, Object> getApplyDetailInfoByApplyId(Integer businessKey);
-
-    /**
-     * 通过id获取对应的申请单详情
-     * @param prsId
-     * @return
-     */
-    PlatformApply getPlatformById(Integer prsId);
 }

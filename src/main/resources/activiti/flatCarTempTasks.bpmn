@@ -42,7 +42,7 @@
       <exclusiveGateway gatewayDirection="Unspecified" id="_17" name="ExclusiveGateway"/>
       <sequenceFlow id="_18" sourceRef="_14" targetRef="_17"/>
       <sequenceFlow id="_19" sourceRef="_17" targetRef="_3">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '0'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_20" sourceRef="_17" targetRef="_16">
          <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '1'}</conditionExpression>
@@ -56,7 +56,7 @@
       </sequenceFlow>
       <sequenceFlow id="_28" sourceRef="_7" targetRef="_16"/>
       <sequenceFlow id="_29" sourceRef="_22" targetRef="_3">
-         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '2'}</conditionExpression>
+         <conditionExpression xsi:type="tFormalExpression">${ApprovalOpinion == '0'}</conditionExpression>
       </sequenceFlow>
       <sequenceFlow id="_30" sourceRef="_6" targetRef="_21"/>
       <sequenceFlow id="_31" sourceRef="_5" targetRef="_21"/>

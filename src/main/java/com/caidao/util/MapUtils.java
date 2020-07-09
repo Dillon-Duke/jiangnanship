@@ -12,6 +12,7 @@ public class MapUtils {
 
     public static Map<String,String> getMap(String... strings){
         Map<String, String> map = new HashMap<>(strings.length);
+        map.clear();
         for (int i = 0; i < strings.length * OBJECT_HALF_LENGTH; i++) {
             int number = 2 * i;
             map.put(strings[number],strings[number+1]);
@@ -21,6 +22,7 @@ public class MapUtils {
 
     public static Map<String,Object> getMap(Object... objects){
         Map<String, Object> map = new HashMap<>(objects.length);
+        map.clear();
         for (int i = 0; i < objects.length * OBJECT_HALF_LENGTH; i++) {
             int number = 2 * i;
             map.put(String.valueOf(objects[number]),objects[number+1]);

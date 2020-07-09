@@ -16,13 +16,14 @@ public class EntityUtils {
      * @param deptUsername
      * @return
      */
-    public static AppTasksMassage getAppMassage(String massageName, Integer taskId, Integer userId, String deptUsername) {
+    public static AppTasksMassage getAppMassage(String massageName, Integer taskId, Integer userId, String deptUsername, Integer massageType) {
         AppTasksMassage appTasksMassage = new AppTasksMassage();
         appTasksMassage.setIsRead(1);
         appTasksMassage.setMassageName(massageName);
         appTasksMassage.setTaskId(taskId);
         appTasksMassage.setCreateTime(LocalDateTime.now());
         appTasksMassage.setUserId(userId);
+        appTasksMassage.setMassageType(massageType);
         appTasksMassage.setUsername(deptUsername);
         appTasksMassage.setState(1);
         return appTasksMassage;
@@ -116,36 +117,25 @@ public class EntityUtils {
 
     /**
      * 将内容封装到实体类中返回
-     * @param businessKey
-     * @param carId
-     * @param startTime
-     * @param workNum
-     * @param workShift
-     * @param endTime
-     * @param carPlant
-     * @param driverId
-     * @param driverName
-     * @param operatorId
-     * @param operatorName
+     * @param commId
+     * @param fileName
+     * @param fileResource
+     * @param massageDetail
+     * @param messageName
+     * @param userId
      * @return
      */
-    public static DeptUserCarApply getDeptUserCar(Integer businessKey, Integer carId, LocalDateTime startTime,
-                                                  String workNum, String workShift, LocalDateTime endTime,
-                                                  Integer carPlant, Integer driverId, String driverName,
-                                                  Integer operatorId, String operatorName){
-        DeptUserCarApply deptUserCarApply = new DeptUserCarApply();
-        deptUserCarApply.setBusinessKey(businessKey);
-        deptUserCarApply.setCarId(carId);
-        deptUserCarApply.setCarPlant(carPlant);
-        deptUserCarApply.setDriverId(driverId);
-        deptUserCarApply.setDriverName(driverName);
-        deptUserCarApply.setEndTime(endTime);
-        deptUserCarApply.setOperatorId(operatorId);
-        deptUserCarApply.setOperatorName(operatorName);
-        deptUserCarApply.setStartTime(startTime);
-        deptUserCarApply.setWorkNum(workNum);
-        deptUserCarApply.setWorkShift(workShift);
-        return deptUserCarApply;
+    public static AppUserCommonMsg getAppUserCommonMsg(Integer commId, String fileName, String fileResource, String massageDetail, String messageName, Integer userId) {
+        AppUserCommonMsg appUserCommonMsg = new AppUserCommonMsg();
+        appUserCommonMsg.setCommId(commId);
+        appUserCommonMsg.setCreateTime(LocalDateTime.now());
+        appUserCommonMsg.setFileName(fileName);
+        appUserCommonMsg.setFileResource(fileResource);
+        appUserCommonMsg.setIsRead(1);
+        appUserCommonMsg.setMassageDetail(massageDetail);
+        appUserCommonMsg.setMassageName(messageName);
+        appUserCommonMsg.setUserId(userId);
+        return appUserCommonMsg;
     }
 
 }

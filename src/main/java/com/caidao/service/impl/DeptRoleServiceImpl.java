@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Dillon
@@ -92,18 +93,14 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<Integer> deptIdList = deptRole.getDeptIdList();
         List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
-            for (Integer integer : deptIdList) {
-                deptDeptRoles.add(EntityUtils.getDeptDeptRole(integer, deptRole.getRoleId()));
-            }
+            deptDeptRoles = deptIdList.stream().map((x) -> EntityUtils.getDeptDeptRole(x, deptRole.getRoleId())).collect(Collectors.toList());
         }
         Boolean result = deptDeptRoleMapper.insertBatches(deptDeptRoles);
         //新增角色权限的中间表
         List<Integer> powerIdList = deptRole.getPowerIdList();
         List<DeptRoleAuthorisation> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
-            for (Integer integer : powerIdList) {
-                authorisations.add(EntityUtils.getDeptRoleAuthorisation(deptIdList.get(0), deptRole.getRoleId(), integer));
-            }
+            authorisations = powerIdList.stream().map((x) -> EntityUtils.getDeptRoleAuthorisation(deptIdList.get(0), deptRole.getRoleId(), x)).collect(Collectors.toList());
         }
         Boolean result1 = deptRoleConfigMapper.insertBatches(authorisations);
         if (result && result1) {
@@ -126,24 +123,20 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         List<DeptDeptRole> deptDeptRoles = deptDeptRoleMapper.selectList(new LambdaQueryWrapper<DeptDeptRole>()
                                                                 .eq(DeptDeptRole::getRoleId, id));
         //判断中间表是否有数据
-        List<Integer> arrayList = new ArrayList<>();
+        List<Integer> arrayList;
         if ((deptDeptRoles != null) && (!deptDeptRoles.isEmpty())){
             //将部门id放在角色里
-            for (DeptDeptRole deptDeptRole : deptDeptRoles) {
-                arrayList.add(deptDeptRole.getDeptId());
-            }
+            arrayList = deptDeptRoles.stream().map((x) -> x.getDeptId()).collect(Collectors.toList());
             deptRole.setDeptIdList(arrayList);
         }
         //从中间表获取权限数据
         List<DeptRoleAuthorisation> deptRoleAuthorisations = deptRoleConfigMapper.selectList(new LambdaQueryWrapper<DeptRoleAuthorisation>()
                                                                     .eq(DeptRoleAuthorisation::getRoleId, id));
         //判断中间表是否有数据
-        ArrayList<Integer> arrayList1 = new ArrayList<Integer>();
+        List<Integer> arrayList1;
         if ((deptRoleAuthorisations != null) && (!deptRoleAuthorisations.isEmpty())){
             //将权限id放在角色里
-            for (DeptRoleAuthorisation config : deptRoleAuthorisations) {
-                arrayList1.add(config.getConfigId());
-            }
+            arrayList1 = deptRoleAuthorisations.stream().map((x) -> x.getConfigId()).collect(Collectors.toList());
             deptRole.setPowerIdList(arrayList1);
         }
         return deptRole;
@@ -169,20 +162,16 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorisation>()
                 .in(DeptRoleAuthorisation::getRoleId, deptRole.getRoleId()));
         List<Integer> deptIdList = deptRole.getDeptIdList();
-        List<DeptDeptRole> deptDeptRoles = new ArrayList<>(deptIdList.size());
+        List<DeptDeptRole> deptDeptRoles = null;
         if ((deptIdList != null) && (!deptIdList.isEmpty())){
-            for (Integer integer : deptIdList) {
-                deptDeptRoles.add(EntityUtils.getDeptDeptRole(integer, deptRole.getRoleId()));
-            }
+            deptDeptRoles = deptIdList.stream().map((x) -> EntityUtils.getDeptDeptRole(x, deptRole.getRoleId())).collect(Collectors.toList());
         }
         Boolean batches = deptDeptRoleMapper.insertBatches(deptDeptRoles);
         //新增角色权限的中间表
-        List<Integer> powerIdList = deptRole.getPowerIdList();
+        List<Integer> powerIdList = null;
         List<DeptRoleAuthorisation> authorisations = new ArrayList<>(powerIdList.size());
         if ((powerIdList != null) && (!powerIdList.isEmpty())){
-            for (Integer integer : powerIdList) {
-                authorisations.add(EntityUtils.getDeptRoleAuthorisation(deptIdList.get(0), deptRole.getRoleId(), integer));
-            }
+            authorisations = powerIdList.stream().map((x) -> EntityUtils.getDeptRoleAuthorisation(deptIdList.get(0), deptRole.getRoleId(), x)).collect(Collectors.toList());
         }
         Boolean insertBatches = deptRoleConfigMapper.insertBatches(authorisations);
         if (batches && insertBatches) {
@@ -207,14 +196,10 @@ public class DeptRoleServiceImpl extends ServiceImpl<DeptRoleMapper, DeptRole> i
         if ((!userRoles.isEmpty()) || (userRoles != null)){
             throw new MyException("该角色上面有绑定的用户，不能删除");
         }
-        for (Serializable serializable : idList) {
-            //删除角色之前，先删除对应的角色部门中间表
-            deptDeptRoleMapper.delete(new LambdaQueryWrapper<DeptDeptRole>()
-                    .in(DeptDeptRole::getRoleId, serializable));
-            //删除角色之前，先删除对应的权限中间表
-            deptRoleConfigMapper.delete(new LambdaQueryWrapper<DeptRoleAuthorisation>()
-                    .in(DeptRoleAuthorisation::getRoleId, serializable));
-        }
+        //删除角色之前，先删除对应的角色部门中间表
+        deptDeptRoleMapper.deleteBatchRoleIds(idList);
+        //删除角色之前，先删除对应的权限中间表
+        deptRoleConfigMapper.deleteBatchRoleIds(idList);
         boolean result = deptRoleMapper.updateBatchesState(idList);
         return result;
     }

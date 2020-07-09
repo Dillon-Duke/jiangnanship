@@ -47,17 +47,6 @@ public class DateUtils {
     }
 
     /**
-     * Date转换为LocalDateTime
-     * @param date
-     */
-    public static LocalDateTime date2LocalDateTime(Date date){
-        Instant instant = date.toInstant();
-        ZoneId zoneId = ZoneId.systemDefault();
-        LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
-        return localDateTime;
-    }
-
-    /**
      * LocalDateTime转换为Date
      * @param localDateTime
      */
@@ -69,32 +58,49 @@ public class DateUtils {
     }
 
     /**
-     * 日期转为Boolean值
-     * @param date
-     * @return
-     */
-    public static Boolean booleanDate(Date date){
-        if (date == null){
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * 获取两个时间点内的时长,为毫秒
      * @param startTime
      * @param endTime
      * @return
      */
-    public static long getTimesLengthBetweenEndTimeAndStartTime(LocalDateTime startTime, LocalDateTime endTime) {
-        return ChronoUnit.MILLIS.between(endTime,startTime);
+    public static long getTimesLengthBetweenEndTimeAndStartTimeMailSecond(LocalDateTime endTime, LocalDateTime startTime) {
+        return ChronoUnit.MILLIS.between(startTime,endTime);
+    }
+
+    /**
+     * 获取两个时间点内的时长,为分钟
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public static long getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime endTime, LocalDateTime startTime) {
+        long between = ChronoUnit.MILLIS.between(startTime, endTime);
+        return between/1800000;
+    }
+
+    /**
+     * 时间戳转换为localtime
+     * @return
+     */
+    public static LocalDateTime secondTimeStamp2LocalDateTime(Long SecondTimeStamp) {
+        LocalDateTime localDateTime = LocalDateTime.ofEpochSecond(SecondTimeStamp, 0, ZoneOffset.ofHours(8));
+        return localDateTime;
+    }
+
+    /**
+     * 时间戳转换为localtime
+     * @return
+     */
+    public static LocalDateTime mailSecondTimeStamp2LocalDateTime(Long mailSecondTimeStamp) {
+        LocalDateTime localDateTime = LocalDateTime.ofEpochSecond(mailSecondTimeStamp/1000, 0, ZoneOffset.ofHours(8));
+        return localDateTime;
     }
 
     public static void main(String[] args) throws InterruptedException {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = LocalDateTime.now();
         Thread.sleep(3000);
-        LocalDateTime now1 = LocalDateTime.now();
-        System.out.println(getTimesLengthBetweenEndTimeAndStartTime(now1,now));
+        LocalDateTime endTime = LocalDateTime.now();
+        System.out.println(getTimesLengthBetweenEndTimeAndStartTimeSecond(endTime,startTime));
     }
 
 }

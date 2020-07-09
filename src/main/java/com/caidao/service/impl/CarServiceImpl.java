@@ -4,25 +4,28 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.caidao.exception.MyException;
 import com.caidao.mapper.CarMapper;
 import com.caidao.mapper.DeptUserCarApplyMapper;
 import com.caidao.mapper.PlatformApplyMapper;
-import com.caidao.pojo.*;
+import com.caidao.pojo.Car;
+import com.caidao.pojo.DeptUserCarApply;
+import com.caidao.pojo.PlatformApply;
+import com.caidao.pojo.SysUser;
 import com.caidao.service.CarService;
 import com.caidao.util.DateUtils;
 import com.caidao.util.FastDfsClientUtils;
 import com.caidao.util.MapUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.util.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -201,10 +204,6 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
     public Boolean saveOrBindTaskWithCar(List<DeptUserCarApply> deptUserCarApplies) {
-        DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-        if (deptUser == null) {
-            throw new MyException("用户登录超时，请重新登录");
-        }
         Assert.notNull(deptUserCarApplies,"车辆绑定信息不能未空");
         for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
             log.info("车辆id为{}的车辆们绑定任务id为{}的任务",deptUserCarApply.getCarId(),deptUserCarApply.getBusinessKey());
@@ -255,7 +254,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
             if (carId == null) {
                 carDriver.put(carId, deptUserCarApply);
                 carOperate.put(carId, deptUserCarApply);
-            } else if (deptUserCarApply.getStartTime().isBefore(carDriver.get(carId).getStartTime())) {
+            } else if (deptUserCarApply.getRealStartTime().isBefore(carDriver.get(carId).getRealStartTime())) {
                 carDriver.remove(carId);
                 carDriver.put(carId, deptUserCarApply);
                 carOperate.remove(carId);
@@ -282,84 +281,109 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
      * @return
      */
     @Override
-    public Map<String, Object> getAllCarsWithHaveTasksAndNoTasks(LocalDateTime date) {
+    public Map<String, Object> getAllCarsWithHaveTasksAndNoTasks(Long date) {
         //判断是否有传日期类，如果没有，则默认查询当天的所有任务
+        LocalDateTime dateTime = null;
         if (date == null) {
-            date = LocalDateTime.now();
+            dateTime = LocalDateTime.now();
+        } else {
+            dateTime = DateUtils.secondTimeStamp2LocalDateTime(date);
         }
         //获取传入日期的0点时间
-        LocalDateTime minDate = LocalDateTime.of(date.toLocalDate(), LocalTime.MIN);
+        LocalDateTime minDate = LocalDateTime.of(dateTime.toLocalDate(), LocalTime.MIN);
         //获取传入日期的24点时间
-        LocalDateTime maxDate = LocalDateTime.of(date.toLocalDate(), LocalTime.MAX);
+        LocalDateTime maxDate = LocalDateTime.of(dateTime.toLocalDate(), LocalTime.MAX);
         //获取所有的车辆信息
         List<Car> carList = carMapper.selectList(null);
         //获取当天所有的已经分分配好的车辆任务列表
         List<DeptUserCarApply> userCarApplyList = deptUserCarApplyMapper.selectList(new LambdaQueryWrapper<DeptUserCarApply>()
-                                                .gt(DeptUserCarApply::getStartTime,minDate)
-                                                .lt(DeptUserCarApply::getEndTime,maxDate));
-        //获取所有的申请任务Id
-        LinkedList<Integer> applyIds = new LinkedList<>();
-        //获取所有的车辆Id
-        Set<Integer> carIds = new HashSet<>();
-        for (DeptUserCarApply deptUserCarApply : userCarApplyList) {
-            applyIds.add(deptUserCarApply.getBusinessKey());
-            //获得有任务的车辆Id
-            carIds.add(deptUserCarApply.getCarId());
-        }
-        //查询对应所有的申请任务
-        List<PlatformApply> applyList = platformApplyMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
-                .in(PlatformApply::getPrsId, applyIds));
-        //将有任务的车辆放到map中
-        HashMap<String, Car> map = new HashMap<>(carIds.size());
-        //排除所有车辆中有任务的车辆
-        for (Car car : carList) {
-            if (carIds.contains(car.getCarId())) {
-                carList.remove(car);
-                map.put("taskCars",car);
-            }
-        }
-        //对空闲车辆按照车牌号进行从小到大排序
-        carList.sort(Comparator.comparing(Car::getCarPlate).thenComparing(Car::getCarWight,Comparator.reverseOrder()));
-        HashMap<String, Object> taskCars = new HashMap<>(carIds.size());
-        //通过车辆Id获取对应的申请业务信息
-        for (int i = 0; i < map.size(); i++) {
-            Long totalTimeCount = null;
-            List<PlatformApply> applies = new LinkedList<>();
-            Car car = map.get(i);
-            //获取到所有的业务ID
-            List<Integer> businessKeys = new LinkedList<>();
-            for (DeptUserCarApply userCarApply : userCarApplyList) {
-                if (car.getCarId().equals(userCarApply.getCarId())) {
-                    businessKeys.add(userCarApply.getBusinessKey());
-                    //计算时长
-                    totalTimeCount += DateUtils.getTimesLengthBetweenEndTimeAndStartTime(userCarApply.getEndTime(),userCarApply.getStartTime());
+                                                .gt(DeptUserCarApply::getRealStartTime,minDate)
+                                                .lt(DeptUserCarApply::getRealEndTime,maxDate));
+        //如果没有分配好的车辆，返回所有的车辆
+        if (userCarApplyList.size() == 0) {
+            return MapUtils.getMap("freeCarCount",carList.size(),"taskCount",0,"freeCars",carList,"taskCars",null);
+        } else {
+            //获取所有的申请任务Id
+            List<Integer> applyIds = userCarApplyList.stream().map((x) -> x.getBusinessKey()).collect(Collectors.toList());
+            //获取所有的车辆Id
+            Set<Integer> carIds = userCarApplyList.stream().map((x) -> x.getCarId()).collect(Collectors.toSet());
+            //查询对应所有的申请任务
+            List<PlatformApply> applyList = platformApplyMapper.selectList(new LambdaQueryWrapper<PlatformApply>()
+                    .in(PlatformApply::getPrsId, applyIds));
+            //将有任务的车辆放到list中
+            List<Car> taskCars = carList.stream().filter((x) -> carIds.contains(x.getCarId())).collect(Collectors.toList());
+            //排除所有车辆中有任务的车辆
+            carList = carList.stream().filter((x) -> !carIds.contains(x.getCarId())).collect(Collectors.toList());
+            //对空闲车辆按照车牌号进行从小到大排序
+            carList.sort(Comparator.comparing(Car::getCarPlate).thenComparing(Car::getCarWight,Comparator.reverseOrder()));
+            Map<String, Object> taskCar = null;
+            for (Car car : taskCars) {
+                List<DeptUserCarApply> userCarApplies = userCarApplyList.stream().filter((x) -> car.getCarId().equals(x.getCarId())).collect(Collectors.toList());
+                userCarApplies.stream().sorted(Comparator.comparing(DeptUserCarApply::getRealStartTime));
+                List<Integer> businessKeys =userCarApplies.stream().map(x -> x.getBusinessKey()).collect(Collectors.toList());
+                Long totalTimeCount = 0L;
+                for (DeptUserCarApply userCarApply : userCarApplies) {
+                    totalTimeCount += DateUtils.getTimesLengthBetweenEndTimeAndStartTimeMailSecond(userCarApply.getRealEndTime(), userCarApply.getRealStartTime());
                 }
-            }
-            //将对应的申请信息放在list列表中 并且计算时长
-            for (PlatformApply platformApply : applyList) {
-                if (businessKeys.contains(platformApply.getPrsId())) {
-                    applies.add(platformApply);
+                //将对应的申请信息放在list列表中
+                List<PlatformApply> applies = applyList.stream().filter((x) -> businessKeys.contains(x.getPrsId())).collect(Collectors.toList());
+                //根据真实的开始时间进行排序
+                List<Map<String, Object>> maps = new ArrayList<>(userCarApplies.size());
+                for (DeptUserCarApply userCarApply : userCarApplies) {
+                    Map<String, Object> map = new HashMap<>(2);
+                    map.put("realStartTime",userCarApply.getRealStartTime());
+                    map.put("platformApplyEntity",applies.stream().filter((x) -> x.getPrsId().equals(userCarApply.getBusinessKey())).collect(Collectors.toList()).get(0));
+                    maps.add(map);
                 }
+                //处理时长，转换为double
+                double timeCount = totalTimeCount;
+                //保留后面两位小数
+                DecimalFormat df = new DecimalFormat("######0.00");
+                String format = df.format(timeCount / 3600000);
+                taskCar = MapUtils.getMap("car",car,"applyList",maps,"totalTimeCount",format,"carTaskCount",businessKeys.size());
             }
-            //对申请任务进行时间排序
-            applies.sort((x,y) -> Long.compare(x.getStartTime(),y.getState()));
-            //处理时长，转换为double
-            double timeCount = totalTimeCount;
-            taskCars.put("car",car);
-            taskCars.put("applyList",applies);
-            taskCars.put("totalTimeCount",timeCount/60000);
-            taskCars.put("carTaskCount",businessKeys.size());
+            return MapUtils.getMap("freeCarCount",carList.size(),"taskCount",applyList.size(),"freeCars",carList,"taskCars",taskCar);
         }
-        return MapUtils.getMap("freeCarCount",carList.size(),"taskCount",applyList.size(),"freeCars",carList,"taskCars",taskCars);
     }
 
     /**
      * 将已经绑定车辆的任务进行排序
+     * @param sourceId
+     * @param targetId
      * @return
      */
     @Override
-    public void sortBindApplyTasks(Integer businessKey) {
-        //todo 看看算法是怎么实现这个自动排序的，到时候在写这个以时间为基准的排序方式
+    public Map<String, Object> changeBindTaskSort(Integer sourceId, Integer targetId) {
+        Assert.notNull(sourceId,"对象Id不能为空");
+        Assert.notNull(targetId,"目标Id不能为空");
+        //获取所有的车辆任务
+        List<DeptUserCarApply> applies = deptUserCarApplyMapper.selectList(null);
+        //获取对应的资源对象
+        DeptUserCarApply sourceTask = applies.stream().filter((x) -> x.getId().equals(sourceId)).collect(Collectors.toList()).get(0);
+        //获取对应的目标对象
+        DeptUserCarApply targetTask = applies.stream().filter((x) -> x.getId().equals(targetId)).collect(Collectors.toList()).get(0);
+        //获取该车的所有任务
+        List<DeptUserCarApply> carTasks = applies.stream().filter((x) -> x.getCarId().equals(sourceTask.getCarId())).collect(Collectors.toList());
+        //获取所有的任务Ids
+        List<Integer> platformIds = carTasks.stream().map(DeptUserCarApply::getBusinessKey).collect(Collectors.toList());
+        //获取所有的对应的所有任务
+        List<PlatformApply> platformApplies = platformApplyMapper.selectBatchIds(platformIds);
+        //过滤掉车辆任务里面目标车辆和对象车辆任务Id
+        List<Integer> otherTaskIds = platformIds.stream().filter((x) -> !x.equals(sourceTask.getBusinessKey())).filter((y) -> !y.equals(targetTask.getBusinessKey())).collect(Collectors.toList());
+        //获取对应的资源任务
+        PlatformApply sourcePlatformApply = platformApplies.stream().filter((x) -> x.getPrsId().equals(sourceTask.getBusinessKey())).collect(Collectors.toList()).get(0);
+        Map<String, Object> sourceMassage = MapUtils.getMap("sourceTask", sourceTask, "sourcePlatformApply", sourcePlatformApply);
+        //获取对应的目标任务
+        PlatformApply targetPlatformApply = platformApplies.stream().filter((x) -> x.getPrsId().equals(targetTask.getBusinessKey())).collect(Collectors.toList()).get(0);
+        Map<String, Object> targetMassage = MapUtils.getMap("targetTask", targetTask, "targetPlatformApply", targetPlatformApply);
+        //其他任务集合
+        ArrayList<Map<String, Object>> list = new ArrayList<>(carTasks.size() - 2);
+        for (Integer id : otherTaskIds) {
+            PlatformApply otherPlatformApply = platformApplies.stream().filter((x) -> x.getPrsId().equals(id)).collect(Collectors.toList()).get(0);
+            DeptUserCarApply otherTask = applies.stream().filter((x) -> x.getBusinessKey().equals(id)).collect(Collectors.toList()).get(0);
+            list.add(MapUtils.getMap("otherPlatformApply", otherPlatformApply, "otherTask", otherTask));
+        }
+        return MapUtils.getMap("sourceMassage",sourceMassage, "targetMassage",targetMassage, "otherMassages",list);
     }
 
     /**

@@ -28,10 +28,10 @@ import redis.clients.jedis.Jedis;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author jinpeng
@@ -80,8 +80,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				.eq(SysUser::getState,1)
 				.like(StringUtils.hasText(sysUser.getUsername()),SysUser::getUsername,sysUser.getUsername())
 				.like(StringUtils.hasText(sysUser.getPhone()),SysUser::getPhone,sysUser.getPhone())
-		.ne(SysUser::getUsername,"admin")
-		.eq(SysUser::getState,1));
+				.ne(SysUser::getUsername,"admin")
+				.eq(SysUser::getState,1));
 		return usersPage;
 	}
 
@@ -138,10 +138,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (roleIds == null || roleIds.isEmpty()) {
 			return save;
 		}
-		List<SysUserRole> userRoles = new ArrayList<>(roleIds.size());
-		for (Integer roleId : roleIds) {
-			userRoles.add(EntityUtils.getSysUserRole(sysUser.getUserId(),roleId));
-		}
+		List<SysUserRole> userRoles = roleIds.stream().map((x) -> EntityUtils.getSysUserRole(sysUser.getUserId(),x)).collect(Collectors.toList());
 		return sysUserRoleMapper.insertBatches(userRoles);
 	}
 
@@ -204,10 +201,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (selectObjs == null || selectObjs.isEmpty()) {
 			return sysUser;
 		}
-		List<Integer> roleIdList = new ArrayList<Integer>(selectObjs.size());
-		for (Object object : selectObjs) {
-			roleIdList.add(Integer.valueOf(object.toString()));
-		}
+		List<Integer> roleIdList = selectObjs.stream().map((x) -> Integer.parseInt(x.toString())).collect(Collectors.toList());
 		sysUser.setRoleIdList(roleIdList);
 		return sysUser;
 	}
@@ -251,10 +245,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		if (roleIdList == null || roleIdList.isEmpty()) {
 			return updateById;
 		}
-		List<SysUserRole> userRoles = new ArrayList<>(roleIdList.size());
-		for (Integer idList : roleIdList) {
-			userRoles.add(EntityUtils.getSysUserRole(sysUser.getUserId(),idList));
-		}
+		List<SysUserRole> userRoles = roleIdList.stream().map((x) -> EntityUtils.getSysUserRole(sysUser.getUserId(),x)).collect(Collectors.toList());
 		boolean batches = sysUserRoleMapper.insertBatches(userRoles);
 		//获取被删除用户的token
 		Object token = jedis.hget(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());

@@ -51,7 +51,7 @@ public class DeptUserCarApply implements Serializable {
     private Integer carId;
 
     @ApiModelProperty(value = "车辆牌照")
-    private Integer carPlant;
+    private String carPlant;
 
     @ApiModelProperty(value = "排班班次")
     private String workShift;
@@ -59,11 +59,18 @@ public class DeptUserCarApply implements Serializable {
     @ApiModelProperty(value = "排班工单号")
     private String workNum;
 
-    @ApiModelProperty(value = "开始时间")
-    private LocalDateTime startTime;
+    @ApiModelProperty(value = "真实起始时间(时间戳格式，到秒)")
+    private LocalDateTime realStartTime;
 
-    @ApiModelProperty(value = "结束时间")
-    private LocalDateTime endTime;
+    @ApiModelProperty(value = "真实装载时间(时间戳格式，到秒)")
+    private LocalDateTime realLoadTime;
 
+    @ApiModelProperty(value = "真实运送时间(时间戳格式，到秒)")
+    private LocalDateTime realArriveTime;
 
+    @ApiModelProperty(value = "真实结束时间(时间戳格式，到秒)")
+    private LocalDateTime realEndTime;
+
+    @ApiModelProperty(value = "真实驳运状态")
+    private Long realTranState;
 }

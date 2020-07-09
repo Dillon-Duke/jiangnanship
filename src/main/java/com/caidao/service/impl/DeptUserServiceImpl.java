@@ -20,7 +20,6 @@ import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombi
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +30,7 @@ import redis.clients.jedis.Jedis;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dillon
@@ -72,6 +72,9 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
 
     @Autowired
     private DeptConfigMapper deptConfigMapper;
+
+    @Autowired
+    private AppUserCommonMsgMapper appUserCommonMsgMapper;
 
     /**
      * 获取部门用户的分页数据
@@ -151,10 +154,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         //批量获得插入的数据id
         deptUserMapper.insert(deptUser);
         Integer userId = deptUser.getUserId();
-        List<DeptUserRole> deptUserRoles = new ArrayList<>(roleIdList.size());
-        for (Integer integer : roleIdList) {
-            deptUserRoles.add(EntityUtils.getDeptUserRole(userId,integer));
-        }
+        List<DeptUserRole> deptUserRoles = roleIdList.stream().map((x) -> EntityUtils.getDeptUserRole(userId,x)).collect(Collectors.toList());
         Boolean result = deptUserRoleMapper.insertBatches(deptUserRoles);
         //判断是否插入成功
         if (result && userId == 0){
@@ -178,9 +178,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         //将角色id 放到list列表里面去
         List<Integer> arrayList = new ArrayList<>(0);
         if ((roleList != null) && (!roleList.isEmpty())){
-            for (DeptUserRole deptUserRole : roleList) {
-                arrayList.add(deptUserRole.getRoleId());
-            }
+            arrayList = roleList.stream().map((x) -> x.getRoleId()).collect(Collectors.toList());
         }
         DeptUser deptUser = super.getById(id);
         deptUser.setRoleIdList(arrayList);
@@ -239,10 +237,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             deptUser.setUserDeptName("无");
         } else {
             //批量新增用户角色中间表
-            ArrayList<DeptUserRole> deptUserRoles1 = new ArrayList<>(roleIdList.size());
-            for (Integer integer : roleIdList) {
-                deptUserRoles1.add(EntityUtils.getDeptUserRole(deptUser.getUserId(),integer));
-            }
+            List<DeptUserRole> deptUserRoles1 = roleIdList.stream().map((x) -> EntityUtils.getDeptUserRole(deptUser.getUserId(),x)).collect(Collectors.toList());
             batches = deptUserRoleMapper.insertBatches(deptUserRoles1);
             //从其他三张表中查询对应的角色部门信息，填到用户字段里面
             for (Integer integer : roleIdList) {
@@ -332,13 +327,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
                 .or(true)
                 .eq(DeptUserCarApply::getOperatorId,id));
         //获得对应的车辆ID 去重
-        List<Integer> integers = new ArrayList<>();
-        for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
-            Integer carId = deptUserCarApply.getCarId();
-            if (!integers.contains(carId)) {
-                integers.add(carId);
-            }
-        }
+        Set<Integer> integers = deptUserCarApplies.stream().map((x) -> x.getCarId()).collect(Collectors.toSet());
         //TODO 获得对应的车辆任务 之后逻辑确定是否是获取对应的申请任务，再写逻辑
         return deptUserCarApplies;
     }
@@ -371,9 +360,13 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         }
         deptUserCarApplyMapper.insertBatches(userCars);
         for (String name : username) {
-            massages.add(EntityUtils.getAppMassage(name, taskId,null, "平板车操作任务"));
+            massages.add(EntityUtils.getAppMassage(name, taskId,null, "平板车操作任务",null));
         }
-        return appTasksMassageMapper.insertBatches(massages);
+        Integer integer = appTasksMassageMapper.insertBatches(massages);
+        if (integer == 0) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -442,7 +435,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         //获取对应的id
         List<AppTasksMassage> list = new LinkedList<>();
         for (AppTasksMassage appTasksMassage : appTasksMassages) {
-            list.add(EntityUtils.getAppMassage(appTasksMassage.getMassageName(),Integer.parseInt(taskId), appTasksMassage.getUserId(), appTasksMassage.getUsername()));
+            list.add(EntityUtils.getAppMassage(appTasksMassage.getMassageName(),Integer.parseInt(taskId), appTasksMassage.getUserId(), appTasksMassage.getUsername(),null));
         }
         return appTasksMassageMapper.updateBatches(list);
     }
@@ -454,7 +447,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public ResponseEntity<Map<String, String>> login(UserParam userParam) {
+    public Map<String, String> login(UserParam userParam) {
         org.apache.shiro.util.Assert.notNull(userParam.getPrincipal(),"用户名不能为空");
         log.info("用户名为{}请求登录",userParam.getPrincipal());
         try {
@@ -471,7 +464,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
             jedis.del(PropertyUtils.APP_USER_PRIVATE_KEY + userParam.getSessionUuid(),PropertyUtils.APP_USER_PUBLIC_KEY + userParam.getSessionUuid());
             //将个人信息放在hashSet中，后来修改密码的时候抹掉个人的缓存信息以及session信息;
             jedis.hset(PropertyUtils.ALL_USER_TOKEN,userSalt,token);
-            return ResponseEntity.ok(MapUtils.getMap("salt",userSalt,"token",token));
+            return MapUtils.getMap("salt",userSalt,"token",token);
         } catch (Exception e){
             throw new MyException("账号或者密码错误，登录失败");
         }
@@ -568,12 +561,24 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         //获取用户的首页信息数量
         List<AppTasksMassage> handledTasks = getUserNotReadMassage(userMassage.get("username"));
         //获取手机轮播图片，默认3张
-        List<LunchImage> lunchImages = getLunchImages();
+        List<String> lunchImages = getLunchImages();
         //获取手机的常用操作
         List<AppOperate> usualOperate = getAppOperate(userId);
         //获取通用消息个数
-        ArrayList<Integer> commonMsgCount = new ArrayList<>();
-        return MapUtils.getMap("authorities", authorities,"UnHandleTasks",handledTasks,"lunchImages",lunchImages,"usualOperate",usualOperate,"commonMsgCount",commonMsgCount);
+        Integer commonMsgCount = getUnReadUserCommonMsgCount(userId);
+        return MapUtils.getMap("authorities", authorities,"userMassage",userMassage,"UnHandleTasks",handledTasks,"lunchImages",lunchImages,"usualOperate",usualOperate,"commonMsgCount",commonMsgCount);
+    }
+
+    /**
+     * 获得用户通用消息数量
+     * @param userId
+     * @return
+     */
+    private Integer getUnReadUserCommonMsgCount(Integer userId) {
+        List<AppUserCommonMsg> msgList = appUserCommonMsgMapper.selectList(new LambdaQueryWrapper<AppUserCommonMsg>()
+                .eq(AppUserCommonMsg::getUserId, userId)
+                .eq(AppUserCommonMsg::getIsRead, 1));
+        return msgList.size();
     }
 
     /**
@@ -622,13 +627,9 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         List<Object> deptConfigs = deptConfigMapper.selectObjs(new LambdaQueryWrapper<DeptAuthorisation>()
                 .select(DeptAuthorisation::getParamValue)
                 .in(DeptAuthorisation::getConfId, list));
-        List<String> result = new ArrayList<String>();
+        List<String> result = null;
         for (Object object : deptConfigs) {
-            String authorities = String.valueOf(object);
-            String[] split = authorities.split(",");
-            for (String string : split) {
-                result.add(string);
-            }
+            result = Arrays.stream(String.valueOf(object).split(",")).collect(Collectors.toList());
         }
         return result;
     }
@@ -639,7 +640,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
      * 1  代表轮播图设置为显示状态
      * @return
      */
-    private List<LunchImage> getLunchImages() {
+    private List<String> getLunchImages() {
         List<LunchImage> imageList = lunchImageMapper.selectList(new LambdaQueryWrapper<LunchImage>()
                 .eq(LunchImage::getIsUse, 1));
         //将图片按照id进行倒排序
@@ -648,7 +649,8 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         if (imageList.size() > MAX_IMAGE_COUNT) {
             imageList = imageList.subList(0,3);
         }
-        return imageList;
+        List<String> list = imageList.stream().map((i) -> i.getSourceImage()).collect(Collectors.toList());
+        return list;
     }
 
     /**

@@ -1,8 +1,8 @@
 package com.caidao.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.caidao.param.FlatCarAdjustmentParam;
-import com.caidao.param.FlatCarCancelParam;
+import com.caidao.param.PlatformAdjustmentParam;
+import com.caidao.param.PlatformCancelParam;
 import com.caidao.pojo.PlatformReason;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ public interface PlatformReasonService extends IService<PlatformReason> {
      * @param param
      * @return
      */
-    boolean completeCancelApplyTask(FlatCarCancelParam param);
+    boolean completeCancelApplyTask(PlatformCancelParam param);
 
     /**
      * 完成不带意见的审批
@@ -39,26 +39,33 @@ public interface PlatformReasonService extends IService<PlatformReason> {
      * @param param
      * @return
      */
-    Map<String, String> cancelApplyTaskStart(FlatCarCancelParam param);
+    Map<String, String> cancelApplyTaskStart(PlatformCancelParam param);
 
     /**
      * 取消任务司机接单和执行
      * @param param
      * @return
      */
-    void cancelApplyTaskDriverWorking(FlatCarCancelParam param);
+    void cancelApplyTaskDriverWorking(PlatformCancelParam param);
 
     /**
      * 未开始执行的平板车任务调整
      * @param param
      * @return
      */
-    Boolean flatcarAdjustmentWithNoStart(FlatCarAdjustmentParam param);
+    Boolean flatcarAdjustmentWithNoStart(PlatformAdjustmentParam param);
 
     /**
      * 已开始执行的平板车任务调整
      * @param param
      * @return
      */
-    Boolean flatcarAdjustmentWithStart(FlatCarAdjustmentParam param);
+    Boolean flatcarAdjustmentWithStart(PlatformAdjustmentParam param);
+
+    /**
+     * 司机开始执行任务
+     * @param taskId
+     * @return
+     */
+    boolean driverStartTask(String taskId);
 }

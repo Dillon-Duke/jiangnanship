@@ -123,4 +123,14 @@ public class PropertyUtils {
 	 */
 	public static final String PLAT_CAR_PROCESS_IS_OR_NOT_EXECUTE = "司机执行,执行完成,部门评价";
 
+	/**
+	 * 司机执行类型判断
+	 */
+	public static final String PLAT_CAR_PROCESS_DRIVER_EXECUTE = "司机接单";
+
+	/**
+	 * 司机完成类型判断
+	 */
+	public static final String PLAT_CAR_PROCESS_DRIVER_COMPLETE = "司机接单";
+
 }

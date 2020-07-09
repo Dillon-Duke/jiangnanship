@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.caidao.pojo.Car;
 import com.caidao.pojo.DeptUserCarApply;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,17 +61,19 @@ public interface CarService extends IService<Car> {
      * @param date
      * @return
      */
-    Map<String, Object> getAllCarsWithHaveTasksAndNoTasks(LocalDateTime date);
-
-    /**
-     * 将已经绑定车辆的任务进行排序
-     * @return
-     */
-    void sortBindApplyTasks(Integer businessKey);
+    Map<String, Object> getAllCarsWithHaveTasksAndNoTasks(Long date);
 
     /**
      * 自动绑定车辆与申请的关系
      * @return
      */
     void autoCompareCarWithApply();
+
+    /**
+     * 调整已经绑定车辆的任务
+     * @param targetId
+     * @param sourceId
+     * @return
+     */
+    Map<String, Object> changeBindTaskSort(Integer sourceId, Integer targetId);
 }

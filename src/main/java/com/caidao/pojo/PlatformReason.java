@@ -32,7 +32,6 @@ public class PlatformReason implements Serializable {
     private String taskId;
 
     @ApiModelProperty(value = "是否同意 1：同意 0：不同意")
-    @TableField(exist = false)
     private Integer opinion;
 
     @ApiModelProperty(value = "原因")
@@ -44,7 +43,7 @@ public class PlatformReason implements Serializable {
     @ApiModelProperty(value = "创建日期")
     private LocalDateTime createDate;
 
-    @ApiModelProperty(value = "创建人")
+    @ApiModelProperty(value = "创建人Id")
     private Integer createId;
 
     @ApiModelProperty(value = "申请起始时间")

@@ -104,6 +104,7 @@ public class LoginController {
 		//将所有登录用户信息token放在redis中，之后修改密码时删除对应的token
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
 		jedis.hset(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt(),token);
+		System.out.println(token);
 		return ResponseEntity.ok(token);
 	}
 	

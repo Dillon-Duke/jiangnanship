@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * @author tom
  */
 @Data
-public class FlatCarAdjustmentParam {
+public class PlatformAdjustmentParam {
 
     @ApiModelProperty(value = "需要调整的业务Id")
     private Integer adjustmentBusinessKey;

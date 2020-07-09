@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author jinpeng
@@ -75,9 +76,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		List<Integer> menuIdLists = sysRole.getMenuIdList();
 		List<SysRoleMenu> roleMenus = new ArrayList<>(menuIdLists.size());
 		if (!menuIdLists.isEmpty() && save) {
-			for (Integer menuIdList: menuIdLists) {
-				roleMenus.add(EntityUtils.getSysRoleMenu(sysRole.getRoleId(),menuIdList));
-			}
+			roleMenus = menuIdLists.stream().map((x) -> EntityUtils.getSysRoleMenu(sysRole.getRoleId(),x)).collect(Collectors.toList());
 		}
 		return sysRoleMenuMapper.insertBatches(roleMenus);
 	}
@@ -103,9 +102,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		if (!menuIdLists.isEmpty()&&updateById) {
 			//修改角色之前吧所有的角色对应的菜单id删除掉
 			sysRoleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenu>().in(SysRoleMenu::getRoleId,sysRole.getRoleId()));
-			for (Integer menuIdList: menuIdLists) {
-				roleMenus.add(EntityUtils.getSysRoleMenu(sysRole.getRoleId(),menuIdList));
-			}
+			roleMenus = menuIdLists.stream().map((x) -> EntityUtils.getSysRoleMenu(sysRole.getRoleId(),x)).collect(Collectors.toList());
 		}
 		return sysRoleMenuMapper.insertBatches(roleMenus);
 	}
@@ -130,17 +127,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		Assert.notNull(id,"id不能为空");
 		log.info("查询角色ID为{}的角色",id);
 		SysRole sysRole = super.getById(id);
-		List<Object> menuIds = sysRoleMenuMapper.selectObjs(new LambdaQueryWrapper<SysRoleMenu>()
-				.select(SysRoleMenu::getMenuId)
+		List<SysRoleMenu> menuList = sysRoleMenuMapper.selectList(new LambdaQueryWrapper<SysRoleMenu>()
 				.eq(SysRoleMenu::getRoleId, id));
-		if (menuIds == null || menuIds.isEmpty()) {
+		if (menuList == null || menuList.isEmpty()) {
 			return sysRole;
 		}
-		List<Integer> menuIdList = new ArrayList<Integer>(menuIds.size());
-		for (Object menuId : menuIds) {
-			menuIdList.add(Integer.valueOf(menuId.toString()));
-		}
-		sysRole.setMenuIdList(menuIdList);
+		//获取菜单ids
+		List<Integer> menuIds = menuList.stream().map((x) -> x.getMenuId()).collect(Collectors.toList());
+		sysRole.setMenuIdList(menuIds);
 		return sysRole;
 	}
 	/**
@@ -158,10 +152,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole> impl
 		if (userRoles.size() != 0){
 			throw new MyException("ids为" + idList + "的用户绑定该角色，删除失败");
 		}
-		List<Serializable> list = new ArrayList<>(idList.size());
-		for (Serializable roleId : idList) {
-			list.add(roleId);
-		}
+		List<Serializable> list = idList.stream().collect(Collectors.toList());
 		//批量删除用户角色中间表
 		sysRoleMenuMapper.deleteBatchWithRoleIds(list);
 		//批量假删除角色表

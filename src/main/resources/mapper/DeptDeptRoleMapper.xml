@@ -18,4 +18,15 @@
             </foreach>
     </insert>
 
+    <delete id="deleteBatchRoleIds" parameterType="java.util.List">
+        DELETE FROM
+            dept_dept_role
+        WHERE
+            role_id
+        IN
+            <foreach collection="idList" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
 </mapper>

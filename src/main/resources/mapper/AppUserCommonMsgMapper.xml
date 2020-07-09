@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.caidao.mapper.AppUserCommonMsgMapper">
+
+    <sql id="baseSql">
+        (comm_id,massage_name,massage_detail,create_time,user_id,is_read,file_name,file_resource)
+    </sql>
+
+    <insert id="insertBatches" parameterType="java.util.List">
+        INSERT INTO
+            app_user_common_msg
+        <include refid="baseSql" />
+        values
+            <foreach collection="list" item="item" index="index" separator=",">
+                (
+                    #{item.commId},
+                    #{item.massageName},
+                    #{item.massageDetail},
+                    #{item.createTime},
+                    #{item.userId},
+                    #{item.isRead},
+                    #{item.fileName},
+                    #{item.fileResource}
+                )
+            </foreach>
+    </insert>
+
+    <update id="updateByCommonId" parameterType="com.caidao.mapper.AppUserCommonMsgMapper">
+        UPDATE
+            app_user_common_msg
+        SET
+            massage_name = #{msg.massageName},
+            massage_detail = #{msg.massageDetail},
+            user_id = #{msg.massageName},
+            is_read = 1,
+            file_name = #{msg.fileName},
+            file_resource = #{msg.fileResource},
+        WHERE
+            comm_id = #{msg.commId}
+    </update>
+
+    <delete id="deleteBatchCommIds" parameterType="java.util.List">
+        DELETE FROM
+            app_user_common_msg
+        WHERE
+            comm_id
+        IN
+            <foreach collection="ids" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+    </delete>
+
+</mapper>

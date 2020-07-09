@@ -4,13 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.*;
-import com.caidao.param.FlatCarAdjustmentParam;
-import com.caidao.param.FlatCarCancelParam;
-import com.caidao.pojo.*;
+import com.caidao.param.PlatformAdjustmentParam;
+import com.caidao.param.PlatformCancelParam;
+import com.caidao.pojo.AppTasksMassage;
+import com.caidao.pojo.DeptUser;
+import com.caidao.pojo.DeptUserCarApply;
+import com.caidao.pojo.PlatformReason;
 import com.caidao.service.PlatformReasonService;
 import com.caidao.util.EntityUtils;
 import com.caidao.util.MapUtils;
 import com.caidao.util.PropertiesReaderUtils;
+import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.bpmn.model.*;
 import org.activiti.engine.HistoryService;
@@ -80,22 +84,22 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
     public boolean completeApprovalWithOpinion(PlatformReason platformReason ) {
         Assert.notNull(platformReason,"审批原因不能为空");
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
-        if (deptUser == null) {
-            throw new MyException("用户登录超时，请重新登录");
-        }
-        log.info("用户{}完成了任务的审批",deptUser.getUsername());
+        Assert.notNull(deptUser,"用户登录超时，请重新登录");
+        log.info("用户{}完成了任务{}的审批",deptUser.getUsername(),platformReason.getTaskId());
         //用户审批前拾取任务
         applyUserPickUpTask(platformReason.getTaskId(),deptUser.getUsername());
         //驳回时将审批意见存入数据库
-        if (platformReason.getOpinion() == 2 && platformReason.getReason() != null) {
+        if (platformReason.getOpinion() == 0 && platformReason.getReason() != null) {
+            platformReason.setCreateDate(LocalDateTime.now());
             platformReason.setCreateId(deptUser.getCreateId());
             platformReasonMapper.insert(platformReason);
-        } else {
+        } else if (platformReason.getOpinion() == 0 && platformReason.getReason() == null) {
             throw new MyException("请编写驳回原因");
         }
         //如果同意，并书写同意原因，则将原因存在数据库中
         if (platformReason.getOpinion() == 1 && platformReason.getReason() != null) {
             platformReason.setCreateId(deptUser.getCreateId());
+            platformReason.setCreateDate(LocalDateTime.now());
             platformReasonMapper.insert(platformReason);
         }
         //如果修改了起始结束时间，并且没有修改重要程度，则更新申请表中时间
@@ -115,44 +119,26 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         }
         //获得对应的任务Id
         String taskId = platformReason.getTaskId();
-        //设置对应的审批意见，1为同意 2为不同意
+        //设置对应的审批意见，1为同意 0为不同意
         taskService.setVariable(taskId,"ApprovalOpinion", platformReason.getOpinion());
-        //判断是否流程进入endEvent,如果进入EndEvent，则不需要再再推送消息
+        //获得当前任务
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        //判断下一节点是否哦为null  如果为null，则不获取下一节点信息
+        String instanceId = task.getProcessInstanceId();
+        //完成流程的审批
+        taskService.complete(taskId);
+        Task nextTask = taskService.createTaskQuery().processInstanceId(task.getProcessInstanceId()).singleResult();
+        //判断是否流程进入endEvent,如果进入EndEvent，则不需要再再推送消息
         String newTaskId = null;
-        if (task != null) {
-            String instanceId = task.getProcessInstanceId();
-            //完成流程的审批
-            taskService.complete(taskId);
+        if (nextTask != null) {
             //新增消息库中下一个候选人未读信息
             newTaskId = addNextCandidateMassage(task,instanceId, platformReason.getOpinion());
         }
         //将消息中的内容删掉
-        deleteCompleteMassage(taskId);
+        appTasksMassageMapper.delete(new LambdaQueryWrapper<AppTasksMassage>().eq(AppTasksMassage::getTaskId, taskId));
         if (newTaskId != null) {
             return true;
         }
         return false;
-    }
-
-    /**
-     * 判断是否输入了起始时间和结束时间
-     * @param applyStartTime
-     * @param applyEndTime
-     * @return
-     */
-    private boolean haveApplyStartTimeAndEndTime(LocalDateTime applyStartTime,LocalDateTime applyEndTime){
-        if (applyStartTime == null && applyEndTime != null) {
-            throw new MyException("请输入开始时间");
-        }
-        if (applyStartTime != null && applyEndTime == null) {
-            throw new MyException("请输入结束时间");
-        }
-        if (applyStartTime == null && applyEndTime == null) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -171,24 +157,16 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         //用户审批前拾取任务
         applyUserPickUpTask(taskId,deptUser.getUsername());
         //将消息中的内容删掉
-        deleteCompleteMassage(taskId);
+        appTasksMassageMapper.delete(new LambdaQueryWrapper<AppTasksMassage>().eq(AppTasksMassage::getTaskId, taskId));
         //获取对应的业务流程
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-        //判断任务是否被拾取
-        String assignee = task.getAssignee();
-        if (assignee == null) {
-            throw new MyException("请先拾取任务");
-        }
         //获取对应的实例Id
         String instanceId = task.getProcessInstanceId();
         //完成任务流程
         taskService.complete(taskId);
         //推送对应的消息给对应的角色
-        String newTaskId = addNextCandidateMassage(task,instanceId, null);
-        if (newTaskId != null) {
-            return true;
-        }
-        return false;
+        addNextCandidateMassage(task,instanceId, null);
+        return true;
     }
 
     /**
@@ -198,7 +176,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Map<String, String> cancelApplyTaskStart(FlatCarCancelParam param) {
+    public Map<String, String> cancelApplyTaskStart(PlatformCancelParam param) {
         Assert.notNull(param,"取消任务参数不能为空");
         log.info("取消ID为{}的申请",param.getCancelBusinessKey());
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
@@ -246,7 +224,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public boolean completeCancelApplyTask(FlatCarCancelParam param) {
+    public boolean completeCancelApplyTask(PlatformCancelParam param) {
         Assert.notNull(param,"取消任务参数不能为空");
         log.info("取消ID为{}的申请",param.getCancelBusinessKey());
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
@@ -282,7 +260,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         .eq(DeptUserCarApply::getBusinessKey,param.getCancelBusinessKey()));
         //通知申请人取消信息
         DeptUser username = deptUserMapper.selectApplyNameWithApplyId(param.getCancelBusinessKey());
-        AppTasksMassage appTasksMassage = EntityUtils.getAppMassage(param.getCancelReason(),null , username.getUserId(),username.getUsername());
+        AppTasksMassage appTasksMassage = EntityUtils.getAppMassage(param.getCancelReason(),null , username.getUserId(),username.getUsername(),null);
         int insert = appTasksMassageMapper.insert(appTasksMassage);
         if (insert == 0) {
             return false;
@@ -297,7 +275,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public void cancelApplyTaskDriverWorking(FlatCarCancelParam param) {
+    public void cancelApplyTaskDriverWorking(PlatformCancelParam param) {
         Assert.notNull(param,"取消任务参数不能为空");
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         if (deptUser == null) {
@@ -316,7 +294,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Boolean flatcarAdjustmentWithNoStart(FlatCarAdjustmentParam param) {
+    public Boolean flatcarAdjustmentWithNoStart(PlatformAdjustmentParam param) {
         Assert.notNull(param,"调整参数不能为空");
         DeptUser deptUser = (DeptUser) SecurityUtils.getSubject().getPrincipal();
         if (deptUser == null ) {
@@ -342,8 +320,8 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
             List<DeptUserCarApply> deptUserCarApplies = deptUserCarApplyMapper.selectList(new LambdaQueryWrapper<DeptUserCarApply>()
                     .eq(DeptUserCarApply::getDriverId, param.getDriverId()));
             for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
-                LocalDateTime startTime = deptUserCarApply.getStartTime();
-                LocalDateTime endTime = deptUserCarApply.getEndTime();
+                LocalDateTime startTime = deptUserCarApply.getRealStartTime();
+                LocalDateTime endTime = deptUserCarApply.getRealEndTime();
                 Integer key = deptUserCarApply.getBusinessKey();
                 if (!key.equals(param.getAdjustmentBusinessKey()) && startTime.isAfter(param.getStartTime()) && startTime.isBefore(param.getEndTime())) {
                     throw new MyException("司机在该段时间内有其他任务，不能使用");
@@ -357,35 +335,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         }
         //判断是否操作员更换，如果是，修改
         if (param.getOperatorName().length != 0) {
-            //获取所有跟车员的任务
-            List<DeptUserCarApply> deptUserCarApplies = deptUserCarApplyMapper.selectList(new LambdaQueryWrapper<DeptUserCarApply>()
-                    .in(DeptUserCarApply::getOperatorId, param.getOperatorId()));
-            for (DeptUserCarApply deptUserCarApply : deptUserCarApplies) {
-                LocalDateTime startTime = deptUserCarApply.getStartTime();
-                LocalDateTime endTime = deptUserCarApply.getEndTime();
-                Integer key = deptUserCarApply.getBusinessKey();
-                if (!key.equals(param.getAdjustmentBusinessKey()) && startTime.isAfter(param.getStartTime()) && startTime.isBefore(param.getEndTime())) {
-                    throw new MyException("操作员" + deptUserCarApply.getOperatorName() + "在该段时间内有其他任务，不能使用");
-                }
-                if (!key.equals(param.getAdjustmentBusinessKey()) && endTime.isAfter(param.getStartTime()) && endTime.isBefore(param.getEndTime())) {
-                    throw new MyException("操作员" + deptUserCarApply.getOperatorName() + "在该段时间内有其他任务，不能使用");
-                }
-            }
-            //获取对应的绑定Id
-            List<DeptUserCarApply> userCars = deptUserCarApplyMapper.selectList(new LambdaQueryWrapper<DeptUserCarApply>()
-                    .eq(DeptUserCarApply::getBusinessKey, param.getAdjustmentBusinessKey()));
-            //删除该业务id对应的所有绑定
-            deptUserCarApplyMapper.delete(new LambdaQueryWrapper<DeptUserCarApply>()
-                    .eq(DeptUserCarApply::getBusinessKey, param.getAdjustmentBusinessKey()));
-            //重新新增操作员绑定
-            DeptUserCarApply userCar = userCars.get(0);
-            List<DeptUserCarApply> list = new LinkedList<>();
-            for (int i = 0; i < param.getOperatorName().length; i++) {
-                list.add(EntityUtils.getDeptUserCar(userCar.getBusinessKey(),userCar.getCarId(),userCar.getStartTime()
-                ,userCar.getWorkNum(),userCar.getWorkShift(),userCar.getEndTime(),userCar.getCarPlant(),userCar.getDriverId()
-                ,userCar.getDriverName(),param.getOperatorId()[i],param.getOperatorName()[i]));
-            }
-            deptUserCarApplyMapper.insertBatches(list);
+           //todo
         }
         //判断是否是开始时间调整，如果是，修改
         //todo 调整任务后是否需要将信息推送给手机端？
@@ -402,7 +352,7 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
      */
     @Override
     @Transactional(rollbackFor = RuntimeException.class)
-    public Boolean flatcarAdjustmentWithStart(FlatCarAdjustmentParam param) {
+    public Boolean flatcarAdjustmentWithStart(PlatformAdjustmentParam param) {
         //1、添加修改原因
         //2、判断是否目的地变动，如果是，修改
         //3、判断是否车辆更换，如果是，修改
@@ -411,6 +361,21 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         return false;
     }
 
+    /**
+     * 司机开始执行任务
+     * @param taskId
+     * @return
+     */
+    @Override
+    public boolean driverStartTask(String taskId) {
+        return false;
+    }
+
+    /**
+     * 完成审批前拾取任务
+     * @param taskId
+     * @param username
+     */
     private void applyUserPickUpTask(String taskId, String username){
         try {
             AppTasksMassage massage = appTasksMassageMapper.selectOne(new LambdaQueryWrapper<AppTasksMassage>()
@@ -427,34 +392,6 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
     }
 
     /**
-     * 任务取消接口新增司机信息
-     * @param param
-     * @param taskId
-     */
-    private void cancelAddDriverMassage(FlatCarCancelParam param, String taskId) {
-        //完成审批
-        taskService.complete(taskId);
-        //获取对应的任务ID
-        Task task = taskService.createTaskQuery().processInstanceId(param.getInstanceId()).singleResult();
-        String id = task.getId();
-        //获取正在执行任务的司机、操作员
-        DeptUserCarApply deptUserCarApply = deptUserCarApplyMapper.selectOne(new LambdaQueryWrapper<DeptUserCarApply>()
-                .eq(DeptUserCarApply::getBusinessKey, param.getCancelBusinessKey()));
-        //删除旧消息
-        appTasksMassageMapper.delete(new LambdaQueryWrapper<AppTasksMassage>()
-                .eq(AppTasksMassage::getTaskId, param.getTaskId()));
-        //自动推送消息
-        String[] operateNames = deptUserCarApply.getOperatorName().split(",");
-        StringBuilder sb = new StringBuilder();
-        for (String operateName : operateNames) {
-            sb.append(operateName).append(",");
-        }
-        String driverName = deptUserCarApply.getDriverName();
-        sb.append(driverName);
-        insertAppMassage(id, task.getName(), sb.toString());
-    }
-
-    /**
      * 新增消息库中下一个候选人未读信息
      * @param instanceId
      */
@@ -466,28 +403,41 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         // 输出连线
         List<SequenceFlow> outFlows = flowNode.getOutgoingFlows();
         String name = loopNextPoint(bpmnModel, outFlows, opinion);
-        String candidateUsers = customActivitiMapper.getCandidateUsersInActivitiTables(name, instanceId);
         //将用户批量放在信息表中 ,获取流程ID
-        Task task1= taskService.createTaskQuery().processInstanceId(instanceId).singleResult();
-        String taskId = task1.getId();
+        Task task1 = taskService.createTaskQuery().processInstanceId(instanceId).singleResult();
+        String task1Id = task1.getId();
         String taskName = task1.getName();
-        Boolean result =insertAppMassage(taskId, taskName, candidateUsers);
-        if (!result) {
-            throw new MyException("插入消息失败，请联系管理员");
-        }
-        return taskId;
+        String candidateUsers = customActivitiMapper.getCandidateUsersInActivitiTables(name, instanceId);
+        //获得部门代办类型
+        String definitionKey1 = task1.getTaskDefinitionKey();
+        FlowNode flowNode1 = (FlowNode) bpmnModel.getFlowElement(definitionKey1);
+        // 输出连线
+        List<SequenceFlow> outFlows1 = flowNode1.getOutgoingFlows();
+        Integer massageType = getMassageType(outFlows1, taskName);
+        //插入待办任务消息
+        insertAppMassage(task1Id, massageType, taskName, candidateUsers);
+        return task1Id;
     }
 
     /**
-     * 删除对应的消息里面的数据
-     * @param taskId
+     * 返回下一个节点的类型
+     * @param outFlows
+     * @return
      */
-    private void deleteCompleteMassage(String taskId) {
-        int delete = appTasksMassageMapper.delete(new LambdaQueryWrapper<AppTasksMassage>()
-                .eq(AppTasksMassage::getTaskId, taskId));
-        if (delete == 0) {
-            throw new MyException("删除消息失败，请联系管理员");
+    private Integer getMassageType(List<SequenceFlow> outFlows, String taskName) {
+        for (SequenceFlow outFlow : outFlows) {
+            FlowElement element = outFlow.getTargetFlowElement();
+            if (element instanceof UserTask && PropertyUtils.PLAT_CAR_PROCESS_DRIVER_EXECUTE.equals(taskName)) {
+                return 3;
+            } else if (element instanceof UserTask && PropertyUtils.PLAT_CAR_PROCESS_DRIVER_COMPLETE.equals(taskName)) {
+                return 4;
+            } else if (element instanceof ExclusiveGateway) {
+                return 2;
+            } else if (element instanceof UserTask) {
+                return 1;
+            }
         }
+        return null;
     }
 
     /**
@@ -575,11 +525,13 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
     }
 
     /**
-     * 递归调用 找到下一个节点里面的name
+     * 批量插入代办事项消息
+     * @param taskId
+     * @param taskName
      * @param candidateUser
      * @return
      */
-    private Boolean insertAppMassage(String taskId, String taskName, String candidateUser) {
+    private Boolean insertAppMassage(String taskId, Integer massageType, String taskName, String candidateUser) {
         String[] candidateUse = candidateUser.split(",");
         List<AppTasksMassage> massages = new ArrayList<>(candidateUse.length);
         //数组转列表
@@ -588,9 +540,13 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         List<DeptUser> userList = deptUserMapper.selectList(new LambdaQueryWrapper<DeptUser>()
                 .in(DeptUser::getUsername, asList));
         for (DeptUser deptUser : userList) {
-            massages.add(EntityUtils.getAppMassage(taskName + "任务", Integer.parseInt(taskId), deptUser.getUserId(),deptUser.getUsername()));
+            massages.add(EntityUtils.getAppMassage(taskName + "任务", Integer.parseInt(taskId), deptUser.getUserId(),deptUser.getUsername(),massageType));
         }
-        return appTasksMassageMapper.insertBatches(massages);
+        Integer integer = appTasksMassageMapper.insertBatches(massages);
+        if (integer == 0) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -609,5 +565,52 @@ public class PlatformReasonServiceImpl extends ServiceImpl<PlatformReasonMapper,
         }
         businessKey = processInstance.getBusinessKey();
         return businessKey;
+    }
+
+    /**
+     * 判断是否输入了起始时间和结束时间
+     * @param applyStartTime
+     * @param applyEndTime
+     * @return
+     */
+    private boolean haveApplyStartTimeAndEndTime(LocalDateTime applyStartTime,LocalDateTime applyEndTime){
+        if (applyStartTime == null && applyEndTime != null) {
+            throw new MyException("请输入开始时间");
+        }
+        if (applyStartTime != null && applyEndTime == null) {
+            throw new MyException("请输入结束时间");
+        }
+        if (applyStartTime == null && applyEndTime == null) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 任务取消接口新增司机信息
+     * @param param
+     * @param taskId
+     */
+    private void cancelAddDriverMassage(PlatformCancelParam param, String taskId) {
+        //完成审批
+        taskService.complete(taskId);
+        //获取对应的任务ID
+        Task task = taskService.createTaskQuery().processInstanceId(param.getInstanceId()).singleResult();
+        String id = task.getId();
+        //获取正在执行任务的司机、操作员
+        DeptUserCarApply deptUserCarApply = deptUserCarApplyMapper.selectOne(new LambdaQueryWrapper<DeptUserCarApply>()
+                .eq(DeptUserCarApply::getBusinessKey, param.getCancelBusinessKey()));
+        //删除旧消息
+        appTasksMassageMapper.delete(new LambdaQueryWrapper<AppTasksMassage>()
+                .eq(AppTasksMassage::getTaskId, param.getTaskId()));
+        //自动推送消息
+        String[] operateNames = deptUserCarApply.getOperatorName().split(",");
+        StringBuilder sb = new StringBuilder();
+        for (String operateName : operateNames) {
+            sb.append(operateName).append(",");
+        }
+        String driverName = deptUserCarApply.getDriverName();
+        sb.append(driverName);
+        insertAppMassage(id,null, task.getName(), sb.toString());
     }
 }

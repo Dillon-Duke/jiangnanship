@@ -59,7 +59,7 @@ public class PlatformGoods implements Serializable {
     private String sourceImage;
 
     @ApiModelProperty(value = "物品目前所在位置ID")
-    private String goodsPositionId;
+    private Long goodsPositionId;
 
     @ApiModelProperty(value = "物品目前所在地的GPS位置")
     private String goodsPositionGps;

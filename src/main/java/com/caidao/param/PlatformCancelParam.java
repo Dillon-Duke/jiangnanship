@@ -7,7 +7,7 @@ import lombok.Data;
  * @author tom
  */
 @Data
-public class FlatCarCancelParam {
+public class PlatformCancelParam {
 
     @ApiModelProperty("任务ID")
     private String taskId;

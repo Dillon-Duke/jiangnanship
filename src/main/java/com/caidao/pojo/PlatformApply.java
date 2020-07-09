@@ -53,10 +53,10 @@ public class PlatformApply implements Serializable {
     private String endPositionGps;
 
     @ApiModelProperty(value = "起始时间(时间戳格式，到秒)")
-    private Long startTime;
+    private LocalDateTime startTime;
 
     @ApiModelProperty(value = "结束时间(时间戳格式，到秒)")
-    private Long endTime;
+    private LocalDateTime endTime;
 
     @ApiModelProperty(value = "对象ID")
     private Integer objectId;
