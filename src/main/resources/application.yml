@@ -45,7 +45,7 @@ spring:
     username: root
     password: Kaifa2019!
     #&nullCatalogMeansCurrent=true 指代工作流在扫描的时候只扫描当前数据库，没有表则创建表 不要去扫描所有数据库
-    url: jdbc:mysql://192.168.222.5:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
+    url: jdbc:mysql://192.168.105.55:3306/jiangnanship?autoReconnect=true&useSSL=false&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 #个人数据库地址

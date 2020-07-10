@@ -32,6 +32,9 @@ public class DeptUser implements Serializable {
     @TableId(value = "user_id", type = IdType.AUTO)
     private Integer userId;
 
+    @ApiModelProperty(value = "后台用户的Id")
+    private Integer sysUserId;
+
     @ApiModelProperty(value = "用户名")
     private String username;
 

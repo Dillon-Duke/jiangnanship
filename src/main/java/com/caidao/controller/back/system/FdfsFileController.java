@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author tom
@@ -28,7 +29,7 @@ public class FdfsFileController {
     public static final Logger logger = LoggerFactory.getLogger(FdfsFileController.class);
 
     @Value("${fdfs-imgUpload-prifax}")
-    public String fdfsProfix;
+    public String fdfsPrefix;
 
     @Autowired
     private FdfsUpAndDowService fdfsUpAndDowService;
@@ -42,6 +43,8 @@ public class FdfsFileController {
     @ApiOperation("上传文件")
     public ResponseEntity<Map<String, String>> uploadFile(MultipartFile file) {
         Map<String, String> uploadFile = fdfsUpAndDowService.uploadFile(file);
+        String reduce = Stream.of(uploadFile).map((x) -> x.get("fdfsUrl")).reduce(fdfsPrefix, (x, y) -> x + y);
+        uploadFile.replace("fdfsUrl",reduce);
         return ResponseEntity.ok(uploadFile);
     }
 
@@ -66,13 +69,16 @@ public class FdfsFileController {
     @ApiOperation("删除文件")
     public ResponseEntity<String> deleteFile(@RequestBody List<String> filenames) {
         for (String filename : filenames) {
-            String file = fdfsUpAndDowService.deleteFileByFileUrl(fdfsProfix + filename);
+            String file = fdfsUpAndDowService.deleteFileByFileUrl(fdfsPrefix + filename);
             if (file == null){
                 return ResponseEntity.ok("删除成功");
             }
             return ResponseEntity.ok("失败");
         }
         return ResponseEntity.ok("失败");
+    }
+
+    public static void main(String[] args) {
     }
 
 }

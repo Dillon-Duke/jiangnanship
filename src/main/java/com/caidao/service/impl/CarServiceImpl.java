@@ -13,7 +13,6 @@ import com.caidao.pojo.PlatformApply;
 import com.caidao.pojo.SysUser;
 import com.caidao.service.CarService;
 import com.caidao.util.DateUtils;
-import com.caidao.util.FastDfsClientUtils;
 import com.caidao.util.MapUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -48,9 +47,6 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
     @Autowired
     private DeptUserCarApplyMapper deptUserCarApplyMapper;
 
-    @Autowired
-    private FastDfsClientUtils fastDfsClientUtils;
-
     @Value("${fdfs-imgUpload-prifax}")
     private String imgUploadPrifax;
 
@@ -65,7 +61,9 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         log.info("获取所有车辆的信息总共有{}页，每页展示{}个",page.getCurrent(),page.getSize());
         IPage<Car> carPage = carMapper.selectPage(page, new LambdaQueryWrapper<Car>()
                 .eq(Car::getState,1)
-                .like(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName()));
+                .like(StringUtils.hasText(car.getCarName()), Car::getCarName, car.getCarName())
+                .eq(Car::getState,1)
+                .orderByDesc(Car::getCreateDate));
         //处理展示第一张图片
         List<Car> cars = carPage.getRecords();
         List<Car> arrayList = new ArrayList<>(cars.size());
@@ -157,17 +155,6 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         car.setCreateId(principal.getUserId());
         car.setCreateDate(LocalDateTime.now());
         car.setState(1);
-        //将多个图片真实资源路径隔开
-        String sourcePhoto = car.getSourceImage();
-        if (sourcePhoto != "" && sourcePhoto != null){
-            String[] strings = sourcePhoto.split(";");
-            ArrayList<String> arrayList = new ArrayList<>(strings.length);
-            for (String string : strings) {
-                arrayList.add(imgUploadPrifax + string);
-            }
-            String replaceAll = arrayList.toString().replaceAll(",", ";");
-            car.setSourceImage(replaceAll.substring(1,replaceAll.length()-1));
-        }
         return super.save(car);
     }
 
@@ -184,15 +171,6 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
         SysUser principal = (SysUser)SecurityUtils.getSubject().getPrincipal();
         car.setUpdateId(principal.getUserId());
         car.setUpdateDate(LocalDateTime.now());
-        //判断给那些新增的没有前缀的条目加上前缀
-        String[] sourcePhoto = car.getSourceImage().split(";");
-        List<Object> arrayList = new ArrayList<>();
-        for (String string : sourcePhoto) {
-            if (!string.contains(imgUploadPrifax + "group")){
-                arrayList.add(imgUploadPrifax + string);
-            }
-        }
-        car.setSourceImage(arrayList.toString());
         return super.updateById(car);
     }
 

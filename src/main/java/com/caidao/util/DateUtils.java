@@ -3,7 +3,6 @@ package com.caidao.util;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 /**
@@ -64,7 +63,8 @@ public class DateUtils {
      * @return
      */
     public static long getTimesLengthBetweenEndTimeAndStartTimeMailSecond(LocalDateTime endTime, LocalDateTime startTime) {
-        return ChronoUnit.MILLIS.between(startTime,endTime);
+        Duration duration = Duration.between(startTime, endTime);
+        return duration.toMillis();
     }
 
     /**
@@ -74,8 +74,9 @@ public class DateUtils {
      * @return
      */
     public static long getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime endTime, LocalDateTime startTime) {
-        long between = ChronoUnit.MILLIS.between(startTime, endTime);
-        return between/1800000;
+        Duration duration = Duration.between(startTime, endTime);
+        long between = duration.toMinutes();
+        return between;
     }
 
     /**
@@ -97,10 +98,6 @@ public class DateUtils {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        LocalDateTime startTime = LocalDateTime.now();
-        Thread.sleep(3000);
-        LocalDateTime endTime = LocalDateTime.now();
-        System.out.println(getTimesLengthBetweenEndTimeAndStartTimeSecond(endTime,startTime));
     }
 
 }

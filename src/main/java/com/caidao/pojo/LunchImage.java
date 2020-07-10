@@ -37,6 +37,9 @@ public class LunchImage implements Serializable {
     @ApiModelProperty(value = "文件真实路径")
     private String sourceImage;
 
+    @ApiModelProperty(value = "自定义名称")
+    private String customName;
+
     @ApiModelProperty(value = "创建人Id")
     private Integer createId;
 
@@ -44,7 +47,7 @@ public class LunchImage implements Serializable {
     private LocalDateTime createDate;
 
     @ApiModelProperty(value = "是否应用到app首页 1：应用 0：未应用")
-    private String isUse;
+    private Integer isUse;
 
     @ApiModelProperty(value = "是否删除 1：正常 0：删除")
     private Integer state;

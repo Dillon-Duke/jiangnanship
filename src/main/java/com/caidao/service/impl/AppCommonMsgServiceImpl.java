@@ -61,7 +61,8 @@ public class AppCommonMsgServiceImpl extends ServiceImpl<AppCommonMsgMapper, App
         log.info("用户获取消息的当前页{}，页大小{}",page.getCurrent(),page.getSize());
         IPage<AppCommonMsg> selectPage = appCommonMsgMapper.selectPage(page, new LambdaQueryWrapper<AppCommonMsg>()
                 .like(StringUtils.hasText(appCommonMsg.getMassageName()), AppCommonMsg::getMassageName, appCommonMsg.getMassageName())
-                .eq(AppCommonMsg::getState, 1));
+                .eq(AppCommonMsg::getState, 1)
+                .orderByDesc(AppCommonMsg::getCreateTime));
         return selectPage;
     }
 
@@ -81,16 +82,6 @@ public class AppCommonMsgServiceImpl extends ServiceImpl<AppCommonMsgMapper, App
         msg.setIsPublish(0);
         msg.setState(1);
         appCommonMsgMapper.insert(msg);
-        Integer isPublish = msg.getIsPublish();
-        if (isPublish == 1) {
-            List<DeptUser> deptUsers = deptUserMapper.selectList(null);
-            List<Integer> userIds = deptUsers.stream().map((x) -> x.getUserId()).collect(Collectors.toList());
-            List<AppUserCommonMsg> list = userIds.stream().map((x) -> EntityUtils.getAppUserCommonMsg(msg.getId(),msg.getFileName(),msg.getFileResource(),msg.getMassageDetail(),msg.getMassageName(),x)).collect(Collectors.toList());
-            boolean result = appUserCommonMsgMapper.insertBatches(list);
-            if (!result) {
-                throw new MyException("新增消息失败，请重试");
-            }
-        }
     }
 
     /**
@@ -123,14 +114,9 @@ public class AppCommonMsgServiceImpl extends ServiceImpl<AppCommonMsgMapper, App
             throw new MyException("删除的消息中包含已发布的消息，不能删除");
         }
         //判断消息是否发布超过30分钟，如果超过，不能删除
-        List<AppCommonMsg> longTimeUserCommonMsg = appCommonMassages.stream().filter((x) -> DateUtils.getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime.now(), x.getCreateTime()) > MAX_PUBLISH_TIME).collect(Collectors.toList());
+        List<Integer> longTimeUserCommonMsg = ids.stream().filter((x) -> DateUtils.getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime.now(),getAppUserCommonMsgPublishTime(x)) > MAX_PUBLISH_TIME).collect(Collectors.toList());
         if (longTimeUserCommonMsg.size() != 0) {
             throw new MyException("删除的消息中包含发布时长超30分钟的消息，不能删除");
-        }
-        //删除用户消息
-        boolean result = appUserCommonMsgMapper.deleteBatchCommIds(ids);
-        if (!result) {
-            throw new MyException("消息删除失败，请重试");
         }
         //批量删除消息
         boolean result1 = appCommonMsgMapper.removeBatchIds(ids);
@@ -154,16 +140,9 @@ public class AppCommonMsgServiceImpl extends ServiceImpl<AppCommonMsgMapper, App
             throw new MyException("消息已经发布，不能修改");
         }
         //消息发布时间过长，不能修改
-        long longTime = DateUtils.getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime.now(), msg.getCreateTime());
+        long longTime = DateUtils.getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime.now(), getAppUserCommonMsgPublishTime(msg.getId()));
         if (longTime >= MAX_PUBLISH_TIME) {
             throw new MyException("消息发布时间超过30分钟，不能修改");
-        }
-        //查看修改的消息是否已经发布
-        AppCommonMsg appCommonMsg1 = appCommonMsgMapper.selectById(msg.getId());
-        //如果修改的消息已经发布，则更新对应的消息
-        if (appCommonMsg1.getIsPublish() == 1) {
-            //更新已经发布的消息
-            appUserCommonMsgMapper.updateByCommonId(msg);
         }
         int update = appCommonMsgMapper.updateById(msg);
         if (update == 0) {
@@ -173,7 +152,7 @@ public class AppCommonMsgServiceImpl extends ServiceImpl<AppCommonMsgMapper, App
     }
 
     /**
-     * 发布消息
+     * 发布或取消发布消息
      * @param msg
      * @return
      */
@@ -182,10 +161,38 @@ public class AppCommonMsgServiceImpl extends ServiceImpl<AppCommonMsgMapper, App
     public void publishAppCommonMassage(AppCommonMsg msg) {
         Assert.notNull(msg,"修改消息不能为空");
         log.info("发布Id为{}的消息",msg.getId());
-        try {
-            appCommonMsgMapper.updateById(msg);
-        } catch (RuntimeException e) {
-            throw new MyException("发布信息失败，请重试");
+        //获得发布或者是取消发布的状态
+        Integer publish = msg.getIsPublish();
+        if (publish == 1) {
+            //推送消息到各个用户
+            List<DeptUser> deptUsers = deptUserMapper.selectList(null);
+            List<Integer> userIds = deptUsers.stream().map((x) -> x.getUserId()).collect(Collectors.toList());
+            List<AppUserCommonMsg> list = userIds.stream().map((x) -> EntityUtils.getAppUserCommonMsg(msg.getId(),msg.getFileName(),msg.getFileResource(),msg.getMassageDetail(),msg.getMassageName(),x)).collect(Collectors.toList());
+            boolean result = appUserCommonMsgMapper.insertBatches(list);
+            if (!result) {
+                throw new MyException("新增消息失败，请重试");
+            }
+        } else {
+            //查询发布时间是不是超过30分钟，超过则不能取消发布
+            long longTime = DateUtils.getTimesLengthBetweenEndTimeAndStartTimeSecond(LocalDateTime.now(), getAppUserCommonMsgPublishTime(msg.getId()));
+            if (longTime >= MAX_PUBLISH_TIME) {
+                throw new MyException("消息发布时间超过30分钟，不能取消发布");
+            }
+            //取消发布 删除推送到用户里面的信息
+            appUserCommonMsgMapper.deleteBatchCommId(msg.getId());
         }
+        appCommonMsgMapper.updateById(msg);
+    }
+
+    /**
+     * 获取消息发布的时间
+     * @param commId
+     * @return
+     */
+    private LocalDateTime getAppUserCommonMsgPublishTime(Integer commId) {
+        List<AppUserCommonMsg> list = appUserCommonMsgMapper.selectList(new LambdaQueryWrapper<AppUserCommonMsg>()
+                .eq(AppUserCommonMsg::getCommId, commId));
+        LocalDateTime first = list.stream().map((x) -> x.getCreateTime()).findFirst().orElse(LocalDateTime.now());
+        return first;
     }
 }

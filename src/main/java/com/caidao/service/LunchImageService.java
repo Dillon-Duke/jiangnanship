@@ -22,19 +22,18 @@ public interface LunchImageService extends IService<LunchImage> {
     IPage<LunchImage> getLunchImagePage(Page<LunchImage> page, LunchImage lunchImage);
 
     /**
-     * 批量新增图片，一次行最多上传4张
+     * 新增图片
      * @param lunchImage
      * @return
      */
-    boolean addLunchImage(List<LunchImage> lunchImage);
+    boolean addLunchImage(LunchImage lunchImage);
 
     /**
-     * 修改图片状态为使用或者未使用
-     * @param imgId
-     * @param isUse
+     * 修改图片
+     * @param lunchImage
      * @return
      */
-    boolean updateImageUseState(Integer imgId, Integer isUse);
+    boolean updateImageUseState(LunchImage lunchImage);
 
     /**
      * 批量删除图片 假删除
@@ -42,4 +41,17 @@ public interface LunchImageService extends IService<LunchImage> {
      * @return
      */
     Boolean beachDeleteLunchImage(List<Integer> ids);
+
+    /**
+     * 发布或者取消发布app首页轮询图
+     * @param lunchImage
+     */
+    void useOrNotLunchImage(LunchImage lunchImage);
+
+    /**
+     * 通过Id获取图片信息
+     * @param id
+     * @return
+     */
+    LunchImage getLunchImageById(Integer id);
 }

@@ -1,8 +1,9 @@
 package com.caidao.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.caidao.pojo.AppCommonMsg;
 import com.caidao.pojo.AppUserCommonMsg;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
@@ -35,4 +36,12 @@ public interface AppUserCommonMsgMapper extends BaseMapper<AppUserCommonMsg> {
      * @return
      */
     boolean deleteBatchCommIds(@Param("ids")List<Integer> ids);
+
+    /**
+     * 批量删除用户表中的消息
+     * @param id
+     * @return
+     */
+    @Delete("DELETE FROM app_user_common_msg WHERE comm_id = #{id}")
+    Integer deleteBatchCommId(@Param("id") Integer id);
 }

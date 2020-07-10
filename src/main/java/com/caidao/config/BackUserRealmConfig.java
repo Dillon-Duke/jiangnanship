@@ -5,6 +5,7 @@ import com.caidao.service.SysMenuService;
 import com.caidao.service.SysUserService;
 import com.caidao.util.PropertyUtils;
 import com.caidao.util.UserLoginTokenUtils;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -95,19 +96,13 @@ public class BackUserRealmConfig extends AuthorizingRealm {
 		super.clearCachedAuthenticationInfo(principals);
 	}
 
-	@Override
-	public void clearCache(PrincipalCollection principals) {
-		super.clearCache(principals);
-	}
-
 	/**
 	 * 自定义方法：清除所有的  认证缓存  和 授权缓存
 	 */
-	public void getBackClearAllCache() {
-		getAuthorizationCache().clear();
-		getAuthenticationCache().clear();
+	public void clearCache(){
+		PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
+		super.clearCache(principals);
 	}
-
 
 
 }

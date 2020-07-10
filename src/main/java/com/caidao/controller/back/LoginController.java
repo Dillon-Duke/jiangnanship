@@ -45,6 +45,9 @@ public class LoginController {
 
 	@Autowired
 	private Jedis jedis;
+
+	@Autowired
+	private BackUserRealmConfig backUserRealmConfig;
 	
 	@Autowired
 	private SysMenuService sysMenuService;
@@ -90,17 +93,14 @@ public class LoginController {
 	@ApiOperation("后台登录接口")
 	@PostMapping("/login")
 	public ResponseEntity<String> backLogin(@RequestBody UserParam userParam) {
-		
 		Subject subject = SecurityUtils.getSubject();
 		UserLoginTokenUtils userLoginTokenUtils = new UserLoginTokenUtils(userParam.getPrincipal(), userParam.getCredentials(),PropertyUtils.BACK_USER_REALM);
 		String token = null;
-
 		//校验验证码
 		checkCode(userParam.getSessionUuid(),userParam.getImageCode());
 		//校验登录信息
 		subject.login(userLoginTokenUtils);
 		token = subject.getSession().getId().toString();
-
 		//将所有登录用户信息token放在redis中，之后修改密码时删除对应的token
 		SysUser sysUser = (SysUser) SecurityUtils.getSubject().getPrincipal();
 		jedis.hset(PropertyUtils.ALL_USER_TOKEN,sysUser.getUserSalt(),token);
@@ -116,16 +116,12 @@ public class LoginController {
 	@ApiOperation("用户登录查询对应菜单")
 	public ResponseEntity<Object> getMenuList(){	
 		SysUser user = (SysUser)SecurityUtils.getSubject().getPrincipal();
-
 		Assert.notNull(user,"用户信息不能为空");
 		log.info("{}用户登录之后查询菜单",user.getUsername());
-
 		Map<String, Object> result = new HashMap<String,Object>(2);
-
 		//用户的菜单列表
 		List<MenuParam> menuList = sysMenuService.getMenuListByUserId(user);
 		result.put("menuList", menuList);
-
 		//用户的菜单权限
 		List<String> authorities = sysMenuService.getAuth2ByUslerId(user.getUserId());
 		result.put("authorities", authorities);
@@ -157,8 +153,7 @@ public class LoginController {
 		//获取对应的登录用户session
 		String token = SecurityUtils.getSubject().getSession().getId().toString();
 		jedis.del(PropertyUtils.USER_SESSION + token);
-		//清空缓存中的信息
-		new BackUserRealmConfig().getBackClearAllCache();
+		backUserRealmConfig.clearCache();
 		return ResponseEntity.ok().build();
 	}
 

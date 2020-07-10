@@ -88,6 +88,7 @@ public class DeptUserServiceImpl extends ServiceImpl<DeptUserMapper, DeptUser> i
         log.info("查询部门分页数据，当前页{}，页大小{}",page.getCurrent(),page.getSize());
         IPage<DeptUser> selectPage = deptUserMapper.selectPage(page, new LambdaQueryWrapper<DeptUser>()
                 .eq(DeptUser::getState,1)
+                .orderByDesc(DeptUser::getCreateDate)
                 .like(StringUtils.hasText(deptUser.getUsername()), DeptUser::getUsername, deptUser.getUsername()));
         return selectPage;
     }

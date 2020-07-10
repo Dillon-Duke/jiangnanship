@@ -49,7 +49,7 @@ public interface AppCommonMsgService extends IService<AppCommonMsg> {
     Boolean updateAppCommonMassage(AppCommonMsg appCommonMsg);
 
     /**
-     * 发布消息
+     * 发布或取消发布消息
      * @param appCommonMsg
      * @return
      */

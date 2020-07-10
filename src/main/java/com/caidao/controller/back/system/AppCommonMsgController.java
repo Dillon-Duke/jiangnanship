@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caidao.pojo.AppCommonMsg;
 import com.caidao.service.AppCommonMsgService;
 import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,7 @@ public class AppCommonMsgController {
      */
     @GetMapping("/page")
     @ApiOperation("获取分页的消息数据")
+    @RequiresPermissions("sys:appimage:page")
     public ResponseEntity<IPage<AppCommonMsg>> getAppCommonPage(Page<AppCommonMsg> page, AppCommonMsg appCommonMsg){
         IPage<AppCommonMsg> appCommonPage = appCommonMsgService.getAppCommonPage(page,appCommonMsg);
         return ResponseEntity.ok(appCommonPage);
@@ -43,6 +45,7 @@ public class AppCommonMsgController {
      */
     @PostMapping
     @ApiOperation("新增通用消息")
+    @RequiresPermissions("sys:appimage:save")
     public ResponseEntity<Void> saveAppCommonMassage(@RequestBody AppCommonMsg appCommonMsg){
         appCommonMsgService.saveAppCommonMassage(appCommonMsg);
         return ResponseEntity.ok().build();
@@ -55,6 +58,7 @@ public class AppCommonMsgController {
      */
     @GetMapping("info/{id}")
     @ApiOperation("通过id获取消息数据")
+    @RequiresPermissions("sys:appimage:info")
     public ResponseEntity<AppCommonMsg> getAppCommonMassageById(@PathVariable("id") Integer id){
         AppCommonMsg appCommonMsg = appCommonMsgService.getAppCommonMassageById(id);
         return ResponseEntity.ok(appCommonMsg);
@@ -67,6 +71,7 @@ public class AppCommonMsgController {
      */
     @DeleteMapping
     @ApiOperation("批量删除消息")
+    @RequiresPermissions("sys:appimage:delete")
     public ResponseEntity<Void> beachDeleteAppCommonMassage(@RequestBody List<Integer> ids){
         appCommonMsgService.beachDeleteAppCommonMassage(ids);
         return ResponseEntity.ok().build();
@@ -79,6 +84,7 @@ public class AppCommonMsgController {
      */
     @PutMapping
     @ApiOperation("修改消息")
+    @RequiresPermissions("sys:appimage:update")
     public ResponseEntity<Boolean> updateAppCommonMassage(@RequestBody AppCommonMsg appCommonMsg) {
         Boolean updateById = appCommonMsgService.updateAppCommonMassage(appCommonMsg);
         return ResponseEntity.ok(updateById);
@@ -90,7 +96,8 @@ public class AppCommonMsgController {
      * @return
      */
     @PutMapping("publishOrNot")
-    @ApiOperation("修改消息")
+    @ApiOperation("发布或取消发布消息")
+    @RequiresPermissions({"sys:appimage:publish","sys:appimage:unpublish"})
     public ResponseEntity<Boolean> publishOrNotAppCommonMassage(@RequestBody AppCommonMsg appCommonMsg) {
         appCommonMsgService.publishAppCommonMassage(appCommonMsg);
         return ResponseEntity.ok().build();

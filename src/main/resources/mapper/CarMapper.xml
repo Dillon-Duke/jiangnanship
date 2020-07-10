@@ -8,7 +8,7 @@
         SET
         state = 0
         WHERE
-        user_id
+        car_id
         IN
         <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
             #{item}

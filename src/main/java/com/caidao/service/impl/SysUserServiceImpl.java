@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.caidao.config.BackUserRealmConfig;
 import com.caidao.exception.MyException;
 import com.caidao.mapper.DeptUserMapper;
 import com.caidao.mapper.SysUserMapper;
@@ -20,6 +21,7 @@ import com.caidao.util.PropertyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -51,6 +53,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
 	@Autowired
 	private Jedis jedis;
+
+	@Autowired
+	@Lazy
+	private BackUserRealmConfig backUserRealmConfig;
 	
 	@Autowired
 	private SysUserRoleMapper sysUserRoleMapper;
@@ -119,6 +125,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 				throw new MyException("该名称已被注册，请更换其他名称");
 			}
 			DeptUser deptUser = new DeptUser();
+			deptUser.setSysUserId(sysUser.getUserId());
 			deptUser.setUsername(sysUser.getUsername());
 			deptUser.setRealName(sysUser.getRealName());
 			deptUser.setPassword(sysUser.getPassword());
@@ -217,40 +224,38 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 		//设置更新人id
 		SysUser sysUser2 = (SysUser)SecurityUtils.getSubject().getPrincipal();
 		sysUser.setUpdateId(sysUser2.getUserId());
-		//查询数据库中是否有该用户名，如果有，则提示更换用户名
-		DeptUser user = deptUserMapper.selectById(sysUser.getUserId());
-		if (!user.getUsername().equals(sysUser.getUsername())){
-			DeptUser selectOne = deptUserMapper.selectOne(new LambdaQueryWrapper<DeptUser>()
-					.eq(DeptUser::getUsername, sysUser.getUsername()));
-			if (selectOne != null){
-				throw new MyException("该名称已被注册，请更换其他名称");
-			}
-		}
-		//判断密码是否重新输入过，如果输入过，则改密码，若无，则直接存数据库里面
-		String password = sysUser.getPassword();
-		if (password != null && password != ""){
-			//设置加盐密码
-			String saltPass = Md5Utils.getHashAndSaltAndTime(password, sysUser.getUserSalt(), 1024);
-			sysUser.setPassword(saltPass);
-		} else {
-			sysUser.setPassword(user.getPassword());
-		}
-		//设置更新时间
 		sysUser.setUpdateDate(LocalDateTime.now());
+		//获取表中的有相同名字的元数据
+		SysUser sysUser1 = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
+				.eq(SysUser::getUsername, sysUser.getUsername()));
+		//判断表中是否有该名字
+		if (sysUser1.getUsername() ==sysUser.getUsername() && !sysUser.getUserId().equals(sysUser.getUserId())) {
+			throw new MyException("该名称已被注册，请更换其他名称");
+		}
+		//设置盐值密码
+		if (sysUser1.getPassword() != sysUser.getPassword()) {
+			sysUser.setPassword(Md5Utils.getHashAndSaltAndTime(sysUser.getPassword(),sysUser1.getUserSalt(),1024));
+		}
+		//后台更新用户
 		boolean updateById = super.updateById(sysUser);
-		Assert.state(sysUser!=null && sysUser.getPassword()!=null && sysUser.getUsername()!=null, "更新用户失败，请查找传值信息");
 		//删除之前的用户角色对应之后重新更新
 		sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>().in(SysUserRole::getUserId, sysUser.getUserId()));
 		List<Integer> roleIdList = sysUser.getRoleIdList();
 		if (roleIdList == null || roleIdList.isEmpty()) {
-			return updateById;
+			return true;
 		}
+		//批量插入更新的用户角色表
 		List<SysUserRole> userRoles = roleIdList.stream().map((x) -> EntityUtils.getSysUserRole(sysUser.getUserId(),x)).collect(Collectors.toList());
 		boolean batches = sysUserRoleMapper.insertBatches(userRoles);
 		//获取被删除用户的token
-		Object token = jedis.hget(PropertyUtils.ALL_USER_TOKEN, user.getUserSalt());
+		Object token = jedis.hget(PropertyUtils.ALL_USER_TOKEN, sysUser.getUserSalt());
 		//判断该用户目前是否登录 登录 则删除对应session 没有登录 则不需要操作
 		if (token != null) {
+			//删除用户在hash里面的token
+			jedis.hdel(PropertyUtils.ALL_USER_TOKEN, sysUser.getUserSalt());
+			//删除用户的权限缓存
+			backUserRealmConfig.clearCache();
+			//删除用户的session缓存
 			jedis.del(PropertyUtils.USER_SESSION+token);
 		}
 		return batches;
